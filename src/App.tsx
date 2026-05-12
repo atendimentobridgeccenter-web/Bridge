@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 // ── Admin (heavy — separate chunk) ───────────────────────────
 const AdminHome      = lazy(() => import('@/pages/admin/AdminHome'))
@@ -29,6 +29,9 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<Spinner />}>
         <Routes>
+          {/* ── Root ── */}
+          <Route path="/"                               element={<Navigate to="/admin" replace />} />
+
           {/* ── Admin ── */}
           <Route path="/admin"                          element={<AdminHome />} />
           <Route path="/admin/builder"                  element={<Builder />} />
