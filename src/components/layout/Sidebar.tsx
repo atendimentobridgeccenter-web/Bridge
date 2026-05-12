@@ -62,12 +62,12 @@ export default function Sidebar() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -4 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50
+                  className="absolute left-full top-1/2 -tranzinc-y-1/2 ml-2.5 z-50
                              px-2.5 py-1 rounded-lg bg-zinc-800 border border-white/10
                              text-xs font-medium text-white whitespace-nowrap shadow-xl"
                 >
                   {label}
-                  <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2
+                  <span className="absolute -left-1 top-1/2 -tranzinc-y-1/2 w-2 h-2
                                    rotate-45 bg-zinc-800 border-l border-b border-white/10" />
                 </motion.div>
               )}
@@ -95,7 +95,7 @@ export default function Sidebar() {
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
-              className="absolute left-full top-1/2 -translate-y-1/2 ml-2.5 z-50
+              className="absolute left-full top-1/2 -tranzinc-y-1/2 ml-2.5 z-50
                          px-2.5 py-1 rounded-lg bg-zinc-800 border border-white/10
                          text-xs font-medium text-zinc-300 whitespace-nowrap shadow-xl"
             >

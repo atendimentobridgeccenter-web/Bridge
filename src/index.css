@@ -8,16 +8,15 @@
   --bg-root:    #09090b;   /* zinc-950 */
   --bg-panel:   #18181b;   /* zinc-900 */
   --bg-card:    #27272a;   /* zinc-800 */
-  --bg-input:   #1c1c1f;
 
   /* Borders */
-  --border:        rgba(255,255,255,0.08);
-  --border-hover:  rgba(255,255,255,0.16);
-  --border-focus:  rgba(139,92,246,0.6);   /* violet */
+  --border:       rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.16);
+  --border-focus: rgba(139,92,246,0.6);
 
   /* Accent */
-  --accent:        #7c3aed;  /* violet-700 */
-  --accent-bright: #8b5cf6;  /* violet-500 */
+  --accent:        #7c3aed;
+  --accent-bright: #8b5cf6;
   --accent-glow:   rgba(139,92,246,0.15);
 }
 
@@ -37,14 +36,14 @@ html, body, #root {
   height: 100%;
   width: 100%;
   background: var(--bg-root);
-  color: #e4e4e7;   /* zinc-200 */
+  color: #e4e4e7;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────── */
-::-webkit-scrollbar          { width: 6px; height: 6px; }
+::-webkit-scrollbar          { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.12); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.1); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 /* ── Focus ring ────────────────────────────────────────────── */
 *:focus-visible {
@@ -55,7 +54,7 @@ html, body, #root {
 /* ── Selection ─────────────────────────────────────────────── */
 ::selection { background: var(--accent-glow); color: #fff; }
 
-/* ── Utility: glass card ───────────────────────────────────── */
+/* ── Utilities ─────────────────────────────────────────────── */
 .glass {
   background: rgba(24, 24, 27, 0.8);
   backdrop-filter: blur(20px);
@@ -63,7 +62,13 @@ html, body, #root {
   border: 1px solid var(--border);
 }
 
-/* ── Utility: gradient text ────────────────────────────────── */
+.glass-light {
+  background: rgba(39, 39, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
   -webkit-background-clip: text;
@@ -71,7 +76,6 @@ html, body, #root {
   background-clip: text;
 }
 
-/* ── Animated gradient border ──────────────────────────────── */
 .glow-border {
   position: relative;
 }
@@ -86,3 +90,37 @@ html, body, #root {
   transition: opacity 0.3s;
 }
 .glow-border:hover::before { opacity: 1; }
+
+/* ── Shimmer skeleton ──────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 0.5rem;
+}
+
+/* ── Fade-in ───────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+/* ── Spin slow ─────────────────────────────────────────────── */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}

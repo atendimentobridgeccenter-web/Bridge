@@ -14,15 +14,14 @@ interface Props {
 }
 
 const variants = {
-  enter:  { opacity: 0, y: 48, scale: 0.97 },
+  enter:  { opacity: 0, y: 40, scale: 0.98 },
   center: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } },
-  exit:   { opacity: 0, y: -32, scale: 0.97, transition: { duration: 0.3 } },
+  exit:   { opacity: 0, y: -24, scale: 0.98, transition: { duration: 0.28 } },
 }
 
 export default function FormStepView({ step, value, onChange, onNext, stepIndex, totalSteps }: Props) {
   const [localVal, setLocalVal] = useState<string | string[]>(value ?? (step.type === 'multiselect' ? [] : ''))
 
-  // Sync when step changes
   useEffect(() => {
     setLocalVal(value ?? (step.type === 'multiselect' ? [] : ''))
   }, [step.id, value, step.type])
@@ -39,6 +38,8 @@ export default function FormStepView({ step, value, onChange, onNext, stepIndex,
 
   const canAdvance = !step.required || (Array.isArray(localVal) ? localVal.length > 0 : Boolean(localVal))
 
+  const isText = step.type === 'text' || step.type === 'email' || step.type === 'textarea'
+
   return (
     <motion.div
       key={step.id}
@@ -46,22 +47,22 @@ export default function FormStepView({ step, value, onChange, onNext, stepIndex,
       initial="enter"
       animate="center"
       exit="exit"
-      className="w-full max-w-xl mx-auto"
+      className="w-full"
     >
-      {/* Step counter */}
-      <p className="text-sm text-violet-400 font-mono mb-4 tracking-wider">
-        {String(stepIndex + 1).padStart(2, '0')} / {String(totalSteps).padStart(2, '0')}
+      {/* Step indicator */}
+      <p className="text-xs font-mono text-violet-400/60 mb-5 tracking-widest">
+        {String(stepIndex + 1).padStart(2, '0')} — {String(totalSteps).padStart(2, '0')}
       </p>
 
       {/* Question */}
-      <h2 className="text-3xl md:text-4xl font-bold text-white mb-10 leading-tight">
+      <h2 className="text-3xl md:text-4xl font-bold text-white mb-10 leading-tight tracking-tight">
         {step.question}
       </h2>
 
-      {/* Input by type */}
-      <div className="space-y-3">
-        {(step.type === 'text' || step.type === 'email' || step.type === 'textarea') && (
-          <div className="relative">
+      {/* Inputs */}
+      <div className="space-y-2.5">
+        {isText && (
+          <div>
             {step.type === 'textarea' ? (
               <textarea
                 autoFocus
@@ -69,7 +70,11 @@ export default function FormStepView({ step, value, onChange, onNext, stepIndex,
                 placeholder={step.placeholder}
                 onChange={e => commit(e.target.value)}
                 rows={4}
-                className="w-full bg-transparent border-b-2 border-slate-700 focus:border-violet-500 text-white text-xl py-3 outline-none resize-none placeholder:text-slate-600 transition-colors"
+                className={cn(
+                  'w-full bg-transparent border-b-2 border-zinc-700 focus:border-violet-500',
+                  'text-white text-xl py-3 outline-none resize-none',
+                  'placeholder:text-zinc-700 transition-colors leading-relaxed',
+                )}
               />
             ) : (
               <input
@@ -79,67 +84,94 @@ export default function FormStepView({ step, value, onChange, onNext, stepIndex,
                 placeholder={step.placeholder}
                 onChange={e => commit(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleNext()}
-                className="w-full bg-transparent border-b-2 border-slate-700 focus:border-violet-500 text-white text-xl py-3 outline-none placeholder:text-slate-600 transition-colors"
+                className={cn(
+                  'w-full bg-transparent border-b-2 border-zinc-700 focus:border-violet-500',
+                  'text-white text-xl py-3 outline-none',
+                  'placeholder:text-zinc-700 transition-colors',
+                )}
               />
             )}
           </div>
         )}
 
         {step.type === 'select' && step.options?.map(opt => (
-          <button
+          <motion.button
             key={opt.value}
-            onClick={() => { commit(opt.value); setTimeout(onNext, 260) }}
+            whileHover={{ x: 2 }}
+            onClick={() => { commit(opt.value); setTimeout(onNext, 240) }}
             className={cn(
-              'w-full flex items-center justify-between px-5 py-4 rounded-2xl border text-left transition-all duration-200',
+              'w-full flex items-center justify-between px-5 py-4 rounded-xl border text-left',
+              'transition-all duration-200 group',
               localVal === opt.value
-                ? 'border-violet-500 bg-violet-500/15 text-white'
-                : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800/60',
+                ? 'border-violet-500 bg-violet-500/10 text-white'
+                : 'border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/60',
             )}
           >
             <span className="font-medium">{opt.label}</span>
-            {localVal === opt.value && <Check className="w-5 h-5 text-violet-400 shrink-0" />}
-          </button>
+            <span className={cn(
+              'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+              localVal === opt.value
+                ? 'border-violet-500 bg-violet-500'
+                : 'border-zinc-600 group-hover:border-zinc-500',
+            )}>
+              {localVal === opt.value && <Check className="w-3 h-3 text-white" />}
+            </span>
+          </motion.button>
         ))}
 
         {step.type === 'multiselect' && step.options?.map(opt => {
           const selected = Array.isArray(localVal) && localVal.includes(opt.value)
           return (
-            <button
+            <motion.button
               key={opt.value}
+              whileHover={{ x: 2 }}
               onClick={() => {
                 const arr = Array.isArray(localVal) ? [...localVal] : []
                 commit(selected ? arr.filter(v => v !== opt.value) : [...arr, opt.value])
               }}
               className={cn(
-                'w-full flex items-center justify-between px-5 py-4 rounded-2xl border text-left transition-all duration-200',
+                'w-full flex items-center justify-between px-5 py-4 rounded-xl border text-left',
+                'transition-all duration-200 group',
                 selected
-                  ? 'border-violet-500 bg-violet-500/15 text-white'
-                  : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800/60',
+                  ? 'border-violet-500 bg-violet-500/10 text-white'
+                  : 'border-zinc-800 bg-zinc-900/60 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800/60',
               )}
             >
               <span className="font-medium">{opt.label}</span>
-              {selected && <Check className="w-5 h-5 text-violet-400 shrink-0" />}
-            </button>
+              <span className={cn(
+                'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all',
+                selected
+                  ? 'border-violet-500 bg-violet-500'
+                  : 'border-zinc-600 group-hover:border-zinc-500',
+              )}>
+                {selected && <Check className="w-3 h-3 text-white" />}
+              </span>
+            </motion.button>
           )
         })}
       </div>
 
-      {/* Next button — hidden for auto-advance selects */}
-      {(step.type !== 'select') && (
+      {/* Next button */}
+      {step.type !== 'select' && (
         <motion.button
-          initial={false}
-          animate={canAdvance ? { opacity: 1, y: 0 } : { opacity: 0.3, y: 8 }}
+          animate={canAdvance ? { opacity: 1, y: 0 } : { opacity: 0.25, y: 6 }}
           onClick={handleNext}
           disabled={!canAdvance}
-          className="mt-10 flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 disabled:cursor-not-allowed text-white font-semibold text-lg shadow-lg shadow-violet-900/40 transition-colors"
+          className={cn(
+            'mt-10 flex items-center gap-2.5 px-7 py-3.5 rounded-xl',
+            'bg-violet-600 hover:bg-violet-500 disabled:cursor-not-allowed',
+            'text-white font-semibold text-base',
+            'shadow-lg shadow-violet-900/30 transition-colors',
+          )}
         >
-          Continuar <ArrowRight className="w-5 h-5" />
+          Continuar <ArrowRight className="w-4 h-4" />
         </motion.button>
       )}
 
-      {/* Keyboard hint */}
       {(step.type === 'text' || step.type === 'email') && (
-        <p className="mt-4 text-xs text-slate-600">Pressione Enter ↵ para avançar</p>
+        <p className="mt-3 text-xs text-zinc-700">
+          Pressione <kbd className="text-zinc-600">Enter ↵</kbd> para avançar
+        </p>
       )}
     </motion.div>
   )

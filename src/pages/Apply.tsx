@@ -32,7 +32,7 @@ export default function Apply() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -40,7 +40,7 @@ export default function Apply() {
 
   if (error || !form) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
         <p>Formulário não encontrado.</p>
       </div>
     )

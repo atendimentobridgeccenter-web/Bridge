@@ -21,22 +21,26 @@ export default function BuilderHeader({
   const [editingSlug, setEditingSlug] = useState(false)
 
   return (
-    <header className="h-14 shrink-0 flex items-center gap-4 px-4 bg-slate-900 border-b border-slate-800 z-10">
+    <header className="h-14 shrink-0 flex items-center gap-3 px-4
+                       bg-zinc-900 border-b border-white/6 z-10">
       <button
         onClick={() => navigate('/admin')}
-        className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
       </button>
+
+      <div className="w-px h-4 bg-white/8" />
 
       <div className="flex-1 min-w-0">
         <input
           value={title}
           onChange={e => onTitleChange(e.target.value)}
-          className="bg-transparent text-white font-semibold text-sm outline-none w-full truncate"
+          className="bg-transparent text-white font-semibold text-sm outline-none w-full truncate
+                     placeholder:text-zinc-600"
           placeholder="Título da página..."
         />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
+        <div className="flex items-center gap-1 text-xs text-zinc-600">
           <span>/</span>
           {editingSlug ? (
             <input
@@ -47,42 +51,48 @@ export default function BuilderHeader({
               className="bg-transparent outline-none text-violet-400 w-40"
             />
           ) : (
-            <button onClick={() => setEditingSlug(true)} className="text-violet-400 hover:text-violet-300">
+            <button
+              onClick={() => setEditingSlug(true)}
+              className="text-violet-400/70 hover:text-violet-300 transition-colors"
+            >
               {slug || 'slug-da-pagina'}
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={() => window.open(`/${slug}`, '_blank')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs
+                     text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
         >
-          <Eye className="w-4 h-4" />
+          <Eye className="w-3.5 h-3.5" />
           Preview
         </button>
 
         <button
           onClick={onTogglePublish}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
             published
-              ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white',
+              ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 border border-emerald-500/20'
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-white/6',
           )}
         >
-          {published && <Check className="w-3.5 h-3.5" />}
+          {published && <Check className="w-3 h-3" />}
           {published ? 'Publicado' : 'Rascunho'}
         </button>
 
         <button
           onClick={onSave}
           disabled={saving}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white transition-colors"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold
+                     bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white
+                     transition-colors shadow-lg shadow-violet-900/30"
         >
-          <Save className="w-4 h-4" />
-          {saving ? 'Salvando...' : 'Salvar'}
+          <Save className="w-3.5 h-3.5" />
+          {saving ? 'Salvando…' : 'Salvar'}
         </button>
       </div>
     </header>

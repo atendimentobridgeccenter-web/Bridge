@@ -91,7 +91,7 @@ export default function ProductBuilder() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -100,20 +100,20 @@ export default function ProductBuilder() {
   const isPublished = product.status === 'published'
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
       {/* Header */}
-      <header className="h-14 shrink-0 flex items-center gap-3 px-4 border-b border-slate-800 bg-slate-900">
-        <Link to="/admin/products" className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white">
+      <header className="h-14 shrink-0 flex items-center gap-3 px-4 border-b border-zinc-800 bg-zinc-900">
+        <Link to="/admin/products" className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white">
           <ArrowLeft className="w-4 h-4" />
         </Link>
 
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white truncate">{product.name}</p>
-          <p className="text-xs text-slate-500">/{product.slug}</p>
+          <p className="text-xs text-zinc-500">/{product.slug}</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-slate-800 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-zinc-800 rounded-xl p-1">
           {TABS.map(t => (
             <button
               key={t.id}
@@ -121,8 +121,8 @@ export default function ProductBuilder() {
               className={cn(
                 'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
                 tab === t.id
-                  ? 'bg-slate-700 text-white shadow'
-                  : 'text-slate-400 hover:text-white',
+                  ? 'bg-zinc-700 text-white shadow'
+                  : 'text-zinc-400 hover:text-white',
               )}
             >
               {t.label}
@@ -139,7 +139,7 @@ export default function ProductBuilder() {
           <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Salvando...' : 'Salvar'}

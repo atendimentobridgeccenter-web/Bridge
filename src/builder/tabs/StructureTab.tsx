@@ -112,11 +112,11 @@ export default function StructureTab({ productId }: Props) {
       {modules.map((mod, mi) => (
         <div key={mod.id} className={cn(
           'rounded-2xl border transition-colors',
-          openMod === mod.id ? 'border-violet-500/40 bg-slate-900' : 'border-slate-800 bg-slate-900/40',
+          openMod === mod.id ? 'border-violet-500/40 bg-zinc-900' : 'border-zinc-800 bg-zinc-900/40',
         )}>
           {/* Module header */}
           <div className="flex items-center gap-2 p-4">
-            <GripVertical className="w-4 h-4 text-slate-600 shrink-0" />
+            <GripVertical className="w-4 h-4 text-zinc-600 shrink-0" />
             <span className="w-6 h-6 rounded-lg bg-violet-500/15 text-violet-400 text-xs flex items-center justify-center font-bold shrink-0">
               {mi + 1}
             </span>
@@ -126,32 +126,32 @@ export default function StructureTab({ productId }: Props) {
               onBlur={() => updateModule(mod)}
               className="flex-1 bg-transparent text-white font-semibold text-sm outline-none"
             />
-            {saving === mod.id && <span className="text-xs text-slate-600">salvando...</span>}
+            {saving === mod.id && <span className="text-xs text-zinc-600">salvando...</span>}
             <button onClick={() => deleteModule(mod.id)} className="p-1.5 text-red-400/40 hover:text-red-400">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => setOpenMod(openMod === mod.id ? null : mod.id)}>
-              <ChevronDown className={cn('w-4 h-4 text-slate-500 transition-transform', openMod === mod.id && 'rotate-180')} />
+              <ChevronDown className={cn('w-4 h-4 text-zinc-500 transition-transform', openMod === mod.id && 'rotate-180')} />
             </button>
           </div>
 
           {/* Module body: lessons */}
           {openMod === mod.id && (
-            <div className="border-t border-slate-800 px-4 pb-4 pt-3 space-y-2">
+            <div className="border-t border-zinc-800 px-4 pb-4 pt-3 space-y-2">
               {mod.content_json.lessons.map(lesson => (
                 <div key={lesson.id} className={cn(
                   'rounded-xl border p-3 transition-colors',
-                  openLes === lesson.id ? 'border-slate-600 bg-slate-800/60' : 'border-slate-800 bg-slate-800/20',
+                  openLes === lesson.id ? 'border-zinc-600 bg-zinc-800/60' : 'border-zinc-800 bg-zinc-800/20',
                 )}>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500">{LESSON_ICONS[lesson.type]}</span>
+                    <span className="text-zinc-500">{LESSON_ICONS[lesson.type]}</span>
                     <input
                       value={lesson.title}
                       onChange={e => patchLesson(mod.id, lesson.id, { title: e.target.value })}
                       onBlur={() => updateModule(mod)}
                       className="flex-1 bg-transparent text-sm text-white outline-none"
                     />
-                    <label className="flex items-center gap-1 text-xs text-slate-500">
+                    <label className="flex items-center gap-1 text-xs text-zinc-500">
                       <input
                         type="checkbox"
                         checked={lesson.free_preview ?? false}
@@ -161,7 +161,7 @@ export default function StructureTab({ productId }: Props) {
                       Preview
                     </label>
                     <button onClick={() => setOpenLes(openLes === lesson.id ? null : lesson.id)}>
-                      <ChevronDown className={cn('w-3.5 h-3.5 text-slate-600 transition-transform', openLes === lesson.id && 'rotate-180')} />
+                      <ChevronDown className={cn('w-3.5 h-3.5 text-zinc-600 transition-transform', openLes === lesson.id && 'rotate-180')} />
                     </button>
                     <button onClick={() => { removeLesson(mod.id, lesson.id); updateModule({ ...mod, content_json: { lessons: mod.content_json.lessons.filter(l => l.id !== lesson.id) } }) }}>
                       <Trash2 className="w-3.5 h-3.5 text-red-400/40 hover:text-red-400" />
@@ -169,11 +169,11 @@ export default function StructureTab({ productId }: Props) {
                   </div>
 
                   {openLes === lesson.id && (
-                    <div className="mt-3 pt-3 border-t border-slate-700 space-y-3">
+                    <div className="mt-3 pt-3 border-t border-zinc-700 space-y-3">
                       <select
                         value={lesson.type}
                         onChange={e => { patchLesson(mod.id, lesson.id, { type: e.target.value as Lesson['type'] }); updateModule(mod) }}
-                        className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                        className="bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
                       >
                         <option value="video">Vídeo</option>
                         <option value="text">Texto</option>
@@ -186,7 +186,7 @@ export default function StructureTab({ productId }: Props) {
                           onChange={e => patchLesson(mod.id, lesson.id, { video_url: e.target.value })}
                           onBlur={() => updateModule(mod)}
                           placeholder="URL do vídeo (YouTube, Vimeo, Panda...)"
-                          className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-slate-500"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-zinc-500"
                         />
                       )}
                       {lesson.type === 'text' && (
@@ -196,7 +196,7 @@ export default function StructureTab({ productId }: Props) {
                           onBlur={() => updateModule(mod)}
                           placeholder="Conteúdo em Markdown ou HTML..."
                           rows={4}
-                          className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-slate-500 resize-none"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-zinc-500 resize-none"
                         />
                       )}
                       {lesson.type === 'download' && (
@@ -205,7 +205,7 @@ export default function StructureTab({ productId }: Props) {
                           onChange={e => patchLesson(mod.id, lesson.id, { file_url: e.target.value })}
                           onBlur={() => updateModule(mod)}
                           placeholder="URL do arquivo"
-                          className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-slate-500"
+                          className="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500 placeholder:text-zinc-500"
                         />
                       )}
                       <input
@@ -214,7 +214,7 @@ export default function StructureTab({ productId }: Props) {
                         onChange={e => patchLesson(mod.id, lesson.id, { duration_min: Number(e.target.value) })}
                         onBlur={() => updateModule(mod)}
                         placeholder="Duração (min)"
-                        className="w-32 bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500"
+                        className="w-32 bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-violet-500"
                       />
                     </div>
                   )}
@@ -223,7 +223,7 @@ export default function StructureTab({ productId }: Props) {
 
               <button
                 onClick={() => addLesson(mod.id)}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-400 transition-colors pt-1"
+                className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-violet-400 transition-colors pt-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Adicionar aula
               </button>
@@ -234,7 +234,7 @@ export default function StructureTab({ productId }: Props) {
 
       <button
         onClick={addModule}
-        className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl border border-dashed border-slate-700 text-slate-500 hover:border-violet-500/50 hover:text-violet-400 text-sm transition-colors"
+        className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-xl border border-dashed border-zinc-700 text-zinc-500 hover:border-violet-500/50 hover:text-violet-400 text-sm transition-colors"
       >
         <Plus className="w-4 h-4" /> Adicionar módulo
       </button>

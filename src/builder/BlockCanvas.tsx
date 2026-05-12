@@ -15,19 +15,13 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2 } from 'lucide-react'
+import { GripVertical, Trash2, Layers } from 'lucide-react'
 import { HeroBlock, FeaturesBlock, CallToActionBlock } from '@/blocks'
 import type { PageBlock, BlockType, HeroProps, FeaturesProps, CTAProps } from '@/lib/types'
 import { cn } from '@/lib/cn'
 
-// ── Sortable wrapper around each block ──────────────────────
-
 function SortableBlock({
-  block,
-  selected,
-  onSelect,
-  onDelete,
-  onEdit,
+  block, selected, onSelect, onDelete, onEdit,
 }: {
   block: PageBlock
   selected: boolean
@@ -41,7 +35,7 @@ function SortableBlock({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.35 : 1,
   }
 
   return (
@@ -50,83 +44,57 @@ function SortableBlock({
       style={style}
       onClick={onSelect}
       className={cn(
-        'relative group cursor-pointer rounded-2xl ring-2 transition-all',
-        selected ? 'ring-violet-500' : 'ring-transparent hover:ring-violet-500/30',
+        'relative group cursor-pointer ring-2 transition-all duration-150',
+        selected ? 'ring-violet-500' : 'ring-transparent hover:ring-violet-500/25',
       )}
     >
-      {/* Drag handle + delete — visible on hover/select */}
+      {/* Floating controls */}
       <div className={cn(
-        'absolute top-3 right-3 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity',
+        'absolute top-3 right-3 z-20 flex items-center gap-1',
+        'opacity-0 group-hover:opacity-100 transition-opacity',
         selected && 'opacity-100',
       )}>
         <button
-          {...attributes}
-          {...listeners}
-          className="p-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white cursor-grab active:cursor-grabbing"
+          {...attributes} {...listeners}
+          className="p-1.5 rounded-lg bg-zinc-900/90 border border-white/8
+                     text-zinc-400 hover:text-white cursor-grab active:cursor-grabbing
+                     backdrop-blur-sm transition-colors"
           onClick={e => e.stopPropagation()}
         >
-          <GripVertical className="w-4 h-4" />
+          <GripVertical className="w-3.5 h-3.5" />
         </button>
         <button
-          className="p-1.5 rounded-lg bg-red-900/80 text-red-400 hover:text-white"
+          className="p-1.5 rounded-lg bg-red-950/90 border border-red-800/40
+                     text-red-400 hover:text-white backdrop-blur-sm transition-colors"
           onClick={e => { e.stopPropagation(); onDelete() }}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* Block renderer */}
       <BlockRenderer block={block} editable onEdit={onEdit} />
     </div>
   )
 }
 
-// ── Dispatch to the right component ─────────────────────────
-
 function BlockRenderer({
-  block,
-  editable,
-  onEdit,
+  block, editable, onEdit,
 }: {
   block: PageBlock
   editable?: boolean
   onEdit?: (path: string, value: string) => void
 }) {
-  const makeHeroEdit = (field: string, value: string) => onEdit?.(field, value)
-  const makeFeatEdit = (path: string, value: string) => onEdit?.(path, value)
-  const makeCtaEdit  = (field: string, value: string) => onEdit?.(field, value)
-
   switch (block.type as BlockType) {
     case 'HeroBlock':
-      return (
-        <HeroBlock
-          data={block.props as HeroProps}
-          editable={editable}
-          onEdit={(f, v) => makeHeroEdit(f, v)}
-        />
-      )
+      return <HeroBlock data={block.props as HeroProps} editable={editable} onEdit={(f, v) => onEdit?.(f, v)} />
     case 'FeaturesBlock':
-      return (
-        <FeaturesBlock
-          data={block.props as FeaturesProps}
-          editable={editable}
-          onEdit={(p, v) => makeFeatEdit(p, v)}
-        />
-      )
+      return <FeaturesBlock data={block.props as FeaturesProps} editable={editable} onEdit={(p, v) => onEdit?.(p, v)} />
     case 'CallToActionBlock':
-      return (
-        <CallToActionBlock
-          data={block.props as CTAProps}
-          editable={editable}
-          onEdit={(f, v) => makeCtaEdit(f, v)}
-        />
-      )
+      return <CallToActionBlock data={block.props as CTAProps} editable={editable} onEdit={(f, v) => onEdit?.(f, v)} />
     default:
       return null
   }
 }
-
-// ── Canvas ────────────────────────────────────────────────────
 
 interface Props {
   blocks: PageBlock[]
@@ -146,8 +114,7 @@ export default function BlockCanvas({ blocks, selectedId, onSelect, onChange }: 
     if (!over || active.id === over.id) return
     const oldIdx = blocks.findIndex(b => b.id === active.id)
     const newIdx = blocks.findIndex(b => b.id === over.id)
-    const reordered = arrayMove(blocks, oldIdx, newIdx).map((b, i) => ({ ...b, order: i }))
-    onChange(reordered)
+    onChange(arrayMove(blocks, oldIdx, newIdx).map((b, i) => ({ ...b, order: i })))
   }
 
   function handleDelete(id: string) {
@@ -158,15 +125,11 @@ export default function BlockCanvas({ blocks, selectedId, onSelect, onChange }: 
     onChange(
       blocks.map(b => {
         if (b.id !== blockId) return b
-        // deep-set by dot path, e.g. "features.0.title"
         const props = structuredClone(b.props) as Record<string, unknown>
         const keys = path.split('.')
-        let cursor = props as Record<string, unknown>
-        for (let i = 0; i < keys.length - 1; i++) {
-          const k = keys[i]
-          cursor = cursor[k] as Record<string, unknown>
-        }
-        cursor[keys[keys.length - 1]] = value
+        let cur = props as Record<string, unknown>
+        for (let i = 0; i < keys.length - 1; i++) cur = cur[keys[i]] as Record<string, unknown>
+        cur[keys[keys.length - 1]] = value
         return { ...b, props: props as typeof b.props }
       }),
     )
@@ -174,11 +137,14 @@ export default function BlockCanvas({ blocks, selectedId, onSelect, onChange }: 
 
   if (blocks.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-500">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🧱</div>
-          <p className="text-lg font-medium text-slate-400">Página vazia</p>
-          <p className="text-sm mt-1">Adicione blocos pelo painel à esquerda</p>
+      <div className="flex-1 flex items-center justify-center bg-zinc-950">
+        <div className="text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-800/60 border border-white/6
+                          flex items-center justify-center mx-auto mb-5">
+            <Layers className="w-7 h-7 text-zinc-600" />
+          </div>
+          <p className="text-sm font-medium text-zinc-400 mb-1">Página vazia</p>
+          <p className="text-xs text-zinc-600">Arraste blocos do painel à esquerda</p>
         </div>
       </div>
     )
@@ -187,7 +153,7 @@ export default function BlockCanvas({ blocks, selectedId, onSelect, onChange }: 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex-1 overflow-y-auto bg-slate-950">
+        <div className="flex-1 overflow-y-auto bg-zinc-950">
           {blocks.map(block => (
             <SortableBlock
               key={block.id}

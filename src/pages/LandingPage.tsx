@@ -44,7 +44,7 @@ export default function LandingPageRenderer() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -52,9 +52,9 @@ export default function LandingPageRenderer() {
 
   if (notFound || !page) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
         <div className="text-center">
-          <p className="text-6xl font-bold text-slate-700 mb-4">404</p>
+          <p className="text-6xl font-bold text-zinc-700 mb-4">404</p>
           <p className="text-lg">Página não encontrada.</p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function LandingPageRenderer() {
   const blocks = [...(page.blocks_config?.blocks ?? [])].sort((a, b) => a.order - b.order)
 
   return (
-    <main className="bg-slate-950">
+    <main className="bg-zinc-950">
       {blocks.map(block => (
         <BlockRenderer key={block.id} block={block} />
       ))}

@@ -94,7 +94,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPw(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
+                  className="absolute right-3 top-1/2 -tranzinc-y-1/2 text-zinc-600 hover:text-zinc-300"
                 >
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -146,7 +146,7 @@ export default function Login() {
                         bg-violet-600/20 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-40 -left-20 w-[400px] h-[400px] rounded-full
                         bg-indigo-600/15 blur-[100px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+        <div className="absolute top-1/2 left-1/2 -tranzinc-x-1/2 -tranzinc-y-1/2
                         w-[300px] h-[300px] rounded-full
                         bg-violet-500/10 blur-[80px] pointer-events-none" />
 
