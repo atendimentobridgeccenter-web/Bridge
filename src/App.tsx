@@ -1,11 +1,18 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import AdminLayout from '@/components/layout/AdminLayout'
 
-// ── Admin (heavy — separate chunk) ───────────────────────────
+// ── Admin (within AdminLayout sidebar shell) ──────────────────
 const AdminHome      = lazy(() => import('@/pages/admin/AdminHome'))
-const Builder        = lazy(() => import('@/pages/admin/Builder'))
+const Leads          = lazy(() => import('@/pages/admin/Leads'))
 const Products       = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder = lazy(() => import('@/pages/admin/ProductBuilder'))
+
+// ── Builder (standalone — has its own full-screen layout) ─────
+const Builder = lazy(() => import('@/pages/admin/Builder'))
+
+// ── Auth ──────────────────────────────────────────────────────
+const Login = lazy(() => import('@/pages/Login'))
 
 // ── Public ────────────────────────────────────────────────────
 const Apply               = lazy(() => import('@/pages/Apply'))
@@ -13,13 +20,13 @@ const Success             = lazy(() => import('@/pages/Success'))
 const LandingPageRenderer = lazy(() => import('@/pages/LandingPage'))
 
 // ── Members area ──────────────────────────────────────────────
-const MyProducts     = lazy(() => import('@/pages/MyProducts'))
-const ProductViewer  = lazy(() => import('@/pages/ProductViewer'))
+const MyProducts    = lazy(() => import('@/pages/MyProducts'))
+const ProductViewer = lazy(() => import('@/pages/ProductViewer'))
 
 function Spinner() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="w-7 h-7 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
     </div>
   )
 }
@@ -29,26 +36,34 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<Spinner />}>
         <Routes>
-          {/* ── Root ── */}
-          <Route path="/"                               element={<Navigate to="/admin" replace />} />
+          {/* ── Root redirect ── */}
+          <Route path="/" element={<Navigate to="/admin" replace />} />
 
-          {/* ── Admin ── */}
-          <Route path="/admin"                          element={<AdminHome />} />
-          <Route path="/admin/builder"                  element={<Builder />} />
-          <Route path="/admin/builder/:id"              element={<Builder />} />
-          <Route path="/admin/products"                 element={<Products />} />
-          <Route path="/admin/products/:id/edit"        element={<ProductBuilder />} />
+          {/* ── Auth ── */}
+          <Route path="/login" element={<Login />} />
+
+          {/* ── Admin (with sidebar) ── */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index                          element={<AdminHome />} />
+            <Route path="leads"                   element={<Leads />} />
+            <Route path="products"                element={<Products />} />
+            <Route path="products/:id/edit"       element={<ProductBuilder />} />
+          </Route>
+
+          {/* ── Builder (standalone, no sidebar) ── */}
+          <Route path="/admin/builder"            element={<Builder />} />
+          <Route path="/admin/builder/:id"        element={<Builder />} />
 
           {/* ── Public form ── */}
-          <Route path="/apply"                          element={<Apply />} />
-          <Route path="/obrigado"                       element={<Success />} />
+          <Route path="/apply"                    element={<Apply />} />
+          <Route path="/obrigado"                 element={<Success />} />
 
           {/* ── Members area ── */}
-          <Route path="/my-products"                    element={<MyProducts />} />
-          <Route path="/view/:product_slug"             element={<ProductViewer />} />
+          <Route path="/my-products"              element={<MyProducts />} />
+          <Route path="/view/:product_slug"       element={<ProductViewer />} />
 
           {/* ── Public landing pages — must be last ── */}
-          <Route path="/:slug"                          element={<LandingPageRenderer />} />
+          <Route path="/:slug"                    element={<LandingPageRenderer />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

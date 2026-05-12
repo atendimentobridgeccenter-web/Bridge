@@ -5,9 +5,8 @@ import { supabase } from '@/lib/supabase'
 import BlockPalette from '@/builder/BlockPalette'
 import BlockCanvas from '@/builder/BlockCanvas'
 import BuilderHeader from '@/builder/BuilderHeader'
-import type { PageBlock, BlockType, BlocksConfig } from '@/lib/types'
-
-// ── Default props per block type ──────────────────────────────
+import PropertiesPanel from '@/builder/PropertiesPanel'
+import type { PageBlock, BlockType, BlocksConfig, BlockProps } from '@/lib/types'
 
 function defaultProps(type: BlockType): PageBlock['props'] {
   switch (type) {
@@ -38,21 +37,18 @@ function defaultProps(type: BlockType): PageBlock['props'] {
   }
 }
 
-// ── Page ──────────────────────────────────────────────────────
-
 export default function Builder() {
-  const { id } = useParams<{ id?: string }>()
+  const { id }    = useParams<{ id?: string }>()
   const navigate  = useNavigate()
 
-  const [title,     setTitle]     = useState('Nova Landing Page')
-  const [slug,      setSlug]      = useState('')
-  const [published, setPublished] = useState(false)
-  const [blocks,    setBlocks]    = useState<PageBlock[]>([])
+  const [title,      setTitle]      = useState('Nova Landing Page')
+  const [slug,       setSlug]       = useState('')
+  const [published,  setPublished]  = useState(false)
+  const [blocks,     setBlocks]     = useState<PageBlock[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [saving,    setSaving]    = useState(false)
-  const [pageId,    setPageId]    = useState<string | null>(id ?? null)
+  const [saving,     setSaving]     = useState(false)
+  const [pageId,     setPageId]     = useState<string | null>(id ?? null)
 
-  // Load existing page
   useEffect(() => {
     if (!id) return
     supabase
@@ -81,34 +77,34 @@ export default function Builder() {
     setSelectedId(block.id)
   }, [blocks.length])
 
+  const updateBlockProps = useCallback((blockId: string, props: BlockProps) => {
+    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, props } : b))
+  }, [])
+
   async function handleSave() {
     if (!slug) { alert('Defina um slug para a página.'); return }
     setSaving(true)
-
     const blocksConfig: BlocksConfig = { blocks }
-
     if (pageId) {
-      await supabase
-        .from('landing_pages')
+      await supabase.from('landing_pages')
         .update({ title, slug, published, blocks_config: blocksConfig })
         .eq('id', pageId)
     } else {
-      const { data, error } = await supabase
-        .from('landing_pages')
+      const { data, error } = await supabase.from('landing_pages')
         .insert({ title, slug, published, blocks_config: blocksConfig })
-        .select('id')
-        .single()
+        .select('id').single()
       if (!error && data) {
         setPageId(data.id)
         navigate(`/admin/builder/${data.id}`, { replace: true })
       }
     }
-
     setSaving(false)
   }
 
+  const selectedBlock = blocks.find(b => b.id === selectedId) ?? null
+
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-white overflow-hidden">
+    <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
       <BuilderHeader
         title={title}
         slug={slug}
@@ -128,6 +124,11 @@ export default function Builder() {
           selectedId={selectedId}
           onSelect={setSelectedId}
           onChange={setBlocks}
+        />
+
+        <PropertiesPanel
+          block={selectedBlock}
+          onChange={updateBlockProps}
         />
       </div>
     </div>
