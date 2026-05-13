@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, ExternalLink, Edit3, LayoutDashboard } from 'lucide-react'
+import { Plus, ExternalLink, Edit3, LayoutDashboard, Globe, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { LandingPage } from '@/lib/types'
 import { cn } from '@/lib/cn'
@@ -17,43 +17,50 @@ export default function AdminHome() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950">
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: '#0A0A0A' }}>
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-8 py-5 border-b border-white/6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center">
-            <LayoutDashboard className="w-4 h-4 text-zinc-400" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold text-white">Dashboard</h1>
-            <p className="text-xs text-zinc-500">Visão geral das landing pages</p>
-          </div>
+      <div
+        className="shrink-0 flex items-center justify-between px-8 py-5"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight text-[#EDEDED]">Dashboard</h1>
+          <p className="text-xs text-[#71717A] mt-0.5">Visão geral das landing pages</p>
         </div>
         <Link
           to="/admin/builder"
-          className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white',
-            'bg-violet-600 hover:bg-violet-500 transition-colors',
-            'shadow-lg shadow-violet-900/30',
-          )}
+          className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
+                     bg-white text-black hover:bg-[#EBEBEB] transition-colors"
         >
-          <Plus className="w-4 h-4" /> Nova Página
+          <Plus className="w-3.5 h-3.5" />
+          Nova Página
         </Link>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-auto px-8 py-8">
-        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-5">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-[#52525B] mb-5">
           Landing Pages
         </p>
 
         {pages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center mb-4">
-              <LayoutDashboard className="w-5 h-5 text-zinc-600" />
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+              style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <FileText className="w-5 h-5 text-[#52525B]" />
             </div>
-            <p className="text-sm text-zinc-500">Nenhuma página criada ainda.</p>
-            <p className="text-xs text-zinc-600 mt-1">Clique em "Nova Página" para começar.</p>
+            <p className="text-sm font-medium text-[#A1A1AA]">Nenhuma página criada ainda</p>
+            <p className="text-xs text-[#52525B] mt-1 mb-6">Clique em "Nova Página" para começar.</p>
+            <Link
+              to="/admin/builder"
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
+                         bg-white text-black hover:bg-[#EBEBEB] transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nova Página
+            </Link>
           </div>
         )}
 
@@ -61,35 +68,67 @@ export default function AdminHome() {
           {pages.map(page => (
             <div
               key={page.id}
-              className={cn(
-                'flex items-center justify-between p-4 rounded-xl',
-                'border border-white/6 bg-zinc-900/60',
-                'hover:border-white/10 hover:bg-zinc-900 transition-all duration-150',
-              )}
+              className="flex items-center justify-between p-4 rounded-xl transition-all duration-150"
+              style={{
+                background: '#111111',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.12)'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.06)'
+              }}
             >
-              <div>
-                <p className="text-sm font-medium text-white">{page.title || 'Sem título'}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">/{page.slug}</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: '#1C1C1C' }}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-[#71717A]" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[#EDEDED] truncate tracking-tight">
+                    {page.title || 'Sem título'}
+                  </p>
+                  <p className="text-xs text-[#52525B] mt-0.5 flex items-center gap-1">
+                    <Globe className="w-3 h-3" />
+                    /{page.slug}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center gap-2 shrink-0 ml-4">
                 <span className={cn(
-                  'text-xs px-2.5 py-1 rounded-full font-medium',
+                  'text-[10px] px-2 py-1 rounded-md font-medium',
                   page.published
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'bg-zinc-800 text-zinc-500 border border-white/6',
-                )}>
+                    ? 'text-emerald-400'
+                    : 'text-[#52525B]',
+                )}
+                style={{
+                  background: page.published ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.04)',
+                  border: page.published
+                    ? '1px solid rgba(16,185,129,0.15)'
+                    : '1px solid rgba(255,255,255,0.06)',
+                }}>
                   {page.published ? 'Publicado' : 'Rascunho'}
                 </span>
                 <Link
                   to={`/${page.slug}`}
                   target="_blank"
-                  className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg text-[#52525B] hover:text-[#EDEDED] transition-colors"
+                  style={{ background: 'transparent' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'transparent')}
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                 </Link>
                 <Link
                   to={`/admin/builder/${page.id}`}
-                  className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg text-[#52525B] hover:text-[#EDEDED] transition-colors"
+                  style={{ background: 'transparent' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.background = 'transparent')}
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                 </Link>

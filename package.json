@@ -22,6 +22,8 @@
     "@supabase/supabase-js": "^2.105.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
+    "grapesjs": "^0.22.16",
+    "grapesjs-preset-webpage": "^1.0.3",
     "lucide-react": "^1.14.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

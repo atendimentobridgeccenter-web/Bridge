@@ -37,9 +37,17 @@ export interface PageBlock {
   props: BlockProps
 }
 
-export interface BlocksConfig {
+export interface LegacyBlocksConfig {
   blocks: PageBlock[]
 }
+
+export interface GrapesJSConfig {
+  type: 'grapesjs'
+  html: string
+  css: string
+}
+
+export type BlocksConfig = LegacyBlocksConfig | GrapesJSConfig
 
 // ── Database: Landing Pages ───────────────────────────────────
 
