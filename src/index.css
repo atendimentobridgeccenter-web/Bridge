@@ -1,19 +1,11 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ─────────────────────────────────────────────────────────────
    BRIDGE — DESIGN SYSTEM
-   Paleta: Vercel/Linear dark. True black. Ultra-subtle borders.
+   Paleta: true black. Ultra-subtle borders.
 ───────────────────────────────────────────────────────────── */
-
-/* ── Extend Tailwind com tokens customizados ─────────────────*/
-@theme {
-  --color-base:      #0A0A0A;
-  --color-surface:   #111111;
-  --color-surface-2: #161616;
-  --color-surface-3: #1C1C1C;
-  --color-text:      #EDEDED;
-  --color-muted:     #A1A1AA;
-}
 
 /* ── CSS Variables globais ───────────────────────────────────*/
 :root {

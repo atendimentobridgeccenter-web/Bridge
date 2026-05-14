@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Save, Globe, GlobeOff, ArrowLeft, Loader2 } from 'lucide-react'
+import { Save, Globe, ArrowLeft, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { GrapesJSConfig } from '@/lib/types'
 import 'grapesjs/dist/css/grapes.min.css'
@@ -191,7 +191,7 @@ export default function Builder() {
         >
           {published
             ? <><Globe className="w-3.5 h-3.5" /> Publicado</>
-            : <><GlobeOff className="w-3.5 h-3.5" /> Rascunho</>
+            : <><Globe className="w-3.5 h-3.5 opacity-40" /> Rascunho</>
           }
         </button>
 
