@@ -10,7 +10,8 @@ const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
 
 // ── Builder (standalone — has its own full-screen layout) ─────
-const Builder = lazy(() => import('@/pages/admin/Builder'))
+const Builder             = lazy(() => import('@/pages/admin/Builder'))
+const SalesPageEditorPage = lazy(() => import('@/pages/admin/SalesPageEditorPage'))
 
 // ── Auth ──────────────────────────────────────────────────────
 const Login = lazy(() => import('@/pages/Login'))
@@ -56,8 +57,12 @@ export default function App() {
           </Route>
 
           {/* ── Builder (standalone, no sidebar) ── */}
-          <Route path="/admin/builder"            element={<Builder />} />
-          <Route path="/admin/builder/:id"        element={<Builder />} />
+          <Route path="/admin/builder"                    element={<Builder />} />
+          <Route path="/admin/builder/:id"                element={<Builder />} />
+
+          {/* ── Sales Page Editor (standalone, full-screen) ── */}
+          <Route path="/admin/sales-pages/new/edit"       element={<SalesPageEditorPage />} />
+          <Route path="/admin/sales-pages/:id/edit"       element={<SalesPageEditorPage />} />
 
           {/* ── Public form ── */}
           <Route path="/apply"                    element={<Apply />} />

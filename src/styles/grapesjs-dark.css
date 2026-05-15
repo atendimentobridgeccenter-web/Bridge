@@ -1,0 +1,661 @@
+/* ═══════════════════════════════════════════════════════════════
+   GrapesJS — Dark Enterprise Theme Override
+   Bridge SaaS · Applied only when SalesPageEditorPage is mounted
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. CSS Custom Properties (cascade root) ─────────────────── */
+:root {
+  --gjs-main-color:             #16181F;
+  --gjs-primary-color:          #16181F;
+  --gjs-secondary-color:        #A1A1AA;
+  --gjs-tertiary-color:         #E8521A;
+  --gjs-quaternary-color:       #F0643A;
+  --gjs-font-color:             #A1A1AA;
+  --gjs-font-color-active:      #F1F5F9;
+  --gjs-main-dark-color:        rgba(0, 0, 0, 0.4);
+  --gjs-secondary-dark-color:   rgba(0, 0, 0, 0.25);
+  --gjs-main-light-color:       rgba(255, 255, 255, 0.06);
+  --gjs-secondary-light-color:  rgba(255, 255, 255, 0.35);
+  --gjs-soft-light-color:       rgba(255, 255, 255, 0.02);
+  --gjs-light-border:           rgba(255, 255, 255, 0.07);
+  --gjs-arrow-color:            rgba(255, 255, 255, 0.5);
+  --gjs-dark-text-shadow:       rgba(0, 0, 0, 0.4);
+  --gjs-placeholder-background-color: rgba(232, 82, 26, 0.15);
+  --gjs-color-highlight:        #E8521A;
+  --gjs-color-blue:             #60A5FA;
+  --gjs-color-green:            #34D399;
+  --gjs-color-red:              #F87171;
+  --gjs-color-warn:             #FBBF24;
+}
+
+/* ── 2. Canvas Background ─────────────────────────────────────── */
+.gjs-cv-canvas {
+  background-color: #0A0A0A;
+}
+
+.gjs-cv-canvas-bg {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.01) 0px,
+    rgba(255, 255, 255, 0.01) 1px,
+    transparent 1px,
+    transparent 12px
+  ),
+  repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.01) 0px,
+    rgba(255, 255, 255, 0.01) 1px,
+    transparent 1px,
+    transparent 12px
+  ),
+  #0A0A0A;
+}
+
+/* Frame shadow — device frame border */
+.gjs-frame-wrapper {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.6) !important;
+}
+
+/* ── 3. Block Manager ─────────────────────────────────────────── */
+.gjs-block-categories {
+  background: transparent;
+  padding: 8px;
+}
+
+.gjs-block-category {
+  border: none;
+  margin-bottom: 4px;
+}
+
+.gjs-category-title,
+.gjs-block-category .gjs-title {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.25) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  padding: 10px 6px 6px !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gjs-category-open .gjs-category-title,
+.gjs-category-open .gjs-title {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.gjs-category-open .gjs-caret-icon {
+  transform: rotate(180deg);
+}
+
+.gjs-caret-icon {
+  transition: transform 0.2s;
+}
+
+.gjs-blocks-c {
+  background: transparent;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px 0 8px;
+}
+
+.gjs-block {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 8px !important;
+  color: #71717A !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  padding: 12px 8px 10px !important;
+  transition: all 0.15s ease !important;
+  cursor: grab !important;
+  width: auto !important;
+}
+
+.gjs-block:hover {
+  background: rgba(232, 82, 26, 0.07) !important;
+  border-color: rgba(232, 82, 26, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+.gjs-block.gjs-selected,
+.gjs-block.gjs-bdrag {
+  background: rgba(232, 82, 26, 0.12) !important;
+  border-color: rgba(232, 82, 26, 0.5) !important;
+  color: #F1F5F9 !important;
+}
+
+.gjs-block__media {
+  margin-bottom: 6px;
+  color: inherit;
+}
+
+.gjs-block-svg,
+.gjs-block-svg-path {
+  fill: currentColor !important;
+}
+
+.gjs-block-label {
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+/* ── 4. Style Manager ─────────────────────────────────────────── */
+.gjs-sm-sectors {
+  font-size: 12px;
+}
+
+.gjs-sm-sector {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  margin: 0;
+}
+
+.gjs-sm-sector .gjs-sm-title,
+.gjs-sm-sector .gjs-title {
+  background: rgba(255, 255, 255, 0.02) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  padding: 9px 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gjs-sm-sector.gjs-sm-open .gjs-sm-title,
+.gjs-sm-sector.gjs-sm-open .gjs-title {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.gjs-sm-properties {
+  padding: 10px 10px 6px !important;
+  background: transparent !important;
+}
+
+.gjs-sm-property {
+  margin-bottom: 10px !important;
+}
+
+.gjs-sm-label,
+.gjs-sm-property .gjs-sm-label {
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 4px !important;
+}
+
+/* ── Fields & Inputs ── */
+.gjs-sm-field,
+.gjs-field,
+.gjs-clm-field {
+  background: #0D0E12 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  color: #EDEDED !important;
+  transition: border-color 0.15s !important;
+}
+
+.gjs-sm-field:focus-within,
+.gjs-field:focus-within {
+  border-color: rgba(232, 82, 26, 0.5) !important;
+}
+
+.gjs-sm-field input,
+.gjs-field input,
+.gjs-sm-field select,
+.gjs-field select,
+.gjs-sm-field textarea,
+.gjs-field textarea,
+.gjs-clm-field input {
+  background: transparent !important;
+  color: #EDEDED !important;
+  font-size: 12px !important;
+}
+
+.gjs-sm-field input::placeholder,
+.gjs-field input::placeholder {
+  color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Select arrows */
+.gjs-sm-field select,
+.gjs-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A1A1AA' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 6px center !important;
+  padding-right: 22px !important;
+  -webkit-appearance: none !important;
+}
+
+/* Composite fields (e.g. padding with 4 sides) */
+.gjs-sm-field--composite .gjs-field {
+  border-radius: 4px !important;
+}
+
+/* Slider range */
+.gjs-field-range input[type="range"] {
+  accent-color: #E8521A !important;
+}
+
+/* Color picker swatch */
+.gjs-field-color-picker {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Unit selector (px, %, em...) */
+.gjs-input-unit {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #71717A !important;
+  font-size: 10px !important;
+  padding: 0 6px !important;
+}
+
+/* Arrows (increment/decrement) */
+.gjs-sm-int-field .gjs-sm-int-field__arrows {
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0 5px 5px 0;
+}
+
+.gjs-sm-int-field .gjs-sm-int-field__arrows i,
+.gjs-sm-btn {
+  color: #52525B !important;
+  background: transparent !important;
+  border: none !important;
+  transition: color 0.1s !important;
+}
+
+.gjs-sm-int-field .gjs-sm-int-field__arrows i:hover,
+.gjs-sm-btn:hover {
+  color: #E8521A !important;
+}
+
+.gjs-sm-btn-c {
+  gap: 4px;
+}
+
+/* Text align, decoration, and similar toggle buttons */
+.gjs-sm-btn {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 5px !important;
+  color: #52525B !important;
+  font-size: 11px !important;
+  padding: 3px 7px !important;
+  transition: all 0.1s !important;
+}
+
+.gjs-sm-btn:hover,
+.gjs-sm-btn.gjs-sm-btn--active,
+.gjs-sm-active {
+  background: rgba(232, 82, 26, 0.1) !important;
+  border-color: rgba(232, 82, 26, 0.3) !important;
+  color: #E8521A !important;
+}
+
+/* Stack/composite properties */
+.gjs-sm-stack #gjs-sm-add {
+  background: rgba(232, 82, 26, 0.08) !important;
+  border: 1px dashed rgba(232, 82, 26, 0.25) !important;
+  border-radius: 6px !important;
+  color: #E8521A !important;
+  font-size: 11px !important;
+  transition: all 0.15s !important;
+}
+
+.gjs-sm-stack #gjs-sm-add:hover {
+  background: rgba(232, 82, 26, 0.15) !important;
+}
+
+/* ── 5. Selector Manager (above style panel) ──────────────────── */
+.gjs-clm-header {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  padding: 8px 12px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.gjs-clm-tag {
+  background: rgba(232, 82, 26, 0.1) !important;
+  border: 1px solid rgba(232, 82, 26, 0.25) !important;
+  border-radius: 4px !important;
+  color: #E8521A !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+}
+
+.gjs-clm-tag-close {
+  color: rgba(232, 82, 26, 0.7) !important;
+}
+
+.gjs-clm-tags {
+  background: transparent !important;
+  padding: 8px 10px !important;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gjs-clm-select select {
+  background: #0D0E12 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  color: #EDEDED !important;
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+}
+
+.gjs-clm-header-status,
+.gjs-clm-sels-info {
+  color: rgba(255, 255, 255, 0.25) !important;
+  font-size: 10px !important;
+}
+
+/* ── 6. Trait Manager ─────────────────────────────────────────── */
+.gjs-trt-traits {
+  padding: 10px !important;
+  background: transparent !important;
+}
+
+.gjs-trt-trait {
+  margin-bottom: 10px !important;
+}
+
+.gjs-trt-trait .gjs-label {
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 4px !important;
+}
+
+.gjs-trt-trait .gjs-field {
+  width: 100%;
+}
+
+.gjs-trt-trait input[type="text"],
+.gjs-trt-trait input[type="url"],
+.gjs-trt-trait input[type="number"],
+.gjs-trt-trait textarea,
+.gjs-trt-trait select {
+  background: #0D0E12 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  color: #EDEDED !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  width: 100% !important;
+  outline: none !important;
+  transition: border-color 0.15s !important;
+}
+
+.gjs-trt-trait input:focus,
+.gjs-trt-trait textarea:focus,
+.gjs-trt-trait select:focus {
+  border-color: rgba(232, 82, 26, 0.5) !important;
+}
+
+.gjs-trt-trait input[type="checkbox"] {
+  accent-color: #E8521A !important;
+  width: auto !important;
+}
+
+/* ── 7. Layer Manager ─────────────────────────────────────────── */
+.gjs-layers {
+  background: transparent !important;
+}
+
+.gjs-layer-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  transition: background 0.1s !important;
+}
+
+.gjs-layer-title,
+.gjs-layer-title-c {
+  padding: 6px 8px 6px 4px !important;
+}
+
+.gjs-layer-title-inn {
+  color: #71717A !important;
+  font-size: 12px !important;
+}
+
+.gjs-layer-item:hover > .gjs-layer-title {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.gjs-layer-item:hover .gjs-layer-title-inn {
+  color: #A1A1AA !important;
+}
+
+.gjs-layer-item.gjs-selected > .gjs-layer-title {
+  background: rgba(232, 82, 26, 0.08) !important;
+}
+
+.gjs-layer-item.gjs-selected .gjs-layer-title-inn {
+  color: #F1F5F9 !important;
+}
+
+.gjs-layer-vis,
+.gjs-layer-move,
+.gjs-layer__icon {
+  color: rgba(255, 255, 255, 0.2) !important;
+  transition: color 0.1s !important;
+}
+
+.gjs-layer-vis:hover,
+.gjs-layer-move:hover {
+  color: #A1A1AA !important;
+}
+
+.gjs-layer-caret {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ── 8. Component Action Toolbar (floating) ───────────────────── */
+.gjs-toolbar {
+  background: #1A1C23 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  overflow: hidden !important;
+  padding: 2px !important;
+  gap: 2px !important;
+}
+
+.gjs-toolbar-item {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #71717A !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.1s !important;
+  cursor: pointer !important;
+}
+
+.gjs-toolbar-item:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #EDEDED !important;
+}
+
+.gjs-toolbar-item--active {
+  background: rgba(232, 82, 26, 0.12) !important;
+  color: #E8521A !important;
+}
+
+/* ── 9. Rich Text Editor Toolbar ──────────────────────────────── */
+.gjs-rte-toolbar {
+  background: #1A1C23 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  padding: 3px !important;
+  gap: 2px !important;
+}
+
+.gjs-rte-action {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: #71717A !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.1s !important;
+}
+
+.gjs-rte-action:hover,
+.gjs-rte-active {
+  background: rgba(232, 82, 26, 0.1) !important;
+  color: #E8521A !important;
+}
+
+/* ── 10. Drag ghost / placeholder ─────────────────────────────── */
+.gjs-placeholder {
+  background: rgba(232, 82, 26, 0.2) !important;
+  border: 2px dashed rgba(232, 82, 26, 0.6) !important;
+  border-radius: 4px !important;
+}
+
+.gjs-placeholder-int {
+  background: rgba(232, 82, 26, 0.1) !important;
+}
+
+.gjs-badge {
+  background: #E8521A !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+}
+
+/* ── 11. Asset Manager (images) ───────────────────────────────── */
+.gjs-am-assets-cont {
+  background: #16181F !important;
+}
+
+.gjs-am-assets-header {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.gjs-am-asset {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 8px !important;
+  transition: all 0.15s !important;
+}
+
+.gjs-am-asset:hover,
+.gjs-am-highlight {
+  border-color: rgba(232, 82, 26, 0.4) !important;
+}
+
+.gjs-am-add-asset {
+  background: rgba(232, 82, 26, 0.08) !important;
+  border: 1px dashed rgba(232, 82, 26, 0.25) !important;
+  border-radius: 8px !important;
+  color: #E8521A !important;
+}
+
+/* ── 12. Code Editor ──────────────────────────────────────────── */
+.gjs-mdl-dialog {
+  background: #16181F !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7) !important;
+}
+
+.gjs-mdl-header {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #F1F5F9 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.gjs-mdl-content {
+  background: transparent !important;
+}
+
+.gjs-mdl-close {
+  color: #71717A !important;
+}
+
+.gjs-mdl-close:hover {
+  color: #F87171 !important;
+}
+
+.gjs-btn-prim {
+  background: #E8521A !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  transition: opacity 0.15s !important;
+}
+
+.gjs-btn-prim:hover {
+  opacity: 0.88 !important;
+}
+
+/* ── 13. Custom scrollbars inside GrapesJS panels ─────────────── */
+.gjs-block-categories::-webkit-scrollbar,
+.gjs-sm-sectors::-webkit-scrollbar,
+.gjs-trt-traits::-webkit-scrollbar,
+.gjs-layers::-webkit-scrollbar,
+.gjs-clm-tags::-webkit-scrollbar {
+  width: 3px;
+}
+
+.gjs-block-categories::-webkit-scrollbar-track,
+.gjs-sm-sectors::-webkit-scrollbar-track,
+.gjs-trt-traits::-webkit-scrollbar-track,
+.gjs-layers::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gjs-block-categories::-webkit-scrollbar-thumb,
+.gjs-sm-sectors::-webkit-scrollbar-thumb,
+.gjs-trt-traits::-webkit-scrollbar-thumb,
+.gjs-layers::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* ── 14. Component selection highlight colors ─────────────────── */
+.gjs-selected {
+  outline: 2px solid #E8521A !important;
+  outline-offset: -2px !important;
+}
+
+.gjs-hovered {
+  outline: 1px solid rgba(232, 82, 26, 0.4) !important;
+  outline-offset: -1px !important;
+}
