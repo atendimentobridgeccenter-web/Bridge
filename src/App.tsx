@@ -24,6 +24,9 @@ const LandingPageRenderer = lazy(() => import('@/pages/LandingPage'))
 const MyProducts    = lazy(() => import('@/pages/MyProducts'))
 const ProductViewer = lazy(() => import('@/pages/ProductViewer'))
 
+// ── Dev preview ───────────────────────────────────────────────
+const PreviewQuizz  = lazy(() => import('@/pages/PreviewQuizz'))
+
 function Spinner() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -63,6 +66,9 @@ export default function App() {
           {/* ── Members area ── */}
           <Route path="/my-products"              element={<MyProducts />} />
           <Route path="/view/:product_slug"       element={<ProductViewer />} />
+
+          {/* ── Dev preview ── */}
+          <Route path="/preview-quizz"            element={<PreviewQuizz />} />
 
           {/* ── Public landing pages — must be last ── */}
           <Route path="/:slug"                    element={<LandingPageRenderer />} />
