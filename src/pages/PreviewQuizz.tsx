@@ -106,8 +106,8 @@ const MOCK_NODES: FormNode[] = [
 ]
 
 export default function PreviewQuizz() {
-  function handleComplete(answers: Record<string, string>) {
-    console.log('[QuizzRunner] respostas finais:', answers)
+  function handleComplete(_answers: Record<string, string>) {
+    // answers available here for future webhook/API submission
   }
 
   return (

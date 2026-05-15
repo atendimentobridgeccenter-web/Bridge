@@ -436,13 +436,14 @@ function LeadDrawer({
   onClose: () => void
 }) {
   if (!lead) return null
+  const l = lead
 
-  const cfg = STAGE_CONFIG[lead.stage]
-  const pal = avatarPalette(lead.name)
-  const ini = initials(lead.name)
+  const cfg = STAGE_CONFIG[l.stage]
+  const pal = avatarPalette(l.name)
+  const ini = initials(l.name)
 
   function copyEmail() {
-    navigator.clipboard.writeText(lead.email)
+    navigator.clipboard.writeText(l.email)
   }
 
   return (
@@ -478,10 +479,10 @@ function LeadDrawer({
 
           <div className="flex-1 min-w-0">
             <p className="text-[15px] font-bold truncate" style={{ color: '#F1F5F9' }}>
-              {lead.name}
+              {l.name}
             </p>
             <p className="text-[12px] truncate mt-0.5" style={{ color: '#71717A' }}>
-              {lead.email}
+              {l.email}
             </p>
             <span
               className="inline-flex items-center gap-1.5 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md"
@@ -507,7 +508,7 @@ function LeadDrawer({
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
 
           {/* Product + value */}
-          {(lead.product !== '—' || lead.value !== null) && (
+          {(l.product !== '—' || l.value !== null) && (
             <div
               className="flex items-center justify-between px-4 py-3 rounded-xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}
@@ -518,17 +519,17 @@ function LeadDrawer({
                   Produto de Interesse
                 </p>
                 <p className="text-[13px] font-medium" style={{ color: '#EDEDED' }}>
-                  {lead.product}
+                  {l.product}
                 </p>
               </div>
-              {lead.value !== null && (
+              {l.value !== null && (
                 <div className="text-right">
                   <p className="text-[10px] uppercase tracking-widest font-semibold mb-1"
                     style={{ color: 'rgba(255,255,255,0.2)' }}>
                     Valor
                   </p>
                   <p className="text-[18px] font-bold font-mono" style={{ color: cfg.valueColor }}>
-                    {fmtJPY(lead.value)}
+                    {fmtJPY(l.value!)}
                   </p>
                 </div>
               )}
@@ -536,14 +537,14 @@ function LeadDrawer({
           )}
 
           {/* Quiz answers */}
-          {Object.keys(lead.answers).length > 0 && (
+          {Object.keys(l.answers).length > 0 && (
             <div>
               <p className="text-[10px] uppercase tracking-widest font-semibold mb-3"
                 style={{ color: 'rgba(255,255,255,0.25)' }}>
                 Respostas do Quizz
               </p>
               <div className="flex flex-col gap-2">
-                {Object.entries(lead.answers).map(([key, val]) => (
+                {Object.entries(l.answers).map(([key, val]) => (
                   <div
                     key={key}
                     className="px-3 py-3 rounded-lg"
@@ -569,8 +570,8 @@ function LeadDrawer({
             </p>
             <div className="flex flex-col gap-2">
               {[
-                { label: 'Última atividade', time: lead.updatedAt },
-                { label: 'Entrou no funil',  time: lead.updatedAt },
+                { label: 'Última atividade', time: l.updatedAt },
+                { label: 'Entrou no funil',  time: l.updatedAt },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-[12px]" style={{ color: '#71717A' }}>{item.label}</span>
@@ -605,7 +606,7 @@ function LeadDrawer({
           </button>
 
           <a
-            href={`mailto:${lead.email}`}
+            href={`mailto:${l.email}`}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
                        text-[13px] font-semibold transition-all text-white"
             style={{ background: '#E8521A', boxShadow: '0 4px 16px rgba(232,82,26,0.2)' }}
@@ -616,7 +617,7 @@ function LeadDrawer({
             Enviar E-mail
           </a>
 
-          {lead.stripeSessionId && (
+          {l.stripeSessionId && (
             <a
               href={`https://dashboard.stripe.com/payments`}
               target="_blank"
@@ -767,29 +768,27 @@ export default function LeadsKanbanPage() {
         </div>
 
         {/* KPI strip */}
-        <div className="flex items-center gap-6 mt-4">
-          {[
-            { label: 'Total de Leads',    value: String(totalLeads),          color: '#A1A1AA' },
-            { label: 'Convertidos',       value: String(totalConverted),       color: '#34D399' },
-            { label: 'Receita Confirmada',value: totalRevenue > 0 ? fmtJPY(totalRevenue) : '—', color: '#34D399' },
-            { label: 'Pipeline Total',    value: totalPipeline > 0 ? fmtJPY(totalPipeline) : '—', color: '#60A5FA' },
-          ].map(kpi => (
-            <div key={kpi.label} className="flex items-center gap-2">
-              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-                {kpi.label}
-              </span>
-              <span className="text-[13px] font-bold font-mono" style={{ color: kpi.color }}>
-                {kpi.value}
-              </span>
+        {(() => {
+          const kpis = [
+            { label: 'Total de Leads',     value: String(totalLeads),                                 color: '#A1A1AA' },
+            { label: 'Convertidos',        value: String(totalConverted),                              color: '#34D399' },
+            { label: 'Receita Confirmada', value: totalRevenue  > 0 ? fmtJPY(totalRevenue)  : '—',   color: '#34D399' },
+            { label: 'Pipeline Total',     value: totalPipeline > 0 ? fmtJPY(totalPipeline) : '—',   color: '#60A5FA' },
+          ]
+          return (
+            <div className="flex items-center gap-6 mt-4">
+              {kpis.flatMap((kpi, i) => [
+                <div key={kpi.label} className="flex items-center gap-2">
+                  <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>{kpi.label}</span>
+                  <span className="text-[13px] font-bold font-mono" style={{ color: kpi.color }}>{kpi.value}</span>
+                </div>,
+                i < kpis.length - 1
+                  ? <span key={`sep-${i}`} style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+                  : null,
+              ])}
             </div>
-          )).reduce((acc, el, i) => [
-            ...acc,
-            el,
-            i < 3
-              ? <span key={`sep-${i}`} style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)' }} />
-              : null,
-          ], [] as (React.ReactNode)[])}
-        </div>
+          )
+        })()}
       </div>
 
       {/* ── Kanban Board ─────────────────────────────────────── */}

@@ -57,7 +57,7 @@ export default function FeaturesBlock({ data, editable, onEdit }: Props) {
         >
           {data.features.map((feat, i) => (
             <motion.div
-              key={i}
+              key={feat.title ?? i}
               variants={fadeUp}
               className="group relative rounded-2xl border border-white/6 bg-zinc-900/50
                          p-7 hover:border-violet-500/30 hover:bg-violet-500/4

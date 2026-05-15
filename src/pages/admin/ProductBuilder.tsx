@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Save, Globe, AlertCircle, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
@@ -26,7 +26,8 @@ function validate(product: Product): string[] {
   if (!product.slug)          errors.push('Slug não definido.')
   if (!product.price_id_stripe && !(product.checkout_config as { price_id?: string })?.price_id)
     errors.push('Price ID do Stripe não configurado.')
-  const blocks = product.landing_page_config?.blocks ?? []
+  const cfg    = product.landing_page_config as { blocks?: unknown[] } | null
+  const blocks = cfg?.blocks ?? []
   if (blocks.length === 0)    errors.push('Landing page está vazia (adicione pelo menos 1 bloco).')
   return errors
 }
@@ -35,7 +36,6 @@ function validate(product: Product): string[] {
 
 export default function ProductBuilder() {
   const { id }       = useParams<{ id: string }>()
-  const navigate     = useNavigate()
   const [tab, setTab]           = useState<Tab>('checkout')
   const [product, setProduct]   = useState<Product | null>(null)
   const [saving,  setSaving]    = useState(false)
@@ -166,7 +166,7 @@ export default function ProductBuilder() {
         <div className="shrink-0 px-6 py-3 bg-red-900/30 border-b border-red-800/50 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
           <div className="text-sm text-red-300 space-y-0.5">
-            {errors.map((e, i) => <p key={i}>{e}</p>)}
+            {errors.map((e, i) => <p key={`err-${i}-${e.slice(0, 20)}`}>{e}</p>)}
           </div>
         </div>
       )}

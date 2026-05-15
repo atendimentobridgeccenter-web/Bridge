@@ -8,6 +8,7 @@ const Leads          = lazy(() => import('@/pages/admin/LeadsKanbanPage'))
 const Products       = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
+const SettingsPage      = lazy(() => import('@/pages/admin/SettingsPage'))
 
 // ── Builder (standalone — has its own full-screen layout) ─────
 const Builder             = lazy(() => import('@/pages/admin/Builder'))
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="products"                element={<Products />} />
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />
+            <Route path="settings"                element={<SettingsPage />} />
           </Route>
 
           {/* ── Builder (standalone, no sidebar) ── */}

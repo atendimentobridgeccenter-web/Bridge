@@ -149,7 +149,7 @@ function OptionsEditor({
     <div className="flex flex-col gap-2">
       {/* Existing options */}
       {options.map((opt, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={`${opt}-${i}`} className="flex items-center gap-2">
           <div
             className="w-3 h-3 rounded-full shrink-0 border"
             style={{ borderColor: 'rgba(255,255,255,0.2)' }}
