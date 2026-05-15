@@ -16,12 +16,20 @@ export interface LogicJump {
   jumpToNodeId: string
 }
 
+export interface OptionPrice {
+  priceId:  string   // Stripe Price ID — e.g. "price_1abc..."
+  label:    string   // Human-readable plan name — e.g. "Plano Mensal"
+  amount:   number   // Display amount in smallest unit (JPY: integer, USD: cents)
+  currency: string   // ISO 4217 lowercase — e.g. "jpy", "usd", "brl"
+}
+
 export interface FormNode {
-  id:         string
-  title:      string
-  type:       NodeType
-  options:    string[]
-  logicJumps: LogicJump[]
+  id:           string
+  title:        string
+  type:         NodeType
+  options:      string[]
+  logicJumps:   LogicJump[]
+  optionPrices?: Record<string, OptionPrice>  // key = option text
 }
 
 // ── Helpers ───────────────────────────────────────────────────

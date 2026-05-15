@@ -1,14 +1,19 @@
 import QuizzRunner from '@/components/form-builder/QuizzRunner'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
 
-// ── Mock data — demonstrates logic jumps in action ────────────
+// ── Mock data ─────────────────────────────────────────────────
+//
+// Demonstrates:
+//   • Logic jumps (Q3 Iniciante/Básico skips Q4)
+//   • Early termination (Q5 "Viagem e imersão" → __end__)
+//   • Dynamic pricing (Q6 carries optionPrices → unlocks CheckoutSummary)
 //
 // Flow:
-//   Q1 (name)  → Q2 (email) → Q3 (nível)
-//   Q3 Iniciante  ──jump──► Q5 (objetivo)
+//   Q1 (name) → Q2 (email) → Q3 (nível)
+//   Q3 Iniciante/Básico  ──jump──► Q5 (objetivo)
 //   Q3 Intermediário/Avançado → Q4 (JLPT) → Q5 (objetivo)
-//   Q5 "Viagem e cultura" ──jump──► __end__ (finish early)
-//   Q5 outros → Q6 (horas/semana) → Q7 (mensagem) → fim
+//   Q5 "Viagem e imersão" ──jump──► __end__ (generic done)
+//   Q5 outros → Q6 (plano + pricing) → CheckoutSummary
 
 const MOCK_NODES: FormNode[] = [
   {
@@ -36,7 +41,7 @@ const MOCK_NODES: FormNode[] = [
       'Avançado — N2 ou N1',
     ],
     logicJumps: [
-      { id: 'lj1', ifOption: 'Iniciante — nunca estudei', jumpToNodeId: 'n5' },
+      { id: 'lj1', ifOption: 'Iniciante — nunca estudei',           jumpToNodeId: 'n5' },
       { id: 'lj2', ifOption: 'Básico — conheço hiragana e katakana', jumpToNodeId: 'n5' },
     ],
   },
@@ -67,22 +72,36 @@ const MOCK_NODES: FormNode[] = [
   },
   {
     id: 'n6',
-    title: 'Quantas horas por semana você pode dedicar aos estudos?',
+    title: 'Escolha o plano ideal para você.',
     type: 'radio',
     options: [
-      'Menos de 5 horas',
-      'Entre 5 e 10 horas',
-      'Entre 10 e 20 horas',
-      'Mais de 20 horas',
+      'Plano Mensal — ¥ 12.000',
+      'Plano Trimestral — ¥ 32.000',
+      'Mentoria 1:1 Intensiva — ¥ 38.000',
     ],
     logicJumps: [],
-  },
-  {
-    id: 'n7',
-    title: 'Conte-nos sobre sua situação e o que espera conquistar.',
-    type: 'textarea',
-    options: [],
-    logicJumps: [],
+    // Each option maps to a real Stripe Price ID and display metadata.
+    // In production, replace price_mock_* with actual price_... IDs from Stripe.
+    optionPrices: {
+      'Plano Mensal — ¥ 12.000': {
+        priceId:  'price_mock_mensal',
+        label:    'Plano Mensal',
+        amount:   12000,
+        currency: 'jpy',
+      },
+      'Plano Trimestral — ¥ 32.000': {
+        priceId:  'price_mock_trimestral',
+        label:    'Plano Trimestral',
+        amount:   32000,
+        currency: 'jpy',
+      },
+      'Mentoria 1:1 Intensiva — ¥ 38.000': {
+        priceId:  'price_mock_mentoria',
+        label:    'Mentoria 1:1 Intensiva',
+        amount:   38000,
+        currency: 'jpy',
+      },
+    },
   },
 ]
 
@@ -91,5 +110,14 @@ export default function PreviewQuizz() {
     console.log('[QuizzRunner] respostas finais:', answers)
   }
 
-  return <QuizzRunner nodes={MOCK_NODES} onComplete={handleComplete} />
+  return (
+    <QuizzRunner
+      nodes={MOCK_NODES}
+      // Swap for a real product UUID + price ID in production
+      productId="00000000-0000-0000-0000-000000000001"
+      productName="Reforço Escolar de Japonês"
+      defaultPriceId="price_mock_mensal"
+      onComplete={handleComplete}
+    />
+  )
 }
