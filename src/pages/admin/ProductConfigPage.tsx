@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { Product, ProductStatus } from '@/lib/types'
+import FormBuilder, { type FormNode } from '@/components/form-builder/FormBuilder'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -250,24 +251,8 @@ function PrecificacaoPanel({ product }: { product: Partial<Product> }) {
   )
 }
 
-function FormularioPanel() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-        style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.15)' }}>
-        <ClipboardList className="w-7 h-7 text-indigo-400" />
-      </div>
-      <h3 className="text-[15px] font-bold text-[#EDEDED] tracking-tight">Construtor de Formulário</h3>
-      <p className="text-[13px] text-white/30 mt-2 max-w-sm leading-relaxed">
-        O construtor estilo Typeform será implementado aqui. Configure perguntas de qualificação que determinam o preço e o segmento do lead.
-      </p>
-      <div className="flex items-center gap-2 mt-6 px-4 py-2.5 rounded-full"
-        style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
-        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-        <span className="text-[12px] font-medium text-indigo-400">Em desenvolvimento</span>
-      </div>
-    </div>
-  )
+function FormularioPanel({ nodes, onChange }: { nodes: FormNode[]; onChange: (nodes: FormNode[]) => void }) {
+  return <FormBuilder nodes={nodes} onChange={onChange} />
 }
 
 function VendasPanel({ productId }: { productId: string }) {
@@ -315,15 +300,16 @@ export default function ProductConfigPage() {
   const { id }    = useParams<{ id: string }>()
   const navigate  = useNavigate()
 
-  const [product, setProduct] = useState<Partial<Product>>({
+  const [product,    setProduct]    = useState<Partial<Product>>({
     name:   'Carregando...',
     status: 'draft',
     slug:   '',
   })
-  const [tab,     setTab]     = useState<TabId>('geral')
-  const [saving,  setSaving]  = useState(false)
-  const [saved,   setSaved]   = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [formNodes,  setFormNodes]  = useState<FormNode[]>([])
+  const [tab,        setTab]        = useState<TabId>('geral')
+  const [saving,     setSaving]     = useState(false)
+  const [saved,      setSaved]      = useState(false)
+  const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
     if (!id || id === 'new') { setLoading(false); setProduct({ name: 'Novo Produto', status: 'draft', slug: '' }); return }
@@ -333,7 +319,11 @@ export default function ProductConfigPage() {
       .eq('id', id)
       .single()
       .then(({ data }) => {
-        if (data) setProduct(data as Product)
+        if (data) {
+          setProduct(data as Product)
+          const cfg = data.form_logic_config as Record<string, unknown>
+          if (Array.isArray(cfg?.nodes)) setFormNodes(cfg.nodes as FormNode[])
+        }
         setLoading(false)
       })
   }, [id])
@@ -342,11 +332,12 @@ export default function ProductConfigPage() {
     if (!id || id === 'new') return
     setSaving(true)
     await supabase.from('products').update({
-      name:          product.name,
-      slug:          product.slug,
-      description:   product.description,
-      status:        product.status,
-      thumbnail_url: product.thumbnail_url,
+      name:              product.name,
+      slug:              product.slug,
+      description:       product.description,
+      status:            product.status,
+      thumbnail_url:     product.thumbnail_url,
+      form_logic_config: { nodes: formNodes },
     }).eq('id', id)
     setSaving(false)
     setSaved(true)
@@ -435,17 +426,22 @@ export default function ProductConfigPage() {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-auto px-8 py-6">
-        {tab === 'geral' && (
-          <GeralPanel
-            product={product}
-            onUpdate={fields => setProduct(prev => ({ ...prev, ...fields }))}
-          />
-        )}
-        {tab === 'precificacao' && <PrecificacaoPanel product={product} />}
-        {tab === 'formulario'   && <FormularioPanel />}
-        {tab === 'vendas'       && <VendasPanel productId={id ?? ''} />}
-      </div>
+      {tab === 'formulario' ? (
+        <div className="flex-1 overflow-hidden">
+          <FormularioPanel nodes={formNodes} onChange={setFormNodes} />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-auto px-8 py-6">
+          {tab === 'geral' && (
+            <GeralPanel
+              product={product}
+              onUpdate={fields => setProduct(prev => ({ ...prev, ...fields }))}
+            />
+          )}
+          {tab === 'precificacao' && <PrecificacaoPanel product={product} />}
+          {tab === 'vendas'       && <VendasPanel productId={id ?? ''} />}
+        </div>
+      )}
     </div>
   )
 }
