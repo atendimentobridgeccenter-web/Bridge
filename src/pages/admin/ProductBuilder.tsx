@@ -5,53 +5,80 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import CheckoutTab    from '@/builder/tabs/CheckoutTab'
 import LandingPageTab from '@/builder/tabs/LandingPageTab'
-import FormBuilderTab from '@/builder/tabs/FormBuilderTab'
 import StructureTab   from '@/builder/tabs/StructureTab'
+import FormBuilder, { type FormNode } from '@/components/form-builder/FormBuilder'
 import type { Product } from '@/lib/types'
 
 type Tab = 'checkout' | 'landing' | 'form' | 'structure'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'checkout',  label: 'Checkout' },
+  { id: 'checkout',  label: 'Checkout'     },
   { id: 'landing',   label: 'Landing Page' },
-  { id: 'form',      label: 'Formulário' },
-  { id: 'structure', label: 'Estrutura' },
+  { id: 'form',      label: 'Formulário'   },
+  { id: 'structure', label: 'Estrutura'    },
 ]
 
 // ── Publish validation ────────────────────────────────────────
 
 function validate(product: Product): string[] {
   const errors: string[] = []
-  if (!product.name)          errors.push('Nome do produto não definido.')
-  if (!product.slug)          errors.push('Slug não definido.')
+  if (!product.name) errors.push('Nome do produto não definido.')
+  if (!product.slug) errors.push('Slug não definido.')
   if (!product.price_id_stripe && !(product.checkout_config as { price_id?: string })?.price_id)
     errors.push('Price ID do Stripe não configurado.')
   const cfg    = product.landing_page_config as { blocks?: unknown[] } | null
   const blocks = cfg?.blocks ?? []
-  if (blocks.length === 0)    errors.push('Landing page está vazia (adicione pelo menos 1 bloco).')
+  if (blocks.length === 0) errors.push('Landing page está vazia (adicione pelo menos 1 bloco).')
   return errors
 }
 
 // ── Page ──────────────────────────────────────────────────────
 
 export default function ProductBuilder() {
-  const { id }       = useParams<{ id: string }>()
-  const [tab, setTab]           = useState<Tab>('checkout')
-  const [product, setProduct]   = useState<Product | null>(null)
-  const [saving,  setSaving]    = useState(false)
-  const [publishing, setPublishing] = useState(false)
-  const [errors,  setErrors]    = useState<string[]>([])
-  const [saved,   setSaved]     = useState(false)
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { id } = useParams<{ id: string }>()
 
+  const [tab,       setTab]       = useState<Tab>('checkout')
+  const [product,   setProduct]   = useState<Product | null>(null)
+  const [formNodes, setFormNodes] = useState<FormNode[]>([])
+  const [saving,    setSaving]    = useState(false)
+  const [publishing,setPublishing]= useState(false)
+  const [errors,    setErrors]    = useState<string[]>([])
+  const [saved,     setSaved]     = useState(false)
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+
+  const autoSaveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formSaveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formInitDone   = useRef(false)
+
+  // Load product
   useEffect(() => {
     if (!id) return
     supabase.from('products').select('*').eq('id', id).single()
-      .then(({ data }) => { if (data) setProduct(data as Product) })
+      .then(({ data }) => {
+        if (data) {
+          setProduct(data as Product)
+          const cfg = data.form_logic_config as Record<string, unknown>
+          if (Array.isArray(cfg?.nodes)) setFormNodes(cfg.nodes as FormNode[])
+        }
+        setTimeout(() => { formInitDone.current = true }, 100)
+      })
   }, [id])
 
-  // Auto-save with debounce (except structure tab — that saves per action)
+  // Auto-save form nodes on change (debounced)
+  useEffect(() => {
+    if (!formInitDone.current || !id) return
+    if (formSaveTimer.current) clearTimeout(formSaveTimer.current)
+    formSaveTimer.current = setTimeout(async () => {
+      await supabase.from('products')
+        .update({ form_logic_config: { nodes: formNodes } })
+        .eq('id', id)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    }, 1200)
+    return () => { if (formSaveTimer.current) clearTimeout(formSaveTimer.current) }
+  }, [formNodes]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Patch + debounced save for all other fields
   function patch(upd: Partial<Product>) {
     setProduct(prev => prev ? { ...prev, ...upd } : prev)
     setSaved(false)
@@ -120,9 +147,7 @@ export default function ProductBuilder() {
               onClick={() => setTab(t.id)}
               className={cn(
                 'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                tab === t.id
-                  ? 'bg-zinc-700 text-white shadow'
-                  : 'text-zinc-400 hover:text-white',
+                tab === t.id ? 'bg-zinc-700 text-white shadow' : 'text-zinc-400 hover:text-white',
               )}
             >
               {t.label}
@@ -139,7 +164,8 @@ export default function ProductBuilder() {
           <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-400
+                       hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Salvando...' : 'Salvar'}
@@ -172,7 +198,10 @@ export default function ProductBuilder() {
       )}
 
       {/* Tab content */}
-      <div className={cn('flex-1 overflow-auto', tab === 'landing' ? 'overflow-hidden flex' : 'p-8')}>
+      <div className={cn(
+        'flex-1',
+        tab === 'landing' ? 'overflow-hidden flex' : tab === 'form' ? 'overflow-hidden' : 'overflow-auto p-8',
+      )}>
         {tab === 'checkout' && (
           <CheckoutTab product={product} onChange={patch} />
         )}
@@ -186,7 +215,7 @@ export default function ProductBuilder() {
           />
         )}
         {tab === 'form' && (
-          <FormBuilderTab product={product} onChange={patch} />
+          <FormBuilder nodes={formNodes} onChange={setFormNodes} />
         )}
         {tab === 'structure' && (
           <StructureTab productId={product.id} />

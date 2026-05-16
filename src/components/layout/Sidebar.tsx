@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Package, Users, FileStack,
+  LayoutDashboard, Package, Users,
   Zap, LogOut, Settings, ChevronDown,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -10,7 +10,6 @@ const NAV_MAIN = [
   { to: '/admin',          icon: LayoutDashboard, label: 'Dashboard',  end: true },
   { to: '/admin/leads',    icon: Users,           label: 'Leads CRM',  end: false },
   { to: '/admin/products', icon: Package,         label: 'Produtos',   end: false },
-  { to: '/admin/builder',  icon: FileStack,       label: 'Páginas',    end: false },
 ]
 
 const NAV_BOTTOM = [
