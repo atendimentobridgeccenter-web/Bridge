@@ -15,7 +15,8 @@ const Builder             = lazy(() => import('@/pages/admin/Builder'))
 const SalesPageEditorPage = lazy(() => import('@/pages/admin/SalesPageEditorPage'))
 
 // ── Auth ──────────────────────────────────────────────────────
-const Login = lazy(() => import('@/pages/Login'))
+const Login         = lazy(() => import('@/pages/Login'))
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
 
 // ── Public ────────────────────────────────────────────────────
 const Apply               = lazy(() => import('@/pages/Apply'))
@@ -46,7 +47,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/admin" replace />} />
 
           {/* ── Auth ── */}
-          <Route path="/login" element={<Login />} />
+          <Route path="/login"          element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* ── Admin (with sidebar) ── */}
           <Route path="/admin" element={<AdminLayout />}>
