@@ -6,8 +6,11 @@ import { cn } from '@/lib/cn'
 import CheckoutTab    from '@/builder/tabs/CheckoutTab'
 import LandingPageTab from '@/builder/tabs/LandingPageTab'
 import StructureTab   from '@/builder/tabs/StructureTab'
-import FormBuilder, { type FormNode } from '@/components/form-builder/FormBuilder'
+import FormBuilder    from '@/components/form-builder/FormBuilder'
 import type { Product } from '@/lib/types'
+import { useProduct } from '@/hooks/useProduct'
+import { useAutoSave } from '@/hooks/useAutoSave'
+import { useBuilderStore } from '@/stores/useBuilderStore'
 
 type Tab = 'checkout' | 'landing' | 'form' | 'structure'
 
@@ -37,72 +40,46 @@ function validate(product: Product): string[] {
 export default function ProductBuilder() {
   const { id } = useParams<{ id: string }>()
 
-  const [tab,       setTab]       = useState<Tab>('checkout')
-  const [product,   setProduct]   = useState<Product | null>(null)
-  const [formNodes, setFormNodes] = useState<FormNode[]>([])
-  const [saving,    setSaving]    = useState(false)
-  const [publishing,setPublishing]= useState(false)
-  const [errors,    setErrors]    = useState<string[]>([])
-  const [saved,     setSaved]     = useState(false)
+  // ── Server state (React Query) ──────────────────────────────
+  const { data: serverProduct } = useProduct(id)
+
+  // ── Draft state (Zustand) ───────────────────────────────────
+  const product        = useBuilderStore(s => s.product)
+  const formNodes      = useBuilderStore(s => s.formNodes)
+  const savedAt        = useBuilderStore(s => s.savedAt)
+  const initFromServer = useBuilderStore(s => s.initFromServer)
+  const patchProduct   = useBuilderStore(s => s.patchProduct)
+  const setFormNodes   = useBuilderStore(s => s.setFormNodes)
+  const reset          = useBuilderStore(s => s.reset)
+
+  // ── Auto-save ───────────────────────────────────────────────
+  const { saveNow, isSaving } = useAutoSave(id)
+
+  // ── Local UI state ──────────────────────────────────────────
+  const [tab,            setTab]            = useState<Tab>('checkout')
+  const [publishing,     setPublishing]     = useState(false)
+  const [errors,         setErrors]         = useState<string[]>([])
+  const [showSaved,      setShowSaved]      = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const prevSavedAtRef = useRef<Date | null>(null)
 
-  const autoSaveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const formSaveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const formInitDone   = useRef(false)
-
-  // Load product
+  // Init store when server data arrives
   useEffect(() => {
-    if (!id) return
-    supabase.from('products').select('*').eq('id', id).single()
-      .then(({ data }) => {
-        if (data) {
-          setProduct(data as Product)
-          const cfg = data.form_logic_config as Record<string, unknown>
-          if (Array.isArray(cfg?.nodes)) setFormNodes(cfg.nodes as FormNode[])
-        }
-        setTimeout(() => { formInitDone.current = true }, 100)
-      })
-  }, [id])
+    if (serverProduct) initFromServer(serverProduct)
+  }, [serverProduct, initFromServer])
 
-  // Auto-save form nodes on change (debounced)
+  // Reset store on unmount
+  useEffect(() => () => reset(), [reset])
+
+  // Flash "Salvo" whenever a save completes
   useEffect(() => {
-    if (!formInitDone.current || !id) return
-    if (formSaveTimer.current) clearTimeout(formSaveTimer.current)
-    formSaveTimer.current = setTimeout(async () => {
-      await supabase.from('products')
-        .update({ form_logic_config: { nodes: formNodes } })
-        .eq('id', id)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    }, 1200)
-    return () => { if (formSaveTimer.current) clearTimeout(formSaveTimer.current) }
-  }, [formNodes]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Patch + debounced save for all other fields
-  function patch(upd: Partial<Product>) {
-    setProduct(prev => prev ? { ...prev, ...upd } : prev)
-    setSaved(false)
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(() => handleSave(upd), 1500)
-  }
-
-  async function handleSave(extra?: Partial<Product>) {
-    if (!product) return
-    setSaving(true)
-    const merged = { ...product, ...extra }
-    await supabase.from('products').update({
-      name:                merged.name,
-      slug:                merged.slug,
-      description:         merged.description,
-      price_id_stripe:     merged.price_id_stripe,
-      landing_page_config: merged.landing_page_config,
-      form_logic_config:   merged.form_logic_config,
-      checkout_config:     merged.checkout_config,
-    }).eq('id', product.id)
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+    if (savedAt && savedAt !== prevSavedAtRef.current) {
+      prevSavedAtRef.current = savedAt
+      setShowSaved(true)
+      const t = setTimeout(() => setShowSaved(false), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [savedAt])
 
   async function handlePublish() {
     if (!product) return
@@ -112,7 +89,7 @@ export default function ProductBuilder() {
     setPublishing(true)
     const newStatus = product.status === 'published' ? 'draft' : 'published'
     await supabase.from('products').update({ status: newStatus }).eq('id', product.id)
-    setProduct(p => p ? { ...p, status: newStatus } : p)
+    patchProduct({ status: newStatus })
     setPublishing(false)
   }
 
@@ -156,19 +133,19 @@ export default function ProductBuilder() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {saved && (
+          {showSaved && (
             <span className="flex items-center gap-1 text-xs text-green-400">
               <Check className="w-3.5 h-3.5" /> Salvo
             </span>
           )}
           <button
-            onClick={() => handleSave()}
-            disabled={saving}
+            onClick={saveNow}
+            disabled={isSaving}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-400
                        hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors"
           >
             <Save className="w-4 h-4" />
-            {saving ? 'Salvando...' : 'Salvar'}
+            {isSaving ? 'Salvando...' : 'Salvar'}
           </button>
 
           <button
@@ -203,14 +180,14 @@ export default function ProductBuilder() {
         tab === 'landing' ? 'overflow-hidden flex' : tab === 'form' ? 'overflow-hidden' : 'overflow-auto p-8',
       )}>
         {tab === 'checkout' && (
-          <CheckoutTab product={product} onChange={patch} />
+          <CheckoutTab product={product} onChange={patchProduct} />
         )}
         {tab === 'landing' && (
           <LandingPageTab
             product={product}
             selectedBlockId={selectedBlockId}
             onSelectBlock={setSelectedBlockId}
-            onChange={patch}
+            onChange={patchProduct}
             onSelectBlockChange={setSelectedBlockId}
           />
         )}

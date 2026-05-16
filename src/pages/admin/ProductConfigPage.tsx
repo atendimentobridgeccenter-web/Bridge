@@ -10,6 +10,9 @@ import { cn } from '@/lib/cn'
 import type { Product, ProductStatus } from '@/lib/types'
 import FormBuilder, { type FormNode } from '@/components/form-builder/FormBuilder'
 import StripePricePicker from '@/components/StripePricePicker'
+import { useProduct } from '@/hooks/useProduct'
+import { useAutoSave } from '@/hooks/useAutoSave'
+import { useBuilderStore } from '@/stores/useBuilderStore'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -390,66 +393,45 @@ export default function ProductConfigPage() {
   const { id }   = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [product,   setProduct]   = useState<Partial<Product>>({ name: 'Carregando...', status: 'draft', slug: '' })
-  const [formNodes, setFormNodes] = useState<FormNode[]>([])
+  // ── Server state (React Query) ──────────────────────────────
+  const { data: serverProduct, isLoading } = useProduct(id)
+
+  // ── Draft state (Zustand) ───────────────────────────────────
+  const product        = useBuilderStore(s => s.product)
+  const formNodes      = useBuilderStore(s => s.formNodes)
+  const savedAt        = useBuilderStore(s => s.savedAt)
+  const initFromServer = useBuilderStore(s => s.initFromServer)
+  const patchProduct   = useBuilderStore(s => s.patchProduct)
+  const setFormNodes   = useBuilderStore(s => s.setFormNodes)
+  const reset          = useBuilderStore(s => s.reset)
+
+  // ── Auto-save ───────────────────────────────────────────────
+  const { saveNow, isSaving } = useAutoSave(id)
+
+  // ── Local UI state ──────────────────────────────────────────
   const [tab,       setTab]       = useState<TabId>('geral')
-  const [saving,    setSaving]    = useState(false)
-  const [saved,     setSaved]     = useState(false)
-  const [loading,   setLoading]   = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [showSaved, setShowSaved] = useState(false)
+  const fileInputRef   = useRef<HTMLInputElement>(null)
+  const prevSavedAtRef = useRef<Date | null>(null)
 
-  const fileInputRef  = useRef<HTMLInputElement>(null)
-  const initDone      = useRef(false)
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // Load product
+  // Init store when server data arrives
   useEffect(() => {
-    if (!id || id === 'new') {
-      setLoading(false)
-      setProduct({ name: 'Novo Produto', status: 'draft', slug: '' })
-      setTimeout(() => { initDone.current = true }, 100)
-      return
+    if (serverProduct) initFromServer(serverProduct)
+  }, [serverProduct, initFromServer])
+
+  // Reset store on unmount
+  useEffect(() => () => reset(), [reset])
+
+  // Flash "Salvo!" whenever a save completes
+  useEffect(() => {
+    if (savedAt && savedAt !== prevSavedAtRef.current) {
+      prevSavedAtRef.current = savedAt
+      setShowSaved(true)
+      const t = setTimeout(() => setShowSaved(false), 2500)
+      return () => clearTimeout(t)
     }
-    supabase.from('products').select('*').eq('id', id).single()
-      .then(({ data }) => {
-        if (data) {
-          setProduct(data as Product)
-          const cfg = data.form_logic_config as Record<string, unknown>
-          if (Array.isArray(cfg?.nodes)) setFormNodes(cfg.nodes as FormNode[])
-        }
-        setLoading(false)
-        setTimeout(() => { initDone.current = true }, 100)
-      })
-  }, [id])
-
-  // Auto-save form nodes (debounced)
-  useEffect(() => {
-    if (!initDone.current || !id || id === 'new') return
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-    autoSaveTimer.current = setTimeout(async () => {
-      await supabase.from('products').update({ form_logic_config: { nodes: formNodes } }).eq('id', id)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    }, 1200)
-    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
-  }, [formNodes]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleSave() {
-    if (!id || id === 'new') return
-    setSaving(true)
-    await supabase.from('products').update({
-      name:              product.name,
-      slug:              product.slug,
-      description:       product.description,
-      status:            product.status,
-      thumbnail_url:     product.thumbnail_url ?? null,
-      price_id_stripe:   product.price_id_stripe ?? null,
-      form_logic_config: { nodes: formNodes },
-    }).eq('id', id)
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
-  }
+  }, [savedAt])
 
   async function handleThumbnailUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -465,21 +447,21 @@ export default function ProductConfigPage() {
       return
     }
     const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(path)
-    setProduct(prev => ({ ...prev, thumbnail_url: publicUrl }))
+    patchProduct({ thumbnail_url: publicUrl })
     setUploading(false)
-    // Persist immediately
     await supabase.from('products').update({ thumbnail_url: publicUrl }).eq('id', id)
   }
 
-  const statusStyle = STATUS_STYLE[product.status ?? 'draft']
-
-  if (loading) {
+  if (isLoading || (!product && !!id && id !== 'new')) {
     return (
       <div className="flex items-center justify-center h-full" style={{ background: BG_PAGE }}>
         <div className="w-5 h-5 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
       </div>
     )
   }
+
+  const displayProduct: Partial<Product> = product ?? { name: 'Novo Produto', status: 'draft', slug: '' }
+  const statusStyle = STATUS_STYLE[displayProduct.status ?? 'draft']
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: BG_PAGE }}>
@@ -509,7 +491,7 @@ export default function ProductConfigPage() {
 
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <h1 className="text-[15px] font-bold text-[#EDEDED] tracking-tight truncate">
-            {product.name}
+            {displayProduct.name}
           </h1>
           <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0', statusStyle.cls)}>
             {statusStyle.label}
@@ -517,16 +499,16 @@ export default function ProductConfigPage() {
         </div>
 
         <button
-          onClick={handleSave}
-          disabled={saving || saved}
+          onClick={saveNow}
+          disabled={isSaving || showSaved}
           className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[12px] font-semibold
                      text-white transition-all disabled:opacity-70"
-          style={{ background: saved ? '#16A34A' : '#E8521A', boxShadow: '0 4px 16px rgba(232,82,26,0.2)' }}
+          style={{ background: showSaved ? '#16A34A' : '#E8521A', boxShadow: '0 4px 16px rgba(232,82,26,0.2)' }}
         >
-          {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          : saved  ? <Check   className="w-3.5 h-3.5" />
-          :          <Save    className="w-3.5 h-3.5" />}
-          {saving ? 'Salvando…' : saved ? 'Salvo!' : 'Salvar'}
+          {isSaving   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          : showSaved  ? <Check   className="w-3.5 h-3.5" />
+          :              <Save    className="w-3.5 h-3.5" />}
+          {isSaving ? 'Salvando…' : showSaved ? 'Salvo!' : 'Salvar'}
         </button>
       </div>
 
@@ -567,21 +549,21 @@ export default function ProductConfigPage() {
         <div className="flex-1 overflow-auto px-8 py-6">
           {tab === 'geral' && (
             <GeralPanel
-              product={product}
-              onUpdate={fields => setProduct(prev => ({ ...prev, ...fields }))}
+              product={displayProduct}
+              onUpdate={patchProduct}
               onThumbnailClick={() => fileInputRef.current?.click()}
               uploading={uploading}
             />
           )}
           {tab === 'precificacao' && (
             <PrecificacaoPanel
-              product={product}
-              onUpdate={fields => setProduct(prev => ({ ...prev, ...fields }))}
+              product={displayProduct}
+              onUpdate={patchProduct}
               formNodes={formNodes}
             />
           )}
           {tab === 'vendas' && (
-            <VendasPanel productId={id ?? ''} productSlug={product.slug} />
+            <VendasPanel productId={id ?? ''} productSlug={displayProduct.slug} />
           )}
         </div>
       )}
