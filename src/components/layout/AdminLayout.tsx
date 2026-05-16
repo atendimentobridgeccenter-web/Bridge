@@ -1,5 +1,7 @@
-import { Outlet, useLocation, NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Search } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import Sidebar from './Sidebar'
 
 const TITLES: Record<string, string> = {
@@ -69,6 +71,26 @@ function Topbar() {
 }
 
 export default function AdminLayout() {
+  const navigate  = useNavigate()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate('/login', { replace: true })
+      else setReady(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!session) navigate('/login', { replace: true })
+    })
+    return () => subscription.unsubscribe()
+  }, [navigate])
+
+  if (!ready) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0A' }}>
+      <div className="w-7 h-7 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+    </div>
+  )
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: '#0A0A0A' }}>
       <Sidebar />

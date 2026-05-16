@@ -8,6 +8,13 @@ import { cn } from '@/lib/cn'
 export default function Login() {
   const navigate = useNavigate()
   const [email,    setEmail]    = useState('')
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate('/admin', { replace: true })
+    })
+  }, [navigate])
   const [password, setPassword] = useState('')
   const [showPw,   setShowPw]   = useState(false)
   const [loading,  setLoading]  = useState(false)
