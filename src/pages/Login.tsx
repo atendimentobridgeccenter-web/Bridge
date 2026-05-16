@@ -2,7 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, ArrowRight, Loader2, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 
 type Screen = 'login' | 'forgot' | 'forgot-sent'
@@ -24,17 +24,25 @@ export default function Login() {
     })
   }, [navigate])
 
+  function networkError(err: unknown): string {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (!isSupabaseConfigured || msg.toLowerCase().includes('fetch'))
+      return 'Sem conexão com o servidor. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no Vercel.'
+    return msg
+  }
+
   async function handleLogin(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
-    if (authErr) {
-      setError('E-mail ou senha inválidos. Use "Esqueci minha senha" para redefinir.')
+    try {
+      const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
+      if (authErr) { setError(networkError(authErr)); setLoading(false); return }
+      navigate('/admin', { replace: true })
+    } catch (err) {
+      setError(networkError(err))
       setLoading(false)
-      return
     }
-    navigate('/admin', { replace: true })
   }
 
   async function handleForgot(e: FormEvent) {
@@ -42,12 +50,17 @@ export default function Login() {
     if (!email.trim()) { setError('Digite seu e-mail primeiro.'); return }
     setLoading(true)
     setError(null)
-    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-    setLoading(false)
-    if (resetErr) { setError(resetErr.message); return }
-    setScreen('forgot-sent')
+    try {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+      setLoading(false)
+      if (resetErr) { setError(networkError(resetErr)); return }
+      setScreen('forgot-sent')
+    } catch (err) {
+      setLoading(false)
+      setError(networkError(err))
+    }
   }
 
   const ease = [0.16, 1, 0.3, 1] as const
