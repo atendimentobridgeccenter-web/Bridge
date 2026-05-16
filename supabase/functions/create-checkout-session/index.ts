@@ -2,16 +2,19 @@
 // Runtime: Deno
 //
 // Security model:
-//   1. Receive { productId, priceId, email, name }
+//   1. Receive { productId, priceId?, priceIds?, email, name }
+//      - priceIds[] (array) is used by FormRunner (multi-item pricing engine)
+//      - priceId  (single) is used by QuizzRunner (single selection)
+//      Both formats are supported; priceIds takes precedence.
 //   2. Load the product from DB using service role key (bypasses RLS)
 //   3. Build the set of ALLOWED price IDs server-side:
 //        a. product.price_id_stripe  (the main price)
-//        b. Every priceId stored in form_logic_config.nodes[*].optionPrices[*]
-//   4. Reject with 403 if the submitted priceId is not in the allowed set.
-//      → A malicious user cannot substitute a cheaper price ID from devtools.
-//   5. Retrieve the Stripe Price to determine mode (payment vs subscription).
-//   6. Create Stripe Checkout Session — line_items reference the Price by ID only.
-//      → No unit_amount is ever passed from the frontend.
+//        b. Every priceId in form_logic_config (FormSchema: allowed_price_ids)
+//        c. Every optionPrice in form_logic_config (FormNode: nodes[*].optionPrices)
+//   4. Reject with 403 if any submitted priceId is not in the allowed set.
+//   5. Retrieve the first Stripe Price to determine mode (payment vs subscription).
+//   6. Create Stripe Checkout Session — line_items reference Prices by ID only.
+//      No unit_amount is ever passed from the frontend.
 //   7. Return { url }.
 
 import Stripe from 'npm:stripe@14'
@@ -29,7 +32,7 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 )
 
-// ── Types (inline — cannot import from frontend) ──────────────
+// ── Types ─────────────────────────────────────────────────────
 
 interface OptionPrice {
   priceId:  string
@@ -70,10 +73,18 @@ function buildAllowedPriceIds(product: {
     allowed.add(product.price_id_stripe)
   }
 
-  // Walk every FormNode and collect all optionPrice IDs
-  const cfg = product.form_logic_config as { nodes?: FormNode[] } | null
+  const cfg = product.form_logic_config as Record<string, unknown> | null
+
+  // FormSchema format: explicit allowed_price_ids whitelist
+  if (Array.isArray(cfg?.allowed_price_ids)) {
+    for (const pid of cfg.allowed_price_ids as string[]) {
+      if (pid) allowed.add(pid)
+    }
+  }
+
+  // FormNode format: walk nodes and collect all optionPrice IDs
   if (Array.isArray(cfg?.nodes)) {
-    for (const node of cfg.nodes) {
+    for (const node of cfg.nodes as FormNode[]) {
       if (node.optionPrices) {
         for (const op of Object.values(node.optionPrices)) {
           if (op?.priceId) allowed.add(op.priceId)
@@ -94,19 +105,28 @@ Deno.serve(async (req: Request) => {
 
   try {
     // ── 1. Parse payload ────────────────────────────────────────
-    const { productId, priceId, email, name } = await req.json() as {
-      productId: string
-      priceId:   string
-      email?:    string
-      name?:     string
+    // priceIds[] comes from FormRunner (multi-item pricing engine)
+    // priceId (single) comes from QuizzRunner (single option selection)
+    const { productId, priceId, priceIds: priceIdsArr, email, name } = await req.json() as {
+      productId:  string
+      priceId?:   string
+      priceIds?:  string[]
+      email?:     string
+      name?:      string
     }
 
-    if (!productId || !priceId) {
-      return json({ error: 'productId and priceId are required.' }, 400)
+    const resolvedPriceIds: string[] = priceIdsArr?.length
+      ? priceIdsArr
+      : priceId ? [priceId] : []
+
+    if (!productId || resolvedPriceIds.length === 0) {
+      return json({ error: 'productId and at least one priceId are required.' }, 400)
     }
 
-    if (!priceId.startsWith('price_')) {
-      return json({ error: 'Invalid priceId format.' }, 400)
+    for (const pid of resolvedPriceIds) {
+      if (!pid.startsWith('price_')) {
+        return json({ error: `Invalid priceId format: ${pid}` }, 400)
+      }
     }
 
     // ── 2. Load product from DB ─────────────────────────────────
@@ -124,30 +144,31 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Product is no longer available.' }, 403)
     }
 
-    // ── 3. Validate priceId server-side ─────────────────────────
+    // ── 3. Validate every priceId server-side ───────────────────
     const allowed = buildAllowedPriceIds(product)
+    const invalid = resolvedPriceIds.filter(p => !allowed.has(p))
 
-    if (!allowed.has(priceId)) {
-      console.error(`[create-checkout-session] Rejected priceId="${priceId}" for productId="${productId}". Allowed: [${[...allowed].join(', ')}]`)
-      return json({ error: 'This price is not available for the selected product.' }, 403)
+    if (invalid.length > 0) {
+      console.error(
+        `[create-checkout-session] Rejected price_ids=[${invalid.join(', ')}] for productId="${productId}". Allowed: [${[...allowed].join(', ')}]`
+      )
+      return json({ error: 'One or more price IDs are not available for this product.' }, 403)
     }
 
-    // ── 4. Retrieve Stripe Price to determine checkout mode ──────
-    const stripePrice = await stripe.prices.retrieve(priceId)
+    // ── 4. Determine checkout mode from first price ─────────────
+    const firstPrice = await stripe.prices.retrieve(resolvedPriceIds[0])
     const mode: 'payment' | 'subscription' =
-      stripePrice.type === 'recurring' ? 'subscription' : 'payment'
+      firstPrice.type === 'recurring' ? 'subscription' : 'payment'
 
     // ── 5. Create Stripe Checkout Session ───────────────────────
-    const siteUrl = Deno.env.get('SITE_URL') ?? 'http://localhost:5173'
+    const siteUrl = Deno.env.get('SITE_URL') ?? req.headers.get('origin') ?? 'http://localhost:5173'
 
     const session = await stripe.checkout.sessions.create({
       mode,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: resolvedPriceIds.map(price => ({ price, quantity: 1 })),
 
-      // Pre-fill email if collected in the form
       ...(email ? { customer_email: email } : {}),
 
-      // Store lead context for the webhook to consume
       metadata: {
         product_id: productId,
         lead_name:  name  ?? '',
@@ -157,7 +178,6 @@ Deno.serve(async (req: Request) => {
       success_url: `${siteUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:  `${siteUrl}/`,
 
-      // Allow promotional codes on the Stripe-hosted page
       allow_promotion_codes: true,
     })
 

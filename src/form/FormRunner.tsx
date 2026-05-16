@@ -6,18 +6,18 @@ import { supabase } from '@/lib/supabase'
 import { computeLineItems } from '@/lib/pricingEngine'
 import FormStepView from './FormStepView'
 import OrderSummary from './OrderSummary'
-import type { BridgeForm, FormStep, LineItem } from '@/lib/types'
+import type { Product, FormSchema, FormStep, LineItem } from '@/lib/types'
 
 interface Props {
-  form: BridgeForm
+  product: Product
   fromSlug?: string
 }
 
 const CHECKOUT_SENTINEL = '__checkout__'
 
-export default function FormRunner({ form, fromSlug }: Props) {
-  const { schema } = form
-  const steps = schema.steps
+export default function FormRunner({ product, fromSlug }: Props) {
+  const schema = product.form_logic_config as FormSchema
+  const steps  = schema?.steps ?? []
 
   const [stepId,      setStepId]      = useState<string>(steps[0]?.id ?? '')
   const [answers,     setAnswers]     = useState<Record<string, string | string[]>>({})
@@ -51,7 +51,7 @@ export default function FormRunner({ form, fromSlug }: Props) {
       setLeadId(id)
       await supabase.from('bridge_leads').insert({
         id,
-        form_id: form.id,
+        product_id: product.id,
         landing_page_slug: fromSlug ?? null,
         answers: patch.answers ?? {},
         current_step: patch.current_step ?? 0,
@@ -59,7 +59,7 @@ export default function FormRunner({ form, fromSlug }: Props) {
         email: patch.email ?? null,
       })
     }
-  }, [leadId, form.id, fromSlug])
+  }, [leadId, product.id, fromSlug])
 
   function handleChange(value: string | string[]) {
     const field = currentStep?.field ?? stepId
@@ -105,10 +105,15 @@ export default function FormRunner({ form, fromSlug }: Props) {
     }
     setLoading(true)
     const priceIds = lineItems.map(i => i.price_id)
-    const email = (answers['email'] ?? '') as string
+    const email    = (answers['email'] ?? '') as string
     try {
-      const res = await supabase.functions.invoke<{ url: string }>('create-bridge-checkout', {
-        body: { lead_id: leadId, form_id: form.id, price_ids: priceIds, customer_email: email },
+      const res = await supabase.functions.invoke<{ url: string }>('create-checkout-session', {
+        body: {
+          productId: product.id,
+          priceIds,
+          email,
+          name: (answers['name'] ?? '') as string,
+        },
       })
       if (res.error) throw res.error
       if (res.data?.url) window.location.href = res.data.url
@@ -123,6 +128,14 @@ export default function FormRunner({ form, fromSlug }: Props) {
   const currentValue = currentStep
     ? (answers[currentStep.field] ?? answers[stepId] ?? (currentStep.type === 'multiselect' ? [] : ''))
     : ''
+
+  if (!steps.length) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
+        <p>Formulário sem perguntas configuradas.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col relative overflow-hidden">

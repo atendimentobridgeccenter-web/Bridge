@@ -125,24 +125,12 @@ export interface FormSchema {
   cancel_url?: string
 }
 
-// ── Database: Bridge Forms ────────────────────────────────────
-
-export interface BridgeForm {
-  id: string
-  name: string
-  slug: string
-  schema: FormSchema
-  active: boolean
-  created_at: string
-  updated_at: string
-}
-
 // ── Database: Bridge Leads ────────────────────────────────────
 
 export interface BridgeLead {
   id: string
   email: string | null
-  form_id: string | null
+  product_id: string | null
   landing_page_slug: string | null
   answers: Record<string, string | string[]>
   current_step: number
@@ -156,7 +144,7 @@ export interface BridgeLead {
 
 export interface CheckoutRequest {
   lead_id: string
-  form_id: string
+  product_id: string
   price_ids: string[]
   customer_email: string
 }

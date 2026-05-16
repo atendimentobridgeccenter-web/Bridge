@@ -2,33 +2,35 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import FormRunner from '@/form/FormRunner'
-import type { BridgeForm } from '@/lib/types'
-
-// Default form slug — can be overridden via ?form=slug
-const DEFAULT_FORM_SLUG = 'bridge-enterprise'
+import QuizzRunner from '@/components/form-builder/QuizzRunner'
+import type { Product, FormSchema } from '@/lib/types'
+import type { FormNode } from '@/components/form-builder/FormBuilder'
 
 export default function Apply() {
-  const [params]  = useSearchParams()
-  const formSlug  = params.get('form') ?? DEFAULT_FORM_SLUG
-  const fromSlug  = params.get('from') ?? undefined
+  const [params]    = useSearchParams()
+  // ?product=slug is the canonical param; ?form=slug kept for backward compat
+  const productSlug = params.get('product') ?? params.get('form') ?? null
+  const fromSlug    = params.get('from') ?? undefined
 
-  const [form,    setForm]    = useState<BridgeForm | null>(null)
+  const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(false)
 
   useEffect(() => {
+    if (!productSlug) { setError(true); setLoading(false); return }
+
     supabase
-      .from('bridge_forms')
+      .from('products')
       .select('*')
-      .eq('slug', formSlug)
-      .eq('active', true)
+      .eq('slug', productSlug)
+      .eq('status', 'published')
       .single()
       .then(({ data, error: e }) => {
         if (e || !data) setError(true)
-        else setForm(data as BridgeForm)
+        else setProduct(data as Product)
         setLoading(false)
       })
-  }, [formSlug])
+  }, [productSlug])
 
   if (loading) {
     return (
@@ -38,13 +40,36 @@ export default function Apply() {
     )
   }
 
-  if (error || !form) {
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
-        <p>Formulário não encontrado.</p>
+        <p>Produto ou formulário não encontrado.</p>
       </div>
     )
   }
 
-  return <FormRunner form={form} fromSlug={fromSlug} />
+  const cfg = product.form_logic_config as Record<string, unknown>
+
+  // ── New format: FormNode[] produced by FormBuilder ────────────
+  if (Array.isArray(cfg?.nodes) && (cfg.nodes as FormNode[]).length > 0) {
+    return (
+      <QuizzRunner
+        nodes={cfg.nodes as FormNode[]}
+        productId={product.id}
+        productName={product.name}
+        defaultPriceId={product.price_id_stripe ?? undefined}
+      />
+    )
+  }
+
+  // ── Legacy format: FormSchema with steps ──────────────────────
+  if (Array.isArray((cfg as FormSchema)?.steps)) {
+    return <FormRunner product={product} fromSlug={fromSlug} />
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
+      <p>Formulário não configurado para este produto.</p>
+    </div>
+  )
 }
