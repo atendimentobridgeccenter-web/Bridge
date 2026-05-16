@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { Product, ProductStatus } from '@/lib/types'
 import FormBuilder, { type FormNode } from '@/components/form-builder/FormBuilder'
+import StripePricePicker from '@/components/StripePricePicker'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -259,27 +260,13 @@ function PrecificacaoPanel({
       {/* Stripe principal */}
       <Section title="Preço Principal" description="Price ID do Stripe para o plano base do produto.">
         <Field
-          label="Stripe Price ID"
-          hint="Encontre em Stripe Dashboard → Produtos → Preços."
+          label="Preço principal"
+          hint="Busca automática dos preços ativos na sua conta Stripe."
         >
-          <div className="flex items-center rounded-lg overflow-hidden"
-            style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}>
-            <span
-              className="px-3 py-2.5 text-[12px] font-mono text-white/25 select-none shrink-0"
-              style={{ borderRight: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              price_
-            </span>
-            <input
-              value={rawId}
-              onChange={e => onUpdate({ price_id_stripe: e.target.value ? `price_${e.target.value}` : '' })}
-              placeholder="xxxxxxxxxxxxxxxx"
-              className="flex-1 px-3 py-2.5 bg-transparent text-[13px] font-mono text-[#EDEDED]
-                         placeholder:text-white/20 outline-none"
-              onFocus={e  => { e.currentTarget.parentElement!.style.borderColor = 'rgba(232,82,26,0.45)' }}
-              onBlur={e   => { e.currentTarget.parentElement!.style.borderColor = 'rgba(255,255,255,0.07)' }}
-            />
-          </div>
+          <StripePricePicker
+            value={product.price_id_stripe ?? ''}
+            onChange={(priceId, _meta) => onUpdate({ price_id_stripe: priceId })}
+          />
         </Field>
 
         {rawId && (

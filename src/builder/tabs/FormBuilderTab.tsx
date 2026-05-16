@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid'
 import { Plus, Trash2, GripVertical, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { FormStep, FormSchema, Product, QuestionType } from '@/lib/types'
+import StripePricePicker from '@/components/StripePricePicker'
 
 const TYPE_LABELS: Record<QuestionType, string> = {
   text:        'Texto curto',
@@ -60,25 +61,22 @@ export default function FormBuilderTab({ product, onChange }: Props) {
         <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-4">
           Precificação Padrão
         </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <label className="block">
-            <span className="text-xs text-zinc-500 mb-1 block">Price ID padrão</span>
-            <input
-              value={schema?.default_price_id ?? ''}
-              onChange={e => onChange({ form_logic_config: { ...schema, default_price_id: e.target.value } as FormSchema })}
-              placeholder="price_..."
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500 font-mono"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs text-zinc-500 mb-1 block">Valor padrão (centavos)</span>
-            <input
-              type="number"
-              value={schema?.default_amount ?? 0}
-              onChange={e => onChange({ form_logic_config: { ...schema, default_amount: Number(e.target.value) } as FormSchema })}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500"
-            />
-          </label>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-zinc-500">Price ID padrão</span>
+          <StripePricePicker
+            value={schema?.default_price_id ?? ''}
+            onChange={(priceId, meta) => onChange({
+              form_logic_config: {
+                ...schema,
+                default_price_id: priceId,
+                default_amount:   meta.amount,
+                default_label:    meta.nickname ?? meta.productName,
+              } as FormSchema,
+            })}
+          />
+          {schema?.default_price_id && (
+            <p className="text-[10px] font-mono text-zinc-600 truncate">{schema.default_price_id}</p>
+          )}
         </div>
       </div>
 
