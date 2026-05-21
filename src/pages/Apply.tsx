@@ -23,7 +23,6 @@ export default function Apply() {
       .from('products')
       .select('*')
       .eq('slug', productSlug)
-      .eq('status', 'published')
       .single()
       .then(({ data, error: e }) => {
         if (e || !data) setError(true)
@@ -63,7 +62,7 @@ export default function Apply() {
   }
 
   // ── Legacy format: FormSchema with steps ──────────────────────
-  if (Array.isArray((cfg as FormSchema)?.steps)) {
+  if (Array.isArray((cfg as unknown as FormSchema)?.steps)) {
     return <FormRunner product={product} fromSlug={fromSlug} />
   }
 

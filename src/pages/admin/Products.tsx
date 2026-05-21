@@ -132,7 +132,7 @@ function ActionsDropdown({
 
   const copyLinks = [
     { icon: Globe,        label: 'Funil Completo',      desc: 'Sales Page + Quizz',  url: `${origin}/${row.slug}` },
-    { icon: Users,        label: 'Somente Quizz',        desc: 'Formulário direto',   url: `${origin}/apply?p=${row.slug}` },
+    { icon: Users,        label: 'Somente Quizz',        desc: 'Formulário direto',   url: `${origin}/apply?product=${row.slug}` },
     ...(row.hasPrice
       ? [{ icon: ShoppingCart, label: 'Direto pro Checkout', desc: 'Requer preço ativo',  url: `${origin}/checkout/${row.slug}` }]
       : []
