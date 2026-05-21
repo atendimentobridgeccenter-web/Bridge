@@ -47,16 +47,18 @@ export default function Apply() {
     )
   }
 
-  const cfg = product.form_logic_config as Record<string, unknown>
+  const cfg            = product.form_logic_config as Record<string, unknown>
+  const checkoutCfg    = (product.checkout_config  ?? {}) as Record<string, unknown>
+  const checkoutActive = checkoutCfg?.type !== 'lead'
 
   // ── New format: FormNode[] produced by FormBuilder ────────────
   if (Array.isArray(cfg?.nodes) && (cfg.nodes as FormNode[]).length > 0) {
     return (
       <QuizzRunner
         nodes={cfg.nodes as FormNode[]}
-        productId={product.id}
+        productId={checkoutActive ? product.id : undefined}
         productName={product.name}
-        defaultPriceId={product.price_id_stripe ?? undefined}
+        defaultPriceId={checkoutActive ? (product.price_id_stripe ?? undefined) : undefined}
       />
     )
   }

@@ -239,6 +239,22 @@ function GeralPanel({
 
 // ── Precificação tab ──────────────────────────────────────────
 
+function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="relative shrink-0 w-11 h-6 rounded-full transition-all duration-200"
+      style={{ background: enabled ? '#E8521A' : 'rgba(255,255,255,0.1)' }}
+    >
+      <span
+        className="absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm"
+        style={{ transform: enabled ? 'translateX(24px)' : 'translateX(4px)' }}
+      />
+    </button>
+  )
+}
+
 function PrecificacaoPanel({
   product, onUpdate, formNodes,
 }: {
@@ -246,13 +262,26 @@ function PrecificacaoPanel({
   onUpdate:  (fields: Partial<Product>) => void
   formNodes: FormNode[]
 }) {
-  const [showCreate,      setShowCreate]      = useState(false)
-  const [createAmount,    setCreateAmount]    = useState('')
-  const [createCurrency,  setCreateCurrency]  = useState<'brl' | 'jpy'>('brl')
-  const [createLoading,   setCreateLoading]   = useState(false)
-  const [createError,     setCreateError]     = useState<string | null>(null)
+  const [showCreate,     setShowCreate]     = useState(false)
+  const [createAmount,   setCreateAmount]   = useState('')
+  const [createCurrency, setCreateCurrency] = useState<'brl' | 'jpy'>('brl')
+  const [createLoading,  setCreateLoading]  = useState(false)
+  const [createError,    setCreateError]    = useState<string | null>(null)
 
-  // Collect all option prices from quiz nodes
+  // Derive checkout enabled from checkout_config.type
+  const checkoutCfg     = (product.checkout_config ?? {}) as Record<string, unknown>
+  const checkoutEnabled = checkoutCfg?.type !== 'lead'
+
+  function toggleCheckout() {
+    onUpdate({
+      checkout_config: {
+        ...checkoutCfg,
+        type: checkoutEnabled ? 'lead' : 'paid',
+      } as Product['checkout_config'],
+    })
+  }
+
+  // Collect option prices from quiz nodes
   const quizPrices: { option: string; priceId: string; amount: number; currency: string }[] = []
   for (const node of formNodes) {
     if (node.optionPrices) {
@@ -269,10 +298,8 @@ function PrecificacaoPanel({
     if (!product.id || !product.name) return
     const amount = parseFloat(createAmount.replace(',', '.'))
     if (isNaN(amount) || amount <= 0) { setCreateError('Informe um valor válido.'); return }
-
     setCreateLoading(true)
     setCreateError(null)
-
     try {
       const { data, error } = await supabase.functions.invoke('sync-stripe-product', {
         body: {
@@ -283,10 +310,8 @@ function PrecificacaoPanel({
           currency:    createCurrency,
         },
       })
-
       if (error) throw new Error(typeof error === 'object' && 'message' in error ? String((error as {message: unknown}).message) : String(error))
       if (!data?.priceId) throw new Error('Resposta inválida da função.')
-
       onUpdate({ price_id_stripe: data.priceId as string })
       setShowCreate(false)
       setCreateAmount('')
@@ -301,173 +326,170 @@ function PrecificacaoPanel({
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Checkout Status ─────────────────────────────────────── */}
+      {/* ── Toggle principal ──────────────────────────────────────── */}
       <div
-        className="flex items-center gap-4 px-5 py-4 rounded-xl"
-        style={hasPrice
-          ? { background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }
-          : { background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }
+        className="flex items-center gap-4 px-5 py-4 rounded-xl transition-all"
+        style={checkoutEnabled
+          ? { background: 'rgba(232,82,26,0.06)', border: '1px solid rgba(232,82,26,0.18)' }
+          : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }
         }
       >
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={hasPrice
-            ? { background: 'rgba(52,211,153,0.12)' }
-            : { background: 'rgba(251,191,36,0.12)' }
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all"
+          style={checkoutEnabled
+            ? { background: 'rgba(232,82,26,0.12)' }
+            : { background: 'rgba(255,255,255,0.05)' }
           }
         >
-          {hasPrice
-            ? <Check className="w-4 h-4 text-emerald-400" />
-            : <AlertTriangle className="w-4 h-4 text-amber-400" />
-          }
+          <CreditCard className={cn('w-4 h-4', checkoutEnabled ? 'text-[#E8521A]' : 'text-white/25')} />
         </div>
+
         <div className="flex-1 min-w-0">
-          <p className={cn('text-[13px] font-semibold', hasPrice ? 'text-emerald-400' : 'text-amber-400')}>
-            {hasPrice ? 'Checkout ativo' : 'Checkout desabilitado'}
+          <p className={cn('text-[14px] font-bold tracking-tight', checkoutEnabled ? 'text-[#EDEDED]' : 'text-white/35')}>
+            Checkout de Pagamento
           </p>
-          <p className="text-[11px] text-white/35 mt-0.5 truncate">
-            {hasPrice
-              ? `price_${rawId}`
-              : 'Configure um preço abaixo para habilitar o botão de pagamento.'}
+          <p className="text-[11px] text-white/30 mt-0.5">
+            {checkoutEnabled
+              ? 'Ativo — o quizz vai redirecionar para o Stripe ao final.'
+              : 'Desativado — o quizz funciona apenas como captação de lead.'}
           </p>
         </div>
-        {hasPrice && (
-          <a
-            href={`https://dashboard.stripe.com/prices/${product.price_id_stripe}`}
-            target="_blank" rel="noreferrer"
-            className="shrink-0 text-[11px] text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3" /> Ver no Stripe
-          </a>
-        )}
+
+        <Toggle enabled={checkoutEnabled} onToggle={toggleCheckout} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── Configuração de preço (só quando checkout ativo) ────── */}
+      {checkoutEnabled ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* ── Preço Principal ───────────────────────────────────── */}
-        <div className="flex flex-col gap-4">
-          <Section title="Selecionar Preço Existente" description="Busca preços ativos na sua conta Stripe.">
-            <Field label="Preço do Stripe" hint="Busca automática — clique para abrir a lista.">
-              <StripePricePicker
-                value={product.price_id_stripe ?? ''}
-                onChange={(priceId, _meta) => onUpdate({ price_id_stripe: priceId })}
-              />
-            </Field>
-            <a
-              href="https://dashboard.stripe.com/products"
-              target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] text-white/30 hover:text-white/60 transition-colors"
-            >
-              <ExternalLink className="w-3 h-3" /> Abrir Stripe Dashboard
-            </a>
-          </Section>
-
-          {/* ── Criar Preço no Stripe ──────────────────────────── */}
-          <Section title="Criar Novo Preço no Stripe" description="Cria o produto e preço no Stripe automaticamente.">
-            {!showCreate ? (
-              <button
-                onClick={() => setShowCreate(true)}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all"
-                style={{ background: 'rgba(232,82,26,0.08)', border: '1px dashed rgba(232,82,26,0.3)', color: '#E8521A' }}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Criar e vincular preço
-              </button>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {/* Valor */}
-                <Field label="Valor">
-                  <div className="flex gap-2">
-                    <select
-                      value={createCurrency}
-                      onChange={e => setCreateCurrency(e.target.value as 'brl' | 'jpy')}
-                      className="px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none appearance-none shrink-0"
-                      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)', width: '80px' }}
-                    >
-                      <option value="brl">BRL</option>
-                      <option value="jpy">JPY</option>
-                    </select>
-                    <input
-                      type="number"
-                      value={createAmount}
-                      onChange={e => setCreateAmount(e.target.value)}
-                      placeholder={createCurrency === 'brl' ? '297,00' : '12000'}
-                      className="flex-1 px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none [appearance:textfield]"
-                      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-white/25 mt-1">
-                    {createCurrency === 'brl' ? 'Valor em reais (ex: 297 = R$297,00)' : 'Valor em ienes (ex: 12000 = ¥12.000)'}
-                  </p>
-                </Field>
-
-                {createError && (
-                  <p className="text-[11px] text-red-400 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3 h-3 shrink-0" /> {createError}
-                  </p>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCreatePrice}
-                    disabled={createLoading || !createAmount}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all disabled:opacity-50"
-                    style={{ background: '#E8521A' }}
-                  >
-                    {createLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                    {createLoading ? 'Criando…' : 'Criar no Stripe'}
-                  </button>
-                  <button
-                    onClick={() => { setShowCreate(false); setCreateError(null); setCreateAmount('') }}
-                    className="px-4 py-2.5 rounded-lg text-[12px] text-white/30 hover:text-white/60 transition-colors"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
-                  >
-                    Cancelar
-                  </button>
+          {/* Preço Principal */}
+          <div className="flex flex-col gap-4">
+            <Section title="Selecionar Preço Existente" description="Busca preços ativos na sua conta Stripe.">
+              <Field label="Preço do Stripe" hint="Clique para buscar preços ativos.">
+                <StripePricePicker
+                  value={product.price_id_stripe ?? ''}
+                  onChange={(priceId) => onUpdate({ price_id_stripe: priceId })}
+                />
+              </Field>
+              {hasPrice && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                  style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+                  <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-[11px] text-emerald-400 font-mono truncate flex-1">price_{rawId}</span>
+                  <a href={`https://dashboard.stripe.com/prices/${product.price_id_stripe}`}
+                    target="_blank" rel="noreferrer"
+                    className="text-[10px] text-white/25 hover:text-white/50 flex items-center gap-1 shrink-0">
+                    <ExternalLink className="w-2.5 h-2.5" /> Stripe
+                  </a>
                 </div>
+              )}
+              <a href="https://dashboard.stripe.com/products" target="_blank" rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-white/25 hover:text-white/50 transition-colors">
+                <ExternalLink className="w-3 h-3" /> Abrir Stripe Dashboard
+              </a>
+            </Section>
+
+            {/* Criar Preço no Stripe */}
+            <Section title="Criar Novo Preço no Stripe" description="Cria o produto e preço no Stripe automaticamente.">
+              {!showCreate ? (
+                <button onClick={() => setShowCreate(true)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-[13px] font-semibold transition-all"
+                  style={{ background: 'rgba(232,82,26,0.08)', border: '1px dashed rgba(232,82,26,0.3)', color: '#E8521A' }}>
+                  <Plus className="w-3.5 h-3.5" /> Criar e vincular preço
+                </button>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <Field label="Valor">
+                    <div className="flex gap-2">
+                      <select value={createCurrency} onChange={e => setCreateCurrency(e.target.value as 'brl' | 'jpy')}
+                        className="px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none appearance-none"
+                        style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)', width: '80px' }}>
+                        <option value="brl">BRL</option>
+                        <option value="jpy">JPY</option>
+                      </select>
+                      <input type="number" value={createAmount} onChange={e => setCreateAmount(e.target.value)}
+                        placeholder={createCurrency === 'brl' ? '297' : '12000'}
+                        className="flex-1 px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none [appearance:textfield]"
+                        style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }} />
+                    </div>
+                    <p className="text-[10px] text-white/25 mt-1">
+                      {createCurrency === 'brl' ? 'Valor em reais (297 = R$297,00)' : 'Valor em ienes (12000 = ¥12.000)'}
+                    </p>
+                  </Field>
+                  {createError && (
+                    <p className="text-[11px] text-red-400 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3 h-3 shrink-0" /> {createError}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button onClick={handleCreatePrice} disabled={createLoading || !createAmount}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all disabled:opacity-50"
+                      style={{ background: '#E8521A' }}>
+                      {createLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                      {createLoading ? 'Criando…' : 'Criar no Stripe'}
+                    </button>
+                    <button onClick={() => { setShowCreate(false); setCreateError(null); setCreateAmount('') }}
+                      className="px-4 py-2.5 rounded-lg text-[12px] text-white/30 hover:text-white/60 transition-colors"
+                      style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Section>
+          </div>
+
+          {/* Preços do Quizz */}
+          <Section title="Preços por Opção do Quizz" description="Price IDs definidos nas opções do Formulário.">
+            {quizPrices.length === 0 ? (
+              <div className="py-6 flex flex-col items-center gap-2 text-center">
+                <p className="text-[12px] text-white/30">Nenhum preço vinculado a opções do quizz.</p>
+                <p className="text-[11px] text-white/20 leading-relaxed">
+                  Na aba <strong className="text-white/35">Formulário</strong>, selecione uma questão de múltipla escolha
+                  e configure um Price ID por opção.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {quizPrices.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg"
+                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-medium text-[#EDEDED] truncate">{p.option}</p>
+                      <p className="text-[10px] font-mono text-white/25 truncate mt-0.5">{p.priceId}</p>
+                    </div>
+                    <span className="text-[13px] font-bold font-mono text-[#E8521A] shrink-0">
+                      {p.currency.toUpperCase() === 'JPY'
+                        ? `¥${p.amount.toLocaleString()}`
+                        : `R$${(p.amount / 100).toFixed(2)}`}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </Section>
         </div>
-
-        {/* ── Preços do Quizz ────────────────────────────────────── */}
-        <Section
-          title="Preços por Opção do Quizz"
-          description="Price IDs definidos nas opções do Formulário de Qualificação."
-        >
-          {quizPrices.length === 0 ? (
-            <div className="py-6 flex flex-col items-center gap-2 text-center">
-              <p className="text-[12px] text-white/30 leading-relaxed">
-                Nenhum preço vinculado a opções do quizz.
-              </p>
-              <p className="text-[11px] text-white/20 leading-relaxed">
-                Na aba <strong className="text-white/35">Formulário</strong>, selecione uma questão
-                de múltipla escolha e configure um Price ID por opção.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {quizPrices.map((p, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <div className="min-w-0">
-                    <p className="text-[12px] font-medium text-[#EDEDED] truncate">{p.option}</p>
-                    <p className="text-[10px] font-mono text-white/25 truncate mt-0.5">{p.priceId}</p>
-                  </div>
-                  <span className="text-[13px] font-bold font-mono text-[#E8521A] shrink-0">
-                    {p.currency.toUpperCase() === 'JPY'
-                      ? `¥${p.amount.toLocaleString()}`
-                      : `R$${(p.amount / 100).toFixed(2)}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Section>
-      </div>
+      ) : (
+        /* ── Modo Captação de Lead ────────────────────────────────── */
+        <div className="flex flex-col items-center justify-center py-10 gap-4 text-center rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <CreditCard className="w-5 h-5 text-white/20" />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-white/30">Modo Captação de Lead</p>
+            <p className="text-[11px] text-white/20 mt-1 leading-relaxed max-w-xs">
+              O quizz coletará os dados do lead e exibirá uma tela de confirmação.<br />
+              Nenhum redirecionamento para checkout será feito.
+            </p>
+          </div>
+          <button onClick={toggleCheckout}
+            className="text-[11px] text-[#E8521A]/70 hover:text-[#E8521A] transition-colors">
+            Ativar checkout →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
