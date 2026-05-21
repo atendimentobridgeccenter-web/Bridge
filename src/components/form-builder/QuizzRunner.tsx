@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock, ShieldCheck, Loader2 } from 'lucide-react'
+import { ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock, ShieldCheck, Loader2, AlertTriangle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { FormNode, OptionPrice, NodeType } from './FormBuilder'
 
@@ -178,13 +178,35 @@ function CheckoutSummary({
   nodes:       FormNode[]
   answers:     Record<string, string>
 }) {
-  const [loading, setLoading] = useState(false)
-  const [errMsg,  setErrMsg]  = useState<string | null>(null)
+  const [loading,          setLoading]          = useState(false)
+  const [errMsg,           setErrMsg]           = useState<string | null>(null)
+  const [resolvedPriceInfo, setResolvedPriceInfo] = useState<OptionPrice | null>(priceInfo)
 
   const email = findAnswerByType('email', nodes, answers)
   const name  = findAnswerByType('text',  nodes, answers)
 
   const canCheckout = !!priceId && !!productId
+
+  // Fetch price metadata when we have a priceId but no display info
+  useEffect(() => {
+    if (!priceId || resolvedPriceInfo) return
+    supabase.functions.invoke('list-stripe-prices')
+      .then(({ data }) => {
+        const found = (data?.prices ?? []).find(
+          (p: { priceId: string; amount: number; currency: string; nickname: string | null; productName: string }) =>
+            p.priceId === priceId,
+        )
+        if (found) {
+          setResolvedPriceInfo({
+            priceId:  found.priceId,
+            label:    found.nickname ?? found.productName,
+            amount:   found.amount,
+            currency: found.currency,
+          })
+        }
+      })
+      .catch(() => {}) // silent — "Calculado no checkout" is acceptable fallback
+  }, [priceId, resolvedPriceInfo])
 
   async function handleCheckout() {
     if (!canCheckout) return
@@ -196,14 +218,20 @@ function CheckoutSummary({
         body: { productId, priceId, email, name },
       })
 
-      if (error) throw error
+      if (error) {
+        const msg = typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : JSON.stringify(error)
+        throw new Error(msg)
+      }
       if (data?.url) {
         window.location.href = data.url as string
       } else {
-        throw new Error('URL não retornada pela função.')
+        throw new Error(data?.error ?? 'URL de checkout não retornada.')
       }
     } catch (err) {
-      setErrMsg('Não foi possível gerar a sessão. Tente novamente.')
+      console.error('[checkout]', err)
+      setErrMsg(err instanceof Error ? err.message : 'Erro ao gerar sessão.')
       setLoading(false)
     }
   }
@@ -266,17 +294,29 @@ function CheckoutSummary({
           {/* Price row */}
           <div className="px-6 py-5 flex items-center justify-between">
             <span className="text-[14px] font-semibold text-[#E2E8F0]">Total</span>
-            {priceInfo ? (
+            {resolvedPriceInfo ? (
               <span className="text-[26px] font-bold tracking-tight" style={{ color: '#F1F5F9' }}>
-                {formatAmount(priceInfo.amount, priceInfo.currency)}
+                {formatAmount(resolvedPriceInfo.amount, resolvedPriceInfo.currency)}
               </span>
             ) : (
               <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                Calculado no checkout
+                {priceId ? 'Carregando…' : 'Calculado no checkout'}
               </span>
             )}
           </div>
         </div>
+
+        {/* Sem preço configurado */}
+        {!canCheckout && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-[12px] text-amber-300/70 leading-relaxed">
+              Preço não configurado neste produto. Configure um preço Stripe na aba{' '}
+              <strong className="text-amber-300">Precificação</strong> do painel admin para habilitar o pagamento.
+            </p>
+          </div>
+        )}
 
         {/* CTA */}
         <button
@@ -304,7 +344,11 @@ function CheckoutSummary({
         </button>
 
         {errMsg && (
-          <p className="text-center text-[12px]" style={{ color: '#F87171' }}>{errMsg}</p>
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
+            style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-400">{errMsg}</p>
+          </div>
         )}
 
         {/* Trust badge */}
