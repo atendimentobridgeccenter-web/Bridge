@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import FormRunner from '@/form/FormRunner'
 import QuizzRunner from '@/components/form-builder/QuizzRunner'
+import type { TrackingConfig } from '@/components/form-builder/QuizzRunner'
 import type { Product, FormSchema } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
 
@@ -50,15 +51,19 @@ export default function Apply() {
   const cfg            = product.form_logic_config as Record<string, unknown>
   const checkoutCfg    = (product.checkout_config  ?? {}) as Record<string, unknown>
   const checkoutActive = checkoutCfg?.type !== 'lead'
+  const trackingCfg    = (checkoutCfg.tracking ?? {}) as TrackingConfig
+  const hasTracking    = Object.values(trackingCfg).some(Boolean)
 
   // ── New format: FormNode[] produced by FormBuilder ────────────
   if (Array.isArray(cfg?.nodes) && (cfg.nodes as FormNode[]).length > 0) {
     return (
       <QuizzRunner
         nodes={cfg.nodes as FormNode[]}
-        productId={checkoutActive ? product.id : undefined}
+        productId={product.id}
+        enableCheckout={checkoutActive}
         productName={product.name}
         defaultPriceId={checkoutActive ? (product.price_id_stripe ?? undefined) : undefined}
+        tracking={hasTracking ? trackingCfg : undefined}
       />
     )
   }

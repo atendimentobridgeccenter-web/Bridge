@@ -4,7 +4,7 @@ import {
   ArrowLeft, Save, Globe, Settings, CreditCard,
   ClipboardList, LayoutTemplate, ExternalLink,
   Loader2, Check, Image as ImageIcon, Upload,
-  AlertTriangle, Zap, Plus,
+  AlertTriangle, Zap, Plus, Radio, Tag,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -15,6 +15,7 @@ import StripePricePicker from '@/components/StripePricePicker'
 import { useProduct } from '@/hooks/useProduct'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useBuilderStore } from '@/stores/useBuilderStore'
+import type { TrackingConfig } from '@/components/form-builder/QuizzRunner'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -24,12 +25,13 @@ const BG_INPUT = '#0D0E12'
 
 // ── Tabs config ───────────────────────────────────────────────
 
-type TabId = 'geral' | 'precificacao' | 'formulario' | 'vendas'
+type TabId = 'geral' | 'precificacao' | 'formulario' | 'rastreio' | 'vendas'
 
 const TABS: { id: TabId; icon: React.ElementType; label: string }[] = [
   { id: 'geral',        icon: Settings,      label: 'Geral'           },
   { id: 'precificacao', icon: CreditCard,     label: 'Precificação'    },
   { id: 'formulario',   icon: ClipboardList,  label: 'Formulário'      },
+  { id: 'rastreio',     icon: Radio,          label: 'Rastreio'        },
   { id: 'vendas',       icon: LayoutTemplate, label: 'Página de Vendas'},
 ]
 
@@ -500,6 +502,169 @@ function FormularioPanel({ nodes, onChange }: { nodes: FormNode[]; onChange: (no
   return <FormBuilder nodes={nodes} onChange={onChange} />
 }
 
+// ── Rastreio tab ──────────────────────────────────────────────
+
+function RastreioPanel({
+  product, onUpdate,
+}: {
+  product:  Partial<Product>
+  onUpdate: (fields: Partial<Product>) => void
+}) {
+  const checkoutCfg = (product.checkout_config ?? {}) as Record<string, unknown>
+  const tracking    = (checkoutCfg.tracking ?? {}) as TrackingConfig
+
+  function updateTracking(patch: Partial<TrackingConfig>) {
+    onUpdate({
+      checkout_config: {
+        ...checkoutCfg,
+        tracking: { ...tracking, ...patch },
+      } as Product['checkout_config'],
+    })
+  }
+
+  const labelCls = 'text-[12px] font-semibold text-white/50'
+  const hintCls  = 'text-[11px] text-white/25 mt-0.5'
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      {/* ── Coluna esquerda: pixels ── */}
+      <div className="flex flex-col gap-5">
+
+        {/* Meta Pixel */}
+        <Section title="Meta Pixel (Facebook Ads)" description="Rastreia visitantes e conversões para suas campanhas no Meta.">
+          <Field label="Pixel ID" hint="Ex: 1234567890123456">
+            <Input
+              value={tracking.metaPixelId ?? ''}
+              onChange={v => updateTracking({ metaPixelId: v || undefined })}
+              placeholder="Pixel ID do Meta"
+              mono
+            />
+          </Field>
+          {tracking.metaPixelId && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="text-[11px] text-emerald-400">Pixel configurado — será injetado no carregamento do formulário</span>
+            </div>
+          )}
+        </Section>
+
+        {/* Google Analytics */}
+        <Section title="Google Analytics 4" description="Rastreie sessões, eventos e conversões via GA4.">
+          <Field label="Measurement ID" hint="Ex: G-XXXXXXXXXX">
+            <Input
+              value={tracking.gaMeasurementId ?? ''}
+              onChange={v => updateTracking({ gaMeasurementId: v || undefined })}
+              placeholder="G-XXXXXXXXXX"
+              mono
+            />
+          </Field>
+        </Section>
+
+        {/* Google Tag Manager */}
+        <Section title="Google Tag Manager" description="Gerencie todos os seus scripts via GTM sem alterar o código.">
+          <Field label="Container ID" hint="Ex: GTM-XXXXXXX">
+            <Input
+              value={tracking.gtmContainerId ?? ''}
+              onChange={v => updateTracking({ gtmContainerId: v || undefined })}
+              placeholder="GTM-XXXXXXX"
+              mono
+            />
+          </Field>
+        </Section>
+
+        {/* Google Ads */}
+        <Section title="Google Ads Conversion" description="Dispara uma conversão específica quando o lead conclui o formulário.">
+          <Field label="Conversion ID" hint="Ex: AW-XXXXXXXXX">
+            <Input
+              value={tracking.googleAdsConversionId ?? ''}
+              onChange={v => updateTracking({ googleAdsConversionId: v || undefined })}
+              placeholder="AW-XXXXXXXXX"
+              mono
+            />
+          </Field>
+          <Field label="Conversion Label">
+            <Input
+              value={tracking.googleAdsConversionLabel ?? ''}
+              onChange={v => updateTracking({ googleAdsConversionLabel: v || undefined })}
+              placeholder="XXXXXXXXXXX"
+              mono
+            />
+          </Field>
+        </Section>
+      </div>
+
+      {/* ── Coluna direita: nomes de eventos + info ── */}
+      <div className="flex flex-col gap-5">
+
+        {/* Personalizar nomes de eventos */}
+        <Section title="Personalizar Eventos" description="Nome do evento disparado ao concluir o formulário e ao efetuar uma compra.">
+          <div className="flex items-center gap-2 mb-1">
+            <Tag className="w-3.5 h-3.5 text-white/30" />
+            <p className={labelCls}>Evento de Lead (form concluído)</p>
+          </div>
+          <Input
+            value={tracking.leadEventName ?? ''}
+            onChange={v => updateTracking({ leadEventName: v || undefined })}
+            placeholder="Lead"
+          />
+          <p className={hintCls}>Padrão: <code className="text-white/40">Lead</code> — dispara no Meta Pixel e GA4</p>
+
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '4px 0' }} />
+
+          <div className="flex items-center gap-2 mb-1">
+            <Tag className="w-3.5 h-3.5 text-white/30" />
+            <p className={labelCls}>Evento de Compra (checkout concluído)</p>
+          </div>
+          <Input
+            value={tracking.purchaseEventName ?? ''}
+            onChange={v => updateTracking({ purchaseEventName: v || undefined })}
+            placeholder="Purchase"
+          />
+          <p className={hintCls}>Padrão: <code className="text-white/40">Purchase</code> — disparado via Stripe webhook</p>
+        </Section>
+
+        {/* Como funciona */}
+        <div className="rounded-xl p-5 flex flex-col gap-3"
+          style={{ background: 'rgba(232,82,26,0.04)', border: '1px solid rgba(232,82,26,0.12)' }}>
+          <p className="text-[12px] font-semibold text-[#EDEDED]">Como funciona o rastreio</p>
+          <div className="flex flex-col gap-2.5 text-[11px] leading-relaxed text-white/40">
+            <div className="flex gap-2">
+              <span className="text-[#E8521A] shrink-0 mt-0.5">①</span>
+              <span>Os scripts (Pixel, GA4, GTM) são injetados quando o visitante abre o formulário.</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-[#E8521A] shrink-0 mt-0.5">②</span>
+              <span>Ao concluir o formulário (lead qualificado), o evento de <strong className="text-white/60">Lead</strong> é disparado automaticamente.</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-[#E8521A] shrink-0 mt-0.5">③</span>
+              <span>Leads desqualificados pelas regras de lógica <strong className="text-white/60">não disparam</strong> eventos de conversão.</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-[#E8521A] shrink-0 mt-0.5">④</span>
+              <span>O evento de <strong className="text-white/60">Purchase</strong> é disparado pelo webhook Stripe após pagamento confirmado.</span>
+            </div>
+          </div>
+        </div>
+
+        {/* CRM info */}
+        <div className="rounded-xl p-5 flex flex-col gap-3"
+          style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.12)' }}>
+          <p className="text-[12px] font-semibold text-[#EDEDED]">CRM automático</p>
+          <p className="text-[11px] text-white/40 leading-relaxed">
+            Todo lead que conclui o formulário é salvo automaticamente na tabela <code className="text-emerald-400/70">leads</code> com nome, e-mail, telefone, cidade, estado, respostas completas e status de qualificação.
+          </p>
+          <p className="text-[11px] text-emerald-400/60">
+            Acesse os leads em breve na seção CRM do painel Bridge.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Vendas tab ────────────────────────────────────────────────
 
 function VendasPanel({ productId, productSlug }: { productId: string; productSlug?: string }) {
@@ -722,6 +887,12 @@ export default function ProductConfigPage() {
               product={displayProduct}
               onUpdate={patchProduct}
               formNodes={formNodes}
+            />
+          )}
+          {tab === 'rastreio' && (
+            <RastreioPanel
+              product={displayProduct}
+              onUpdate={patchProduct}
             />
           )}
           {tab === 'vendas' && (

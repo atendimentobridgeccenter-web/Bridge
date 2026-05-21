@@ -1,17 +1,34 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock, ShieldCheck, Loader2, AlertTriangle } from 'lucide-react'
+import {
+  ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock,
+  ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { FormNode, OptionPrice, NodeType } from './FormBuilder'
 
-// ── Public types ──────────────────────────────────────────────
+// ── Tracking config (exported — usado em Apply.tsx e ProductConfigPage) ──
+
+export interface TrackingConfig {
+  metaPixelId?:             string  // Facebook/Meta Pixel ID
+  gaMeasurementId?:         string  // GA4 Measurement ID (G-XXXXXXXX)
+  gtmContainerId?:          string  // Google Tag Manager (GTM-XXXXXXX)
+  googleAdsConversionId?:   string  // Google Ads (AW-XXXXXXXXX)
+  googleAdsConversionLabel?: string
+  leadEventName?:           string  // nome do evento no form completion (default "Lead")
+  purchaseEventName?:       string  // nome do evento na compra (default "Purchase")
+}
+
+// ── Props ─────────────────────────────────────────────────────
 
 export interface QuizzRunnerProps {
-  nodes:            FormNode[]
-  productId?:       string        // enables checkout flow
-  productName?:     string        // shown in CheckoutSummary
-  defaultPriceId?:  string        // fallback if no option carries a price
-  onComplete?:      (answers: Record<string, string>) => void
+  nodes:           FormNode[]
+  productId?:      string        // UUID do produto — para salvar lead + checkout
+  enableCheckout?: boolean       // mostra checkout no final (padrão: !!productId)
+  productName?:    string
+  defaultPriceId?: string
+  tracking?:       TrackingConfig
+  onComplete?:     (answers: Record<string, string>) => void
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -20,11 +37,10 @@ const LETTER = (i: number) => String.fromCharCode(65 + i)
 
 function formatAmount(amount: number, currency: string): string {
   const curr = currency.toLowerCase()
-  // JPY and KRW are zero-decimal currencies
   if (curr === 'jpy' || curr === 'krw') {
     return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(amount)
   }
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: curr.toUpperCase() })
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: curr.toUpperCase() })
     .format(amount / 100)
 }
 
@@ -37,7 +53,67 @@ function findAnswerByType(
   return node ? (answers[node.id] ?? '') : ''
 }
 
-// ── Sub-components ─────────────────────────────────────────────
+// ── Tracking injection helpers ────────────────────────────────
+
+function injectInlineScript(code: string, id: string) {
+  if (document.getElementById(id)) return
+  const s = document.createElement('script')
+  s.id = id; s.innerHTML = code
+  document.head.appendChild(s)
+}
+
+function injectScript(src: string, id: string) {
+  if (document.getElementById(id)) return
+  const s = document.createElement('script')
+  s.id = id; s.src = src; s.async = true
+  document.head.appendChild(s)
+}
+
+function injectMetaPixel(pixelId: string) {
+  injectInlineScript(
+    `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${pixelId}');fbq('track','PageView');`,
+    `meta-pixel-${pixelId}`,
+  )
+}
+
+function injectGA4(measurementId: string) {
+  injectScript(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`, `ga4-${measurementId}`)
+  injectInlineScript(
+    `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','${measurementId}');`,
+    `ga4-config-${measurementId}`,
+  )
+}
+
+function injectGTM(containerId: string) {
+  injectInlineScript(
+    `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${containerId}');`,
+    `gtm-${containerId}`,
+  )
+}
+
+function fireMetaEvent(eventName: string) {
+  try { (window as Window & { fbq?: (...a: unknown[]) => void }).fbq?.('track', eventName) } catch { /* silent */ }
+}
+
+function fireGtagEvent(eventName: string, conversionId?: string, conversionLabel?: string) {
+  const g = (window as Window & { gtag?: (...a: unknown[]) => void }).gtag
+  if (!g) return
+  if (conversionId && conversionLabel) {
+    g('event', 'conversion', { send_to: `${conversionId}/${conversionLabel}` })
+  }
+  g('event', eventName)
+}
+
+// ── Sub-components ────────────────────────────────────────────
 
 function ProgressBar({ pct }: { pct: number }) {
   return (
@@ -55,59 +131,40 @@ function ProgressBar({ pct }: { pct: number }) {
 
 function KbdChip({ label }: { label: string }) {
   return (
-    <span
-      className="inline-flex items-center justify-center rounded text-[10px] font-bold shrink-0"
+    <span className="inline-flex items-center justify-center rounded text-[10px] font-bold shrink-0"
       style={{
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
         color: 'rgba(255,255,255,0.4)',
-        minWidth: label.length > 1 ? 'auto' : '20px',
-        height: '20px',
+        minWidth: label.length > 1 ? 'auto' : '20px', height: '20px',
         padding: label.length > 1 ? '0 5px' : undefined,
-      }}
-    >
+      }}>
       {label}
     </span>
   )
 }
 
-function OptionBtn({
-  letter, label, selected, priceTag, onClick,
-}: {
-  letter:    string
-  label:     string
-  selected:  boolean
-  priceTag?: string
-  onClick:   () => void
+function OptionBtn({ letter, label, selected, priceTag, onClick }: {
+  letter: string; label: string; selected: boolean; priceTag?: string; onClick: () => void
 }) {
   return (
-    <button
-      onClick={onClick}
+    <button onClick={onClick}
       className="flex items-center gap-3 w-full p-4 rounded-xl text-left transition-all duration-150"
       style={{
         background: selected ? 'rgba(232,82,26,0.1)' : '#1E202A',
         border:     selected ? '1px solid rgba(232,82,26,0.5)' : '1px solid rgba(255,255,255,0.05)',
-        boxShadow:  selected ? '0 0 0 1px rgba(232,82,26,0.15), 0 4px 16px rgba(232,82,26,0.08)' : 'none',
+        boxShadow:  selected ? '0 0 0 1px rgba(232,82,26,0.15),0 4px 16px rgba(232,82,26,0.08)' : 'none',
       }}
-      onMouseEnter={e => {
-        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,82,26,0.3)'
-      }}
-      onMouseLeave={e => {
-        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.05)'
-      }}
+      onMouseEnter={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,82,26,0.3)' }}
+      onMouseLeave={e => { if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.05)' }}
     >
       <KbdChip label={letter} />
-      <span
-        className="flex-1 text-[15px] leading-snug transition-colors"
-        style={{ color: selected ? '#F1F5F9' : '#A1A1AA' }}
-      >
+      <span className="flex-1 text-[15px] leading-snug transition-colors"
+        style={{ color: selected ? '#F1F5F9' : '#A1A1AA' }}>
         {label}
       </span>
       {priceTag && (
-        <span
-          className="text-[11px] font-semibold shrink-0"
-          style={{ color: selected ? '#E8521A' : 'rgba(255,255,255,0.25)' }}
-        >
+        <span className="text-[11px] font-semibold shrink-0"
+          style={{ color: selected ? '#E8521A' : 'rgba(255,255,255,0.25)' }}>
           {priceTag}
         </span>
       )}
@@ -115,13 +172,26 @@ function OptionBtn({
   )
 }
 
-function AnswerInput({
-  node, value, onChange, onEnter,
-}: {
-  node:     FormNode
-  value:    string
-  onChange: (v: string) => void
-  onEnter:  () => void
+// Mascaras para CPF e telefone
+function maskCPF(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 3)  return d
+  if (d.length <= 6)  return `${d.slice(0,3)}.${d.slice(3)}`
+  if (d.length <= 9)  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`
+}
+
+function maskPhone(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 11)
+  if (d.length === 0)  return ''
+  if (d.length <= 2)   return `(${d}`
+  if (d.length <= 6)   return `(${d.slice(0,2)}) ${d.slice(2)}`
+  if (d.length <= 10)  return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
+  return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
+}
+
+function AnswerInput({ node, value, onChange, onEnter }: {
+  node: FormNode; value: string; onChange: (v: string) => void; onEnter: () => void
 }) {
   const borderColor = value ? '#E8521A' : 'rgba(255,255,255,0.12)'
   const sharedCls = `
@@ -132,238 +202,206 @@ function AnswerInput({
 
   if (node.type === 'textarea') {
     return (
-      <textarea
-        autoFocus
-        value={value}
+      <textarea autoFocus value={value}
         onChange={e => onChange(e.target.value)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEnter() }
-        }}
-        placeholder="Escreva aqui…"
-        rows={4}
+        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEnter() } }}
+        placeholder="Escreva aqui…" rows={4}
         className={sharedCls + ' resize-none'}
-        style={{ borderBottomColor: borderColor }}
-      />
+        style={{ borderBottomColor: borderColor }} />
+    )
+  }
+
+  if (node.type === 'phone') {
+    return (
+      <input autoFocus type="tel" value={value}
+        onChange={e => onChange(maskPhone(e.target.value))}
+        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
+        placeholder="(11) 99999-9999"
+        className={sharedCls} style={{ borderBottomColor: borderColor }} />
+    )
+  }
+
+  if (node.type === 'cpf') {
+    return (
+      <input autoFocus type="text" value={value}
+        onChange={e => onChange(maskCPF(e.target.value))}
+        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
+        placeholder="000.000.000-00"
+        className={sharedCls} style={{ borderBottomColor: borderColor }} />
+    )
+  }
+
+  if (node.type === 'date') {
+    return (
+      <input autoFocus type="date" value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
+        className={sharedCls + ' [color-scheme:dark]'}
+        style={{ borderBottomColor: borderColor }} />
+    )
+  }
+
+  if (node.type === 'number') {
+    return (
+      <input autoFocus type="number" value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
+        placeholder="0"
+        className={sharedCls + ' [appearance:textfield]'}
+        style={{ borderBottomColor: borderColor }} />
     )
   }
 
   return (
-    <input
-      autoFocus
+    <input autoFocus
       type={node.type === 'email' ? 'email' : 'text'}
       value={value}
       onChange={e => onChange(e.target.value)}
       onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
-      placeholder={node.type === 'email' ? 'seu@email.com' : 'Escreva aqui…'}
-      className={sharedCls}
-      style={{ borderBottomColor: borderColor }}
-    />
+      placeholder={
+        node.type === 'email' ? 'seu@email.com' :
+        node.type === 'city'  ? 'Ex: São Paulo' :
+        node.type === 'state' ? 'Ex: SP' :
+        'Escreva aqui…'
+      }
+      className={sharedCls} style={{ borderBottomColor: borderColor }} />
   )
 }
 
-// ── CheckoutSummary ───────────────────────────────────────────
+// ── WelcomeScreen ─────────────────────────────────────────────
 
-function CheckoutSummary({
-  productId,
-  productName,
-  priceId,
-  priceInfo,
-  nodes,
-  answers,
-}: {
-  productId:   string | undefined
-  productName: string | undefined
-  priceId:     string | null
-  priceInfo:   OptionPrice | null
-  nodes:       FormNode[]
-  answers:     Record<string, string>
+function WelcomeScreen({ node, pct, onStart }: {
+  node: FormNode; pct: number; onStart: () => void
 }) {
-  const [loading,          setLoading]          = useState(false)
-  const [errMsg,           setErrMsg]           = useState<string | null>(null)
-  const [resolvedPriceInfo, setResolvedPriceInfo] = useState<OptionPrice | null>(priceInfo)
-
-  const email = findAnswerByType('email', nodes, answers)
-  const name  = findAnswerByType('text',  nodes, answers)
-
-  const canCheckout = !!priceId && !!productId
-
-  // Fetch price metadata when we have a priceId but no display info
-  useEffect(() => {
-    if (!priceId || resolvedPriceInfo) return
-    supabase.functions.invoke('list-stripe-prices')
-      .then(({ data }) => {
-        const found = (data?.prices ?? []).find(
-          (p: { priceId: string; amount: number; currency: string; nickname: string | null; productName: string }) =>
-            p.priceId === priceId,
-        )
-        if (found) {
-          setResolvedPriceInfo({
-            priceId:  found.priceId,
-            label:    found.nickname ?? found.productName,
-            amount:   found.amount,
-            currency: found.currency,
-          })
-        }
-      })
-      .catch(() => {}) // silent — "Calculado no checkout" is acceptable fallback
-  }, [priceId, resolvedPriceInfo])
-
-  async function handleCheckout() {
-    if (!canCheckout) return
-    setLoading(true)
-    setErrMsg(null)
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { productId, priceId, email, name },
-      })
-
-      if (error) {
-        const msg = typeof error === 'object' && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : JSON.stringify(error)
-        throw new Error(msg)
-      }
-      if (data?.url) {
-        window.location.href = data.url as string
-      } else {
-        throw new Error(data?.error ?? 'URL de checkout não retornada.')
-      }
-    } catch (err) {
-      console.error('[checkout]', err)
-      setErrMsg(err instanceof Error ? err.message : 'Erro ao gerar sessão.')
-      setLoading(false)
-    }
-  }
-
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
-      style={{ background: '#0D0E12' }}
-    >
-      <ProgressBar pct={1} />
-
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
       <motion.div
-        className="w-full max-w-[480px] flex flex-col gap-4"
+        className="w-full max-w-[560px] flex flex-col gap-8 text-center"
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
-          <ShieldCheck className="w-4 h-4" style={{ color: '#E8521A' }} />
-          <span className="text-[12px] font-semibold tracking-widest uppercase"
-            style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Resumo do Pedido
-          </span>
-        </div>
-
-        {/* Receipt card */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}
+        <motion.div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto"
+          style={{ background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}
         >
-          {/* Product block */}
-          <div className="px-6 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <p className="text-[12px] font-semibold uppercase tracking-widest mb-2"
-              style={{ color: 'rgba(255,255,255,0.25)' }}>
-              Produto
-            </p>
-            <p className="text-[20px] font-bold text-[#F1F5F9] tracking-tight">
-              {productName ?? 'Produto'}
-            </p>
-            {priceInfo?.label && (
-              <p className="text-[13px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                {priceInfo.label}
-              </p>
-            )}
-          </div>
+          <Sparkles className="w-8 h-8" style={{ color: '#E8521A' }} />
+        </motion.div>
 
-          {/* Lead info — shown if collected */}
-          {(name || email) && (
-            <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <p className="text-[12px] font-semibold uppercase tracking-widest mb-2"
-                style={{ color: 'rgba(255,255,255,0.25)' }}>
-                Para
-              </p>
-              {name  && <p className="text-[14px] text-[#E2E8F0]">{name}</p>}
-              {email && <p className="text-[12px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{email}</p>}
-            </div>
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight leading-tight text-[#F1F5F9]">
+            {node.title || 'Bem-vindo!'}
+          </h1>
+          {node.description && (
+            <p className="text-[17px] mt-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {node.description}
+            </p>
           )}
-
-          {/* Price row */}
-          <div className="px-6 py-5 flex items-center justify-between">
-            <span className="text-[14px] font-semibold text-[#E2E8F0]">Total</span>
-            {resolvedPriceInfo ? (
-              <span className="text-[26px] font-bold tracking-tight" style={{ color: '#F1F5F9' }}>
-                {formatAmount(resolvedPriceInfo.amount, resolvedPriceInfo.currency)}
-              </span>
-            ) : (
-              <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {priceId ? 'Carregando…' : 'Calculado no checkout'}
-              </span>
-            )}
-          </div>
         </div>
 
-        {/* Sem preço configurado */}
-        {!canCheckout && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
-            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-[12px] text-amber-300/70 leading-relaxed">
-              Preço não configurado neste produto. Configure um preço Stripe na aba{' '}
-              <strong className="text-amber-300">Precificação</strong> do painel admin para habilitar o pagamento.
-            </p>
-          </div>
-        )}
-
-        {/* CTA */}
         <button
-          onClick={handleCheckout}
-          disabled={loading || !canCheckout}
-          className="w-full flex items-center justify-center gap-3 py-4 rounded-xl
-                     text-[15px] font-bold text-white transition-all"
-          style={{
-            background:  canCheckout ? '#E8521A' : 'rgba(255,255,255,0.05)',
-            boxShadow:   canCheckout && !loading ? '0 8px 32px rgba(232,82,26,0.3)' : 'none',
-            cursor:      canCheckout && !loading ? 'pointer' : 'not-allowed',
-          }}
+          onClick={onStart}
+          className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl
+                     text-[15px] font-bold text-white mx-auto transition-all"
+          style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.3)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#E8521A' }}
         >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Gerando ambiente seguro…
-            </>
-          ) : (
-            <>
-              <Lock className="w-4 h-4" />
-              Ir para Pagamento Seguro
-            </>
-          )}
+          {node.buttonLabel || 'Começar →'}
         </button>
 
-        {errMsg && (
-          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
-            style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
-            <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-[12px] text-red-400">{errMsg}</p>
-          </div>
-        )}
+        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>
+          POWERED BY BRIDGE
+        </p>
+      </motion.div>
+    </div>
+  )
+}
 
-        {/* Trust badge */}
-        <div className="flex items-center justify-center gap-2 pt-1">
-          <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.2)' }} />
-          <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Pagamento 100% seguro via <strong>Stripe</strong> · Dados criptografados
-          </p>
+// ── DisqualifiedScreen ────────────────────────────────────────
+
+function DisqualifiedScreen() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={1} />
+      <motion.div
+        className="text-center max-w-md"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <motion.div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8"
+          style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
+        >
+          <XCircle className="w-8 h-8 text-red-400" />
+        </motion.div>
+        <h2 className="text-3xl font-bold text-[#F1F5F9] tracking-tight mb-4">
+          Agradecemos seu interesse
+        </h2>
+        <p className="text-[16px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          Com base nas suas respostas, este produto pode não ser o mais adequado para o seu momento atual.
+          Nossa equipe poderá entrar em contato com indicações personalizadas.
+        </p>
+        <div className="mt-10 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
+          Powered by Bridge
         </div>
       </motion.div>
     </div>
   )
 }
 
-// ── Generic Done Screen (no productId) ───────────────────────
+// ── Custom ThankyouScreen ─────────────────────────────────────
+
+function ThankyouScreen({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={1} />
+      <motion.div
+        className="text-center max-w-md"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <motion.div
+          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-8"
+          style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 18 }}
+        >
+          <CheckCircle className="w-8 h-8 text-emerald-400" />
+        </motion.div>
+        <h2 className="text-4xl font-bold text-[#F1F5F9] tracking-tight mb-4">
+          {title || 'Tudo certo!'}
+        </h2>
+        {description && (
+          <p className="text-[16px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            {description}
+          </p>
+        )}
+        <div className="mt-10 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold"
+          style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)', color: '#E8521A' }}>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E8521A] animate-pulse" />
+          Powered by Bridge
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Generic DoneScreen ────────────────────────────────────────
 
 function DoneScreen() {
   return (
@@ -399,7 +437,160 @@ function DoneScreen() {
   )
 }
 
-// ── Animation config ──────────────────────────────────────────
+// ── CheckoutSummary ───────────────────────────────────────────
+
+function CheckoutSummary({
+  productId, productName, priceId, priceInfo, nodes, answers,
+}: {
+  productId:   string
+  productName: string | undefined
+  priceId:     string | null
+  priceInfo:   OptionPrice | null
+  nodes:       FormNode[]
+  answers:     Record<string, string>
+}) {
+  const [loading,           setLoading]           = useState(false)
+  const [errMsg,            setErrMsg]            = useState<string | null>(null)
+  const [resolvedPriceInfo, setResolvedPriceInfo] = useState<OptionPrice | null>(priceInfo)
+
+  const email = findAnswerByType('email', nodes, answers)
+  const name  = findAnswerByType('text',  nodes, answers)
+
+  const canCheckout = !!priceId && !!productId
+
+  useEffect(() => {
+    if (!priceId || resolvedPriceInfo) return
+    supabase.functions.invoke('list-stripe-prices')
+      .then(({ data }) => {
+        const found = (data?.prices ?? []).find(
+          (p: { priceId: string; amount: number; currency: string; nickname: string | null; productName: string }) =>
+            p.priceId === priceId,
+        )
+        if (found) {
+          setResolvedPriceInfo({
+            priceId:  found.priceId,
+            label:    found.nickname ?? found.productName,
+            amount:   found.amount,
+            currency: found.currency,
+          })
+        }
+      })
+      .catch(() => {})
+  }, [priceId, resolvedPriceInfo])
+
+  async function handleCheckout() {
+    if (!canCheckout) return
+    setLoading(true); setErrMsg(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { productId, priceId, email, name },
+      })
+      if (error) throw new Error(typeof error === 'object' && 'message' in error
+        ? String((error as { message: unknown }).message) : JSON.stringify(error))
+      if (data?.url) { window.location.href = data.url as string }
+      else throw new Error(data?.error ?? 'URL de checkout não retornada.')
+    } catch (err) {
+      setErrMsg(err instanceof Error ? err.message : 'Erro ao gerar sessão.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={1} />
+      <motion.div
+        className="w-full max-w-[480px] flex flex-col gap-4"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <ShieldCheck className="w-4 h-4" style={{ color: '#E8521A' }} />
+          <span className="text-[12px] font-semibold tracking-widest uppercase"
+            style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Resumo do Pedido
+          </span>
+        </div>
+
+        <div className="rounded-2xl overflow-hidden"
+          style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="px-6 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <p className="text-[12px] font-semibold uppercase tracking-widest mb-2"
+              style={{ color: 'rgba(255,255,255,0.25)' }}>Produto</p>
+            <p className="text-[20px] font-bold text-[#F1F5F9] tracking-tight">{productName ?? 'Produto'}</p>
+            {resolvedPriceInfo?.label && (
+              <p className="text-[13px] mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {resolvedPriceInfo.label}
+              </p>
+            )}
+          </div>
+
+          {(name || email) && (
+            <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <p className="text-[12px] font-semibold uppercase tracking-widest mb-2"
+                style={{ color: 'rgba(255,255,255,0.25)' }}>Para</p>
+              {name  && <p className="text-[14px] text-[#E2E8F0]">{name}</p>}
+              {email && <p className="text-[12px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{email}</p>}
+            </div>
+          )}
+
+          <div className="px-6 py-5 flex items-center justify-between">
+            <span className="text-[14px] font-semibold text-[#E2E8F0]">Total</span>
+            {resolvedPriceInfo ? (
+              <span className="text-[26px] font-bold tracking-tight text-[#F1F5F9]">
+                {formatAmount(resolvedPriceInfo.amount, resolvedPriceInfo.currency)}
+              </span>
+            ) : (
+              <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                {priceId ? 'Carregando…' : 'Calculado no checkout'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {!canCheckout && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)' }}>
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-[12px] text-amber-300/70 leading-relaxed">
+              Preço não configurado. Configure um preço Stripe na aba{' '}
+              <strong className="text-amber-300">Precificação</strong>.
+            </p>
+          </div>
+        )}
+
+        <button onClick={handleCheckout} disabled={loading || !canCheckout}
+          className="w-full flex items-center justify-center gap-3 py-4 rounded-xl text-[15px] font-bold text-white transition-all"
+          style={{
+            background: canCheckout ? '#E8521A' : 'rgba(255,255,255,0.05)',
+            boxShadow:  canCheckout && !loading ? '0 8px 32px rgba(232,82,26,0.3)' : 'none',
+            cursor:     canCheckout && !loading ? 'pointer' : 'not-allowed',
+          }}>
+          {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Gerando ambiente seguro…</>
+                   : <><Lock className="w-4 h-4" />Ir para Pagamento Seguro</>}
+        </button>
+
+        {errMsg && (
+          <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg"
+            style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-[12px] text-red-400">{errMsg}</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-center gap-2 pt-1">
+          <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.2)' }} />
+          <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            Pagamento 100% seguro via <strong>Stripe</strong> · Dados criptografados
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Animation ─────────────────────────────────────────────────
 
 const variants = {
   enter:  (dir: number) => ({ opacity: 0, y: dir > 0 ? 44 : -44 }),
@@ -408,22 +599,80 @@ const variants = {
 }
 const transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] as const }
 
-// ── Main Component ────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────
 
 export default function QuizzRunner({
   nodes,
   productId,
+  enableCheckout,
   productName,
   defaultPriceId,
+  tracking,
   onComplete,
 }: QuizzRunnerProps) {
   const [history,         setHistory]         = useState<string[]>(nodes[0] ? [nodes[0].id] : [])
   const [answers,         setAnswers]         = useState<Record<string, string>>({})
   const [draft,           setDraft]           = useState('')
   const [done,            setDone]            = useState(false)
+  const [disqualified,    setDisqualified]    = useState(false)
+  const [thankyouContent, setThankyouContent] = useState<{ title: string; description?: string } | null>(null)
   const [activePriceId,   setActivePriceId]   = useState<string | null>(defaultPriceId ?? null)
   const [activePriceInfo, setActivePriceInfo] = useState<OptionPrice | null>(null)
-  const dirRef = useRef(1)
+  const [leadSaved,       setLeadSaved]       = useState(false)
+  const finalAnswersRef = useRef<Record<string, string>>({})
+  const dirRef          = useRef(1)
+
+  // enableCheckout defaults to true when productId is set
+  const checkoutEnabled = enableCheckout ?? !!productId
+
+  // ── Inject tracking pixels on mount ──────────────────────────
+
+  useEffect(() => {
+    if (!tracking) return
+    if (tracking.gtmContainerId)    injectGTM(tracking.gtmContainerId)
+    if (tracking.gaMeasurementId)   injectGA4(tracking.gaMeasurementId)
+    if (tracking.metaPixelId)       injectMetaPixel(tracking.metaPixelId)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Save lead + fire tracking events when done ────────────────
+
+  useEffect(() => {
+    if ((!done && !disqualified) || leadSaved) return
+    setLeadSaved(true)
+
+    const ans = finalAnswersRef.current
+    const email = findAnswerByType('email', nodes, ans)
+    const phone = findAnswerByType('phone', nodes, ans)
+    const name  = findAnswerByType('text',  nodes, ans)
+    const cpf   = findAnswerByType('cpf',   nodes, ans)
+    const city  = findAnswerByType('city',  nodes, ans)
+    const state = findAnswerByType('state', nodes, ans)
+
+    // Save to leads table (fire and forget)
+    if (productId) {
+      supabase.from('leads').insert({
+        product_id: productId,
+        email:      email || null,
+        phone:      phone || null,
+        name:       name  || null,
+        cpf:        cpf   || null,
+        city:       city  || null,
+        state:      state || null,
+        answers:    ans,
+        qualified:  !disqualified,
+      }).then(() => {}, () => {})
+    }
+
+    // Fire tracking events only when qualified
+    if (!disqualified && tracking) {
+      const leadEvent = tracking.leadEventName || 'Lead'
+      if (tracking.metaPixelId) fireMetaEvent(leadEvent)
+      if (tracking.gaMeasurementId) fireGtagEvent(leadEvent)
+      if (tracking.googleAdsConversionId && tracking.googleAdsConversionLabel) {
+        fireGtagEvent(leadEvent, tracking.googleAdsConversionId, tracking.googleAdsConversionLabel)
+      }
+    }
+  }, [done, disqualified]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Derived ──────────────────────────────────────────────────
 
@@ -431,46 +680,88 @@ export default function QuizzRunner({
   const currentNode = nodes.find(n => n.id === currentId) ?? null
   const currentIdx  = nodes.findIndex(n => n.id === currentId)
   const isChoice    = currentNode?.type === 'radio' || currentNode?.type === 'select'
-  const pct         = done ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
+  const pct         = done || disqualified ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
 
-  // ── advance — the pricing + routing engine ────────────────────
+  // ── Advance from welcome (no answer) ─────────────────────────
+
+  const handleAdvanceWelcome = useCallback(() => {
+    const nextNode = nodes[currentIdx + 1]
+    if (!nextNode) {
+      const customDone = nodes.find(n => n.type === 'thankyou')
+      if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description })
+      setDone(true)
+      onComplete?.(answers)
+      return
+    }
+    if (nextNode.type === 'thankyou') {
+      setThankyouContent({ title: nextNode.title, description: nextNode.description })
+      setDone(true)
+      onComplete?.(answers)
+      return
+    }
+    dirRef.current = 1
+    setHistory(h => [...h, nextNode.id])
+    setDraft('')
+  }, [nodes, currentIdx, answers, onComplete])
+
+  // ── Advance (main engine) ─────────────────────────────────────
 
   const advance = useCallback((answer: string) => {
     if (!currentNode) return
 
     const newAnswers = { ...answers, [currentNode.id]: answer }
     setAnswers(newAnswers)
+    finalAnswersRef.current = newAnswers
 
     // Update active price if this option carries one
     const optPrice = currentNode.optionPrices?.[answer]
-    if (optPrice) {
-      setActivePriceId(optPrice.priceId)
-      setActivePriceInfo(optPrice)
-    }
+    if (optPrice) { setActivePriceId(optPrice.priceId); setActivePriceInfo(optPrice) }
 
-    // Resolve next node via logic jumps or linear order
-    const jump   = currentNode.logicJumps.find(j => j.ifOption === answer)
-    let nextId: string | null = null
+    // Resolve next via logic jumps first
+    const jump = currentNode.logicJumps.find(j => j.ifOption === answer)
 
     if (jump) {
+      if (jump.jumpToNodeId === '__disqualify__') {
+        finalAnswersRef.current = newAnswers
+        setDisqualified(true)
+        return
+      }
       if (jump.jumpToNodeId === '__end__') {
+        const customDone = nodes.find(n => n.type === 'thankyou')
+        if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description })
         setDone(true)
         onComplete?.(newAnswers)
         return
       }
-      nextId = jump.jumpToNodeId
-    } else {
-      const next = nodes[currentIdx + 1]
-      if (!next) {
+      const targetNode = nodes.find(n => n.id === jump.jumpToNodeId)
+      if (targetNode?.type === 'thankyou') {
+        setThankyouContent({ title: targetNode.title, description: targetNode.description })
         setDone(true)
         onComplete?.(newAnswers)
         return
       }
-      nextId = next.id
+      dirRef.current = 1
+      setHistory(h => [...h, jump.jumpToNodeId])
+      setDraft('')
+      return
+    }
+
+    // Linear: next node
+    const nextNode = nodes[currentIdx + 1]
+    if (!nextNode) {
+      setDone(true)
+      onComplete?.(newAnswers)
+      return
+    }
+    if (nextNode.type === 'thankyou') {
+      setThankyouContent({ title: nextNode.title, description: nextNode.description })
+      setDone(true)
+      onComplete?.(newAnswers)
+      return
     }
 
     dirRef.current = 1
-    setHistory(h => [...h, nextId!])
+    setHistory(h => [...h, nextNode.id])
     setDraft('')
   }, [currentNode, currentIdx, answers, nodes, onComplete])
 
@@ -491,7 +782,8 @@ export default function QuizzRunner({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (done || !currentNode) return
+      if (done || disqualified || !currentNode) return
+      if (currentNode.type === 'welcome') return
 
       if (isChoice) {
         const idx = e.key.toUpperCase().charCodeAt(0) - 65
@@ -502,18 +794,13 @@ export default function QuizzRunner({
           return
         }
       }
-
-      if (e.key === 'Enter' && draft) {
-        e.preventDefault()
-        handleNext()
-      }
+      if (e.key === 'Enter' && draft) { e.preventDefault(); handleNext() }
     }
-
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [done, currentNode, isChoice, draft, advance, handleNext])
+  }, [done, disqualified, currentNode, isChoice, draft, advance, handleNext])
 
-  // ── Render: edge cases ────────────────────────────────────────
+  // ── Edge cases ────────────────────────────────────────────────
 
   if (!nodes.length) {
     return (
@@ -525,24 +812,34 @@ export default function QuizzRunner({
     )
   }
 
+  if (disqualified) return <DisqualifiedScreen />
+
   if (done) {
-    return productId ? (
-      <CheckoutSummary
-        productId={productId}
-        productName={productName}
-        priceId={activePriceId}
-        priceInfo={activePriceInfo}
-        nodes={nodes}
-        answers={answers}
-      />
-    ) : (
-      <DoneScreen />
-    )
+    if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} />
+    if (checkoutEnabled && productId) {
+      return (
+        <CheckoutSummary
+          productId={productId}
+          productName={productName}
+          priceId={activePriceId}
+          priceInfo={activePriceInfo}
+          nodes={nodes}
+          answers={answers}
+        />
+      )
+    }
+    return <DoneScreen />
   }
 
   if (!currentNode) return null
 
-  // ── Render: question screen ───────────────────────────────────
+  // ── Welcome screen ────────────────────────────────────────────
+
+  if (currentNode.type === 'welcome') {
+    return <WelcomeScreen node={currentNode} pct={pct} onStart={handleAdvanceWelcome} />
+  }
+
+  // ── Regular question screen ───────────────────────────────────
 
   const canSubmit = !!draft
 
@@ -570,7 +867,7 @@ export default function QuizzRunner({
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" style={{ color: '#E8521A' }} />
                 <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  de {nodes.length}
+                  de {nodes.filter(n => n.type !== 'welcome' && n.type !== 'thankyou').length}
                 </span>
               </div>
 
@@ -593,10 +890,7 @@ export default function QuizzRunner({
                         label={opt}
                         selected={draft === opt}
                         priceTag={opPrice ? formatAmount(opPrice.amount, opPrice.currency) : undefined}
-                        onClick={() => {
-                          setDraft(opt)
-                          setTimeout(() => advance(opt), 280)
-                        }}
+                        onClick={() => { setDraft(opt); setTimeout(() => advance(opt), 280) }}
                       />
                     )
                   })}
@@ -607,43 +901,31 @@ export default function QuizzRunner({
                   )}
                 </div>
               ) : (
-                <AnswerInput
-                  node={currentNode}
-                  value={draft}
-                  onChange={setDraft}
-                  onEnter={handleNext}
-                />
+                <AnswerInput node={currentNode} value={draft} onChange={setDraft} onEnter={handleNext} />
               )}
 
               {/* Actions */}
               <div className="flex items-center gap-4 pt-1">
                 {history.length > 1 && (
-                  <button
-                    onClick={handleBack}
+                  <button onClick={handleBack}
                     className="flex items-center gap-1.5 text-[13px] transition-colors"
                     style={{ color: 'rgba(255,255,255,0.25)' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)' }}
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    Voltar
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)' }}>
+                    <ChevronLeft className="w-3.5 h-3.5" /> Voltar
                   </button>
                 )}
 
                 {!isChoice && (
-                  <button
-                    onClick={handleNext}
-                    disabled={!canSubmit}
+                  <button onClick={handleNext} disabled={!canSubmit}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold text-white transition-all"
                     style={{
                       background: canSubmit ? '#E8521A' : 'rgba(255,255,255,0.05)',
                       color:      canSubmit ? '#fff'    : 'rgba(255,255,255,0.2)',
                       boxShadow:  canSubmit ? '0 4px 20px rgba(232,82,26,0.25)' : 'none',
                       cursor:     canSubmit ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    Continuar
-                    <CornerDownLeft className="w-3.5 h-3.5" />
+                    }}>
+                    Continuar <CornerDownLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
 
@@ -654,7 +936,6 @@ export default function QuizzRunner({
                 )}
               </div>
 
-              {/* Keyboard shortcut hint for choice questions */}
               {isChoice && currentNode.options.length > 0 && (
                 <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
                   Pressione <strong>A</strong>, <strong>B</strong>, <strong>C</strong>… para selecionar
