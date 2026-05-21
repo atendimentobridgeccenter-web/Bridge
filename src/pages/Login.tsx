@@ -26,8 +26,14 @@ export default function Login() {
 
   function networkError(err: unknown): string {
     const msg = err instanceof Error ? err.message : String(err)
-    if (!isSupabaseConfigured || msg.toLowerCase().includes('fetch'))
-      return 'Sem conexão com o servidor. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no Vercel.'
+    console.error('[Bridge Login] Erro de autenticação:', err)
+
+    if (!isSupabaseConfigured) {
+      return 'Configuração incompleta: VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY não definidas. Configure as variáveis no Vercel e faça um novo deploy.'
+    }
+    if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
+      return 'Erro de rede ao conectar ao Supabase. O projeto pode estar pausado (plano gratuito pausa após 1 semana inativo). Acesse supabase.com/dashboard e restaure o projeto.'
+    }
     return msg
   }
 

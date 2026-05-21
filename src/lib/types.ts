@@ -173,7 +173,7 @@ export interface Product {
   price_id_stripe: string | null
   thumbnail_url: string | null
   landing_page_config: BlocksConfig
-  form_logic_config: FormSchema | Record<string, never>
+  form_logic_config: Record<string, unknown>
   checkout_config: CheckoutConfig | Record<string, never>
   created_at: string
   updated_at: string

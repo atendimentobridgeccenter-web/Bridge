@@ -8,6 +8,7 @@
 // draft state at the moment the timer fires, not at setup time.
 
 import { useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { useBuilderStore } from '@/stores/useBuilderStore'
 import { useUpdateProduct } from './useProduct'
 import type { Product } from '@/lib/types'
@@ -32,6 +33,12 @@ export function useAutoSave(id: string | undefined, delay = 1500) {
   const { mutate: updateProduct, isPending: isSaving } = useUpdateProduct()
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  function onSaveError(err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[useAutoSave] Falha ao salvar produto:', err)
+    toast.error(`Erro ao salvar: ${msg}`, { duration: 6000 })
+  }
+
   // Debounced auto-save whenever isDirty flips to true
   useEffect(() => {
     if (!isDirty || !id || id === 'new') return
@@ -41,7 +48,7 @@ export function useAutoSave(id: string | undefined, delay = 1500) {
       if (!product) return
       updateProduct(
         { id, fields: buildFields(product, formNodes) },
-        { onSuccess: markAsSaved },
+        { onSuccess: markAsSaved, onError: onSaveError },
       )
     }, delay)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
@@ -57,7 +64,7 @@ export function useAutoSave(id: string | undefined, delay = 1500) {
     if (!product) return
     updateProduct(
       { id, fields: buildFields(product, formNodes) },
-      { onSuccess: markAsSaved },
+      { onSuccess: markAsSaved, onError: onSaveError },
     )
   }
 

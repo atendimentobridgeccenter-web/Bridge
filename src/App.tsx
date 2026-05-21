@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import AdminLayout from '@/components/layout/AdminLayout'
 
 // ── Admin (within AdminLayout sidebar shell) ──────────────────
@@ -37,6 +38,7 @@ function Spinner() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" richColors closeButton />
       <Suspense fallback={<Spinner />}>
         <Routes>
           {/* ── Root redirect ── */}
