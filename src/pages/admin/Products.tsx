@@ -1,8 +1,10 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Search, Edit3, Trash2, Package, X, ChevronRight,
   MoreHorizontal, Copy, Globe, ShoppingCart, Users,
+  LayoutList, LayoutGrid,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -18,6 +20,7 @@ const BG_DROP  = '#1E2029'
 
 // ── Types ─────────────────────────────────────────────────────
 
+type ViewMode    = 'list' | 'grid'
 type BadgeVariant = 'success' | 'warning' | 'info' | 'orange' | 'muted' | 'violet'
 type ProductModel = 'paid' | 'lead'
 type TipoKey     = 'Curso' | 'Simulado' | 'Mentoria' | 'Produto'
@@ -58,65 +61,126 @@ const TIPO_VARIANT: Record<TipoKey, BadgeVariant> = {
   Produto:  'muted',
 }
 
-// ── Row ───────────────────────────────────────────────────────
+// ── Avatar ─────────────────────────────────────────────────────
+
+const AVATAR_GRADIENTS = [
+  ['#E8521A', '#FF8C42'],
+  ['#6366F1', '#8B5CF6'],
+  ['#10B981', '#34D399'],
+  ['#F59E0B', '#FBBF24'],
+  ['#3B82F6', '#60A5FA'],
+  ['#EC4899', '#F472B6'],
+]
+
+function ProductAvatar({
+  name, thumbnailUrl, size = 'md',
+}: {
+  name:         string
+  thumbnailUrl: string | null
+  size?:        'sm' | 'md' | 'lg'
+}) {
+  const dim   = { sm: 36, md: 40, lg: 56 }[size]
+  const fs    = { sm: 11, md: 12, lg: 18 }[size]
+  const rad   = { sm: 10, md: 12, lg: 14 }[size]
+  const initials = name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '?'
+  const [from, to] = AVATAR_GRADIENTS[name.charCodeAt(0) % AVATAR_GRADIENTS.length]
+
+  if (thumbnailUrl) {
+    return (
+      <img
+        src={thumbnailUrl}
+        alt={name}
+        style={{ width: dim, height: dim, borderRadius: rad, objectFit: 'cover', flexShrink: 0 }}
+      />
+    )
+  }
+
+  return (
+    <div style={{
+      width: dim, height: dim, borderRadius: rad, flexShrink: 0,
+      background:  `linear-gradient(135deg, ${from}, ${to})`,
+      display:     'flex', alignItems: 'center', justifyContent: 'center',
+      color:       'rgba(255,255,255,0.9)',
+      fontWeight:  700, fontSize: fs,
+      letterSpacing: '0.02em',
+    }}>
+      {initials}
+    </div>
+  )
+}
+
+// ── ProductRow ─────────────────────────────────────────────────
 
 interface ProductRow {
-  id:        string
-  emoji:     string
-  name:      string
-  slug:      string
-  tipo:      TipoKey
-  preco:     string
-  variantes: string[]
-  status:    ProductStatus
-  model:     ProductModel
-  hasPrice:  boolean
-  isReal:    boolean
+  id:           string
+  thumbnailUrl: string | null
+  name:         string
+  slug:         string
+  tipo:         TipoKey
+  preco:        string
+  variantes:    string[]
+  status:       ProductStatus
+  model:        ProductModel
+  hasPrice:     boolean
+  isReal:       boolean
 }
 
 const MOCK_ROWS: ProductRow[] = [
-  { id: 'mock-1', emoji: '📚', name: 'Reforço Escolar',         slug: 'reforco-escolar',         tipo: 'Curso',    preco: '¥ 12.000', variantes: ['Mensal', 'Trim.', 'Anual'], status: 'published', model: 'paid', hasPrice: true,  isReal: false },
-  { id: 'mock-2', emoji: '🎯', name: 'Simulado Koukousei 2025', slug: 'simulado-koukousei-2025', tipo: 'Simulado', preco: '¥ 5.800',  variantes: ['Único'],                   status: 'published', model: 'paid', hasPrice: true,  isReal: false },
-  { id: 'mock-3', emoji: '🎁', name: 'E-book Gratuito',         slug: 'ebook-gratuito',          tipo: 'Produto',  preco: '—',        variantes: ['Único'],                   status: 'draft',     model: 'lead', hasPrice: false, isReal: false },
+  { id: 'mock-1', thumbnailUrl: null, name: 'Reforço Escolar',         slug: 'reforco-escolar',         tipo: 'Curso',    preco: '¥ 12.000', variantes: ['Mensal', 'Trim.', 'Anual'], status: 'published', model: 'paid', hasPrice: true,  isReal: false },
+  { id: 'mock-2', thumbnailUrl: null, name: 'Simulado Koukousei 2025', slug: 'simulado-koukousei-2025', tipo: 'Simulado', preco: '¥ 5.800',  variantes: ['Único'],                   status: 'published', model: 'paid', hasPrice: true,  isReal: false },
+  { id: 'mock-3', thumbnailUrl: null, name: 'E-book Gratuito',         slug: 'ebook-gratuito',          tipo: 'Produto',  preco: '—',        variantes: ['Único'],                   status: 'draft',     model: 'lead', hasPrice: false, isReal: false },
 ]
 
 function toRow(p: Product): ProductRow {
   const hasPrice = !!p.price_id_stripe
   return {
-    id:        p.id,
-    emoji:     '📦',
-    name:      p.name,
-    slug:      p.slug,
-    tipo:      'Produto',
-    preco:     hasPrice ? 'Configurado' : '—',
-    variantes: ['Único'],
-    status:    p.status,
-    model:     hasPrice ? 'paid' : 'lead',
+    id:           p.id,
+    thumbnailUrl: p.thumbnail_url ?? null,
+    name:         p.name,
+    slug:         p.slug,
+    tipo:         'Produto',
+    preco:        hasPrice ? 'Configurado' : '—',
+    variantes:    ['Único'],
+    status:       p.status,
+    model:        hasPrice ? 'paid' : 'lead',
     hasPrice,
-    isReal:    true,
+    isReal:       true,
   }
 }
 
-// ── Actions Dropdown ──────────────────────────────────────────
+// ── Actions Dropdown (fixed-position, escapes overflow) ────────
 
 function ActionsDropdown({
-  row,
-  onEdit,
-  onDelete,
+  row, onEdit, onDelete,
 }: {
   row:      ProductRow
   onEdit:   (id: string) => void
   onDelete: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const origin = window.location.origin
+  const [pos,  setPos]  = useState<{ top: number; right: number } | null>(null)
+  const btnRef  = useRef<HTMLButtonElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
+  const origin  = window.location.origin
+
+  function handleToggle(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+    }
+    setOpen(o => !o)
+  }
 
   useEffect(() => {
+    if (!open) return
     function outside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (
+        dropRef.current  && !dropRef.current.contains(e.target as Node) &&
+        btnRef.current   && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false)
     }
-    if (open) document.addEventListener('mousedown', outside)
+    document.addEventListener('mousedown', outside)
     return () => document.removeEventListener('mousedown', outside)
   }, [open])
 
@@ -131,18 +195,60 @@ function ActionsDropdown({
   }
 
   const copyLinks = [
-    { icon: Globe,        label: 'Funil Completo',      desc: 'Sales Page + Quizz',  url: `${origin}/${row.slug}` },
-    { icon: Users,        label: 'Somente Quizz',        desc: 'Formulário direto',   url: `${origin}/apply?product=${row.slug}` },
+    { icon: Globe,        label: 'Funil Completo',       desc: 'Sales Page + Quizz',  url: `${origin}/${row.slug}` },
+    { icon: Users,        label: 'Somente Quizz',         desc: 'Formulário direto',   url: `${origin}/apply?product=${row.slug}` },
     ...(row.hasPrice
-      ? [{ icon: ShoppingCart, label: 'Direto pro Checkout', desc: 'Requer preço ativo',  url: `${origin}/checkout/${row.slug}` }]
+      ? [{ icon: ShoppingCart, label: 'Direto pro Checkout', desc: 'Requer preço ativo', url: `${origin}/checkout/${row.slug}` }]
       : []
     ),
   ]
 
+  const dropdown = open && pos ? (
+    <div
+      ref={dropRef}
+      style={{
+        position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999,
+        width: 224, borderRadius: 14,
+        background:  BG_DROP,
+        border:      '1px solid rgba(255,255,255,0.09)',
+        boxShadow:   '0 20px 56px rgba(0,0,0,0.65)',
+        overflow:    'hidden',
+        paddingTop:  6, paddingBottom: 6,
+      }}
+    >
+      <DropMenuItem icon={Edit3} label="Editar Produto" onClick={() => { onEdit(row.id); setOpen(false) }} />
+      <DropSep />
+      <p style={{ padding: '4px 16px 2px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)' }}>
+        Copiar Link
+      </p>
+      {copyLinks.map(({ icon: Icon, label, desc, url }) => (
+        <button
+          key={label}
+          onClick={() => copy(url, label)}
+          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/4 transition-colors group"
+        >
+          <Icon className="w-3.5 h-3.5 text-white/25 shrink-0 group-hover:text-white/50" />
+          <div className="text-left min-w-0 flex-1">
+            <p className="text-[12px] text-white/65 group-hover:text-white/90 leading-tight">{label}</p>
+            <p className="text-[10px] text-white/25 truncate">{desc}</p>
+          </div>
+          <Copy className="w-3 h-3 text-white/15 shrink-0 group-hover:text-white/40" />
+        </button>
+      ))}
+      {row.isReal && (
+        <>
+          <DropSep />
+          <DropMenuItem icon={Trash2} label="Excluir Produto" danger onClick={() => { setOpen(false); onDelete(row.id) }} />
+        </>
+      )}
+    </div>
+  ) : null
+
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
+        ref={btnRef}
+        onClick={handleToggle}
         className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center transition-all',
           open
@@ -152,65 +258,12 @@ function ActionsDropdown({
       >
         <MoreHorizontal className="w-4 h-4" />
       </button>
-
-      {open && (
-        <div
-          className="absolute right-0 top-full mt-1.5 w-[220px] rounded-xl z-50 overflow-hidden py-1.5"
-          style={{
-            background:  BG_DROP,
-            border:      '1px solid rgba(255,255,255,0.09)',
-            boxShadow:   '0 20px 48px rgba(0,0,0,0.55)',
-          }}
-        >
-          {/* Editar */}
-          <MenuItem
-            icon={Edit3}
-            label="Editar Produto"
-            onClick={() => { onEdit(row.id); setOpen(false) }}
-          />
-
-          {/* Links */}
-          <Separator />
-          <p className="px-4 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/25">
-            Copiar Link
-          </p>
-
-          {copyLinks.map(({ icon: Icon, label, desc, url }) => (
-            <button
-              key={label}
-              onClick={() => copy(url, label)}
-              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/4 transition-colors group"
-            >
-              <Icon className="w-3.5 h-3.5 text-white/25 shrink-0 group-hover:text-white/50" />
-              <div className="text-left min-w-0">
-                <p className="text-[12px] text-white/65 group-hover:text-white/90 leading-tight">{label}</p>
-                <p className="text-[10px] text-white/25 truncate">{desc}</p>
-              </div>
-              <Copy className="w-3 h-3 text-white/15 ml-auto shrink-0 group-hover:text-white/40" />
-            </button>
-          ))}
-
-          {/* Excluir */}
-          {row.isReal && (
-            <>
-              <Separator />
-              <MenuItem
-                icon={Trash2}
-                label="Excluir Produto"
-                danger
-                onClick={() => { setOpen(false); onDelete(row.id) }}
-              />
-            </>
-          )}
-        </div>
-      )}
-    </div>
+      {typeof document !== 'undefined' && createPortal(dropdown, document.body)}
+    </>
   )
 }
 
-function MenuItem({
-  icon: Icon, label, onClick, danger = false,
-}: {
+function DropMenuItem({ icon: Icon, label, onClick, danger = false }: {
   icon:    React.ElementType
   label:   string
   onClick: () => void
@@ -221,9 +274,8 @@ function MenuItem({
       onClick={onClick}
       className={cn(
         'w-full flex items-center gap-3 px-4 py-2 text-[12px] transition-colors',
-        danger
-          ? 'text-red-400/70 hover:text-red-400 hover:bg-red-500/6'
-          : 'text-white/60 hover:text-white/90 hover:bg-white/4',
+        danger ? 'text-red-400/70 hover:text-red-400 hover:bg-red-500/6'
+               : 'text-white/60 hover:text-white/90 hover:bg-white/4',
       )}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -232,15 +284,13 @@ function MenuItem({
   )
 }
 
-function Separator() {
-  return <div className="mx-3 my-1.5" style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+function DropSep() {
+  return <div style={{ margin: '6px 12px', height: 1, background: 'rgba(255,255,255,0.06)' }} />
 }
 
-// ── Table row ─────────────────────────────────────────────────
+// ── List row ──────────────────────────────────────────────────
 
-function ProductTableRow({
-  row, onEdit, onDelete,
-}: {
+function ProductListRow({ row, onEdit, onDelete }: {
   row:      ProductRow
   onEdit:   (id: string) => void
   onDelete: (id: string) => void
@@ -256,12 +306,7 @@ function ProductTableRow({
       {/* Produto */}
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
-          >
-            {row.emoji}
-          </div>
+          <ProductAvatar name={row.name} thumbnailUrl={row.thumbnailUrl} size="sm" />
           <div>
             <p className="text-[13px] font-semibold text-[#EDEDED] leading-none">{row.name}</p>
             <p className="text-[11px] text-white/25 mt-0.5">/{row.slug}</p>
@@ -301,12 +346,111 @@ function ProductTableRow({
       </td>
 
       {/* Ações */}
-      <td className="px-4 py-3.5">
+      <td className="px-4 py-3.5" style={{ width: 52 }}>
         <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
           <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} />
         </div>
       </td>
     </tr>
+  )
+}
+
+// ── Grid card ─────────────────────────────────────────────────
+
+function ProductGridCard({ row, onEdit, onDelete }: {
+  row:      ProductRow
+  onEdit:   (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const status = STATUS_MAP[row.status]
+  const [from, to] = AVATAR_GRADIENTS[row.name.charCodeAt(0) % AVATAR_GRADIENTS.length]
+
+  return (
+    <div
+      className="group rounded-2xl flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        background: BG_CARD,
+        border:     '1px solid rgba(255,255,255,0.07)',
+        boxShadow:  '0 2px 12px rgba(0,0,0,0.25)',
+      }}
+    >
+      {/* Thumbnail */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ aspectRatio: '16/9' }}
+      >
+        {row.thumbnailUrl ? (
+          <img src={row.thumbnailUrl} alt={row.name} className="w-full h-full object-cover" />
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${from}22, ${to}33)` }}
+          >
+            <div
+              className="flex items-center justify-center"
+              style={{
+                width: 56, height: 56, borderRadius: 16,
+                background: `linear-gradient(135deg, ${from}, ${to})`,
+                fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.9)',
+              }}
+            >
+              {row.name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '?'}
+            </div>
+          </div>
+        )}
+        {/* Status badge overlay */}
+        <div className="absolute top-3 left-3">
+          <Badge label={status.label} variant={status.variant} />
+        </div>
+        {/* Actions — visible on hover */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div style={{ background: 'rgba(15,17,23,0.85)', borderRadius: 10, backdropFilter: 'blur(6px)' }}>
+            <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} />
+          </div>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="flex flex-col gap-3 p-4">
+        <div>
+          <p className="text-[13px] font-semibold text-[#EDEDED] leading-snug line-clamp-1">{row.name}</p>
+          <p className="text-[11px] text-white/25 mt-0.5">/{row.slug}</p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge label={row.tipo} variant={TIPO_VARIANT[row.tipo]} />
+          {row.model === 'lead' ? (
+            <Badge label="Captação" variant="violet" />
+          ) : (
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold tabular-nums"
+              style={{ background: 'rgba(16,185,129,0.08)', color: '#34D399', border: '1px solid rgba(16,185,129,0.2)' }}
+            >
+              {row.preco}
+            </span>
+          )}
+        </div>
+
+        {/* Footer CTA */}
+        <button
+          onClick={() => onEdit(row.id)}
+          className="w-full mt-auto py-2 rounded-lg text-[12px] font-medium transition-all opacity-0 group-hover:opacity-100"
+          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}
+          onMouseEnter={e => {
+            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,82,26,0.1)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#F0643A'
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,82,26,0.3)'
+          }}
+          onMouseLeave={e => {
+            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'
+          }}
+        >
+          Editar produto
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -348,7 +492,6 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
         style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
         onClick={onClose}
       />
-
       <div
         className={cn(
           'absolute top-0 right-0 h-full w-[440px] flex flex-col',
@@ -370,8 +513,6 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
 
         {/* Form */}
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
-
-          {/* Nome */}
           <div className="flex flex-col gap-2">
             <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
               Nome do Produto
@@ -389,15 +530,14 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
             />
           </div>
 
-          {/* Modelo de Negócio */}
           <div className="flex flex-col gap-2">
             <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
               Modelo de Negócio
             </label>
             <div className="grid grid-cols-2 gap-2">
               {([
-                { key: 'paid' as const, icon: '💳', label: 'Produto Pago',        desc: 'Checkout via Stripe' },
-                { key: 'lead' as const, icon: '🎁', label: 'Captação de Lead',    desc: 'Gratuito / Funil de leads' },
+                { key: 'paid' as const, icon: '💳', label: 'Produto Pago',     desc: 'Checkout via Stripe' },
+                { key: 'lead' as const, icon: '🎁', label: 'Captação de Lead', desc: 'Gratuito / Funil de leads' },
               ]).map(({ key, icon, label, desc }) => (
                 <button
                   key={key}
@@ -405,8 +545,8 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
                   onClick={() => setModel(key)}
                   className="flex flex-col items-start gap-1 px-3.5 py-3 rounded-lg text-left transition-all"
                   style={{
-                    background:   model === key ? 'rgba(232,82,26,0.08)' : '#0D0E12',
-                    border:       model === key ? '1px solid rgba(232,82,26,0.40)' : '1px solid rgba(255,255,255,0.07)',
+                    background: model === key ? 'rgba(232,82,26,0.08)' : '#0D0E12',
+                    border:     model === key ? '1px solid rgba(232,82,26,0.40)' : '1px solid rgba(255,255,255,0.07)',
                   }}
                 >
                   <span className="text-base">{icon}</span>
@@ -417,7 +557,6 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
             </div>
           </div>
 
-          {/* Dica contextual */}
           <div
             className="rounded-lg px-4 py-3 flex items-start gap-3"
             style={{ background: 'rgba(232,82,26,0.06)', border: '1px solid rgba(232,82,26,0.12)' }}
@@ -452,6 +591,36 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
   )
 }
 
+// ── View Toggle ───────────────────────────────────────────────
+
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  return (
+    <div
+      className="flex items-center gap-0.5 p-1 rounded-lg"
+      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      {([
+        { key: 'list' as const, icon: LayoutList,  label: 'Lista' },
+        { key: 'grid' as const, icon: LayoutGrid,  label: 'Blocos' },
+      ] as const).map(({ key, icon: Icon, label }) => (
+        <button
+          key={key}
+          title={label}
+          onClick={() => onChange(key)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all"
+          style={{
+            background: view === key ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color:      view === key ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.30)',
+          }}
+        >
+          <Icon className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────
 
 export default function Products() {
@@ -461,6 +630,7 @@ export default function Products() {
   const [loading,  setLoading]  = useState(true)
   const [query,    setQuery]    = useState('')
   const [drawer,   setDrawer]   = useState(false)
+  const [view,     setView]     = useState<ViewMode>('list')
 
   async function load() {
     const { data } = await supabase
@@ -513,22 +683,22 @@ export default function Products() {
     [rows, query],
   )
 
-  const publishedCount = rows.filter(r => r.status === 'published').length
+  const publishedCount = rows.filter(r => r.status === 'published' && r.isReal).length
 
   return (
     <>
-      <div className="flex flex-col h-full" style={{ background: BG_PAGE }}>
+      <div className="flex flex-col min-h-full" style={{ background: BG_PAGE }}>
         <div className="max-w-6xl w-full mx-auto px-8 py-8 flex flex-col gap-6">
 
-          {/* Header */}
-          <div className="flex items-start justify-between">
+          {/* ── Page header ── */}
+          <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">Produtos</h1>
               <p className="text-[13px] text-white/30 mt-0.5">Catálogo de produtos e serviços Bridge</p>
             </div>
             <button
               onClick={() => setDrawer(true)}
-              className="flex items-center gap-2 px-5 py-2 text-[13px] font-semibold text-white rounded-full transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 text-[13px] font-semibold text-white rounded-full transition-all shrink-0"
               style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.25)' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#E8521A' }}
@@ -537,70 +707,91 @@ export default function Products() {
             </button>
           </div>
 
-          {/* Table card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.07)' }}>
-            {/* Card header */}
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="flex items-center gap-3">
-                <p className="text-[14px] font-semibold text-[#EDEDED]">Todos os produtos</p>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md text-emerald-400"
-                  style={{ background: 'rgba(52,211,153,0.1)' }}>
-                  {publishedCount} publicado{publishedCount !== 1 ? 's' : ''}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md"
-                style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}>
-                <Search className="w-3.5 h-3.5 text-white/25 shrink-0" />
-                <input
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Buscar produtos..."
-                  className="bg-transparent border-0 outline-none text-[12px] text-white/70 placeholder:text-white/25 w-44"
-                />
-              </div>
+          {/* ── Toolbar ── */}
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <div
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1"
+              style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <Search className="w-4 h-4 text-white/25 shrink-0" />
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Buscar por nome ou tipo..."
+                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-white/70 placeholder:text-white/25"
+              />
+              {query && (
+                <button onClick={() => setQuery('')} className="text-white/25 hover:text-white/60 transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Table */}
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="w-5 h-5 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
+            {/* Stats chip */}
+            {products.length > 0 && (
+              <span
+                className="shrink-0 text-[11px] font-semibold px-3 py-2 rounded-xl whitespace-nowrap text-emerald-400"
+                style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)' }}
+              >
+                {publishedCount} publicado{publishedCount !== 1 ? 's' : ''}
+              </span>
+            )}
+
+            {/* View toggle */}
+            <ViewToggle view={view} onChange={setView} />
+          </div>
+
+          {/* ── Content ── */}
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="w-5 h-5 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-24">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <Package className="w-5 h-5 text-white/20" />
               </div>
-            ) : (
+              <div className="text-center">
+                <p className="text-[14px] font-medium text-white/40">
+                  {query ? 'Nenhum produto encontrado' : 'Nenhum produto ainda'}
+                </p>
+                {query && (
+                  <p className="text-[12px] text-white/20 mt-1">
+                    Tente outro termo ou{' '}
+                    <button className="text-[#E8521A] hover:underline" onClick={() => setQuery('')}>limpe a busca</button>
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : view === 'list' ? (
+
+            /* ── List view ── */
+            <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       {['Produto', 'Tipo', 'Preço', 'Variantes', 'Status', ''].map((h, i) => (
-                        <th key={i} className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider"
-                          style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        <th key={i} className="text-left px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider"
+                          style={{ color: 'rgba(255,255,255,0.28)' }}>
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center py-16">
-                          <div className="flex flex-col items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                              style={{ background: 'rgba(255,255,255,0.04)' }}>
-                              <Package className="w-4 h-4 text-white/20" />
-                            </div>
-                            <p className="text-[13px] text-white/30">Nenhum produto encontrado</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      filtered.map(row => (
-                        <ProductTableRow
-                          key={row.id}
-                          row={row}
-                          onEdit={id => navigate(`/admin/products/${id}`)}
-                          onDelete={deleteProduct}
-                        />
-                      ))
-                    )}
+                    {filtered.map(row => (
+                      <ProductListRow
+                        key={row.id}
+                        row={row}
+                        onEdit={id => navigate(`/admin/products/${id}`)}
+                        onDelete={deleteProduct}
+                      />
+                    ))}
                   </tbody>
                 </table>
 
@@ -615,8 +806,33 @@ export default function Products() {
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+
+          ) : (
+
+            /* ── Grid view ── */
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map(row => (
+                  <ProductGridCard
+                    key={row.id}
+                    row={row}
+                    onEdit={id => navigate(`/admin/products/${id}`)}
+                    onDelete={deleteProduct}
+                  />
+                ))}
+              </div>
+              {!products.length && (
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase tracking-widest"
+                    style={{ background: 'rgba(232,82,26,0.12)', color: '#F0643A' }}>Demo</span>
+                  <p className="text-[11px] text-white/20">
+                    Dados de exemplo. Crie seu primeiro produto para ver dados reais.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
