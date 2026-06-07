@@ -5,7 +5,7 @@ import AdminLayout from '@/components/layout/AdminLayout'
 
 // ── Admin (within AdminLayout sidebar shell) ──────────────────
 const AdminHome      = lazy(() => import('@/pages/admin/AdminHome'))
-const Leads          = lazy(() => import('@/pages/admin/LeadsKanbanPage'))
+const Leads          = lazy(() => import('@/pages/admin/LeadsPage'))
 const Products       = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))

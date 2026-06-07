@@ -179,6 +179,25 @@ export interface Product {
   updated_at: string
 }
 
+// ── Lead (tabela leads — QuizzRunner) ────────────────────────
+
+export interface Lead {
+  id:           string
+  product_id:   string | null
+  email:        string | null
+  phone:        string | null
+  name:         string | null
+  cpf:          string | null
+  city:         string | null
+  state:        string | null
+  answers:      Record<string, string>
+  qualified:    boolean
+  created_at:   string
+  // joined
+  product_name?:        string | null
+  product_form_nodes?:  unknown  // form_logic_config.nodes para resolver títulos
+}
+
 // ── product_structure: one row = one Module ───────────────────
 
 export interface Lesson {
