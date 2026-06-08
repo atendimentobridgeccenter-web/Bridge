@@ -1,6 +1,16 @@
 // ── Block types ──────────────────────────────────────────────
 
-export type BlockType = 'HeroBlock' | 'FeaturesBlock' | 'CallToActionBlock'
+export type BlockType =
+  | 'HeroBlock'
+  | 'FeaturesBlock'
+  | 'CallToActionBlock'
+  | 'HeadingBlock'
+  | 'TextBlock'
+  | 'ImageBlock'
+  | 'ButtonBlock'
+  | 'AccordionBlock'
+  | 'VideoBlock'
+  | 'CarouselBlock'
 
 export interface HeroProps {
   title: string
@@ -28,7 +38,104 @@ export interface CTAProps {
   buttonLink: string
 }
 
-export type BlockProps = HeroProps | FeaturesProps | CTAProps
+// ── Common block style ────────────────────────────────────────
+
+export interface BlockStyle {
+  bg?:       string   // CSS background (color or gradient)
+  color?:    string   // text color
+  paddingY?: number   // vertical padding in px
+  align?:    'left' | 'center' | 'right'
+}
+
+// ── New block prop interfaces ──────────────────────────────────
+
+export interface HeadingProps {
+  text:        string
+  level?:      'h1' | 'h2' | 'h3' | 'h4'
+  fontWeight?: 'normal' | 'semibold' | 'bold' | 'extrabold'
+  fontSize?:   'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl'
+  style?:      BlockStyle
+}
+
+export interface TextBlockProps {
+  text:      string
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl'
+  maxWidth?: boolean
+  style?:    BlockStyle
+}
+
+export interface ImageBlockProps {
+  src:      string
+  alt?:     string
+  caption?: string
+  radius?:  number   // border-radius px
+  shadow?:  boolean
+  link?:    string
+  width?:   'sm' | 'md' | 'lg' | 'full'
+  style?:   BlockStyle
+}
+
+export type ButtonTarget = 'form' | 'checkout' | 'url'
+
+export interface ButtonBlockProps {
+  label:        string
+  target:       ButtonTarget
+  url?:         string
+  productSlug?: string
+  variant?:     'solid' | 'outline'
+  size?:        'sm' | 'md' | 'lg'
+  color?:       string   // button bg
+  textColor?:   string   // button text
+  fullWidth?:   boolean
+  style?:       BlockStyle
+}
+
+export interface AccordionItem {
+  id:       string
+  question: string
+  answer:   string
+}
+
+export interface AccordionBlockProps {
+  title?: string
+  items:  AccordionItem[]
+  style?: BlockStyle
+}
+
+export interface VideoBlockProps {
+  url:       string
+  caption?:  string
+  autoplay?: boolean
+  muted?:    boolean
+  style?:    BlockStyle
+}
+
+export interface CarouselSlide {
+  id:       string
+  src:      string
+  alt?:     string
+  caption?: string
+}
+
+export interface CarouselBlockProps {
+  slides:    CarouselSlide[]
+  autoplay?: boolean
+  interval?: number   // seconds
+  showDots?: boolean
+  style?:    BlockStyle
+}
+
+export type BlockProps =
+  | HeroProps
+  | FeaturesProps
+  | CTAProps
+  | HeadingProps
+  | TextBlockProps
+  | ImageBlockProps
+  | ButtonBlockProps
+  | AccordionBlockProps
+  | VideoBlockProps
+  | CarouselBlockProps
 
 export interface PageBlock {
   id: string

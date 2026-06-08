@@ -1,21 +1,33 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { HeroBlock, FeaturesBlock, CallToActionBlock } from '@/blocks'
-import type { LandingPage, PageBlock, HeroProps, FeaturesProps, CTAProps, GrapesJSConfig, BlocksConfig } from '@/lib/types'
+import {
+  HeroBlock, FeaturesBlock, CallToActionBlock,
+  HeadingBlock, TextBlock, ImageBlock, ButtonBlock,
+  AccordionBlock, VideoBlock, CarouselBlock,
+} from '@/blocks'
+import type {
+  PageBlock, GrapesJSConfig, BlocksConfig,
+  HeroProps, FeaturesProps, CTAProps,
+  HeadingProps, TextBlockProps, ImageBlockProps, ButtonBlockProps,
+  AccordionBlockProps, VideoBlockProps, CarouselBlockProps,
+} from '@/lib/types'
 
 // ── Block dispatcher ──────────────────────────────────────────
 
 function BlockRenderer({ block }: { block: PageBlock }) {
   switch (block.type) {
-    case 'HeroBlock':
-      return <HeroBlock data={block.props as HeroProps} />
-    case 'FeaturesBlock':
-      return <FeaturesBlock data={block.props as FeaturesProps} />
-    case 'CallToActionBlock':
-      return <CallToActionBlock data={block.props as CTAProps} />
-    default:
-      return null
+    case 'HeroBlock':         return <HeroBlock         data={block.props as HeroProps} />
+    case 'FeaturesBlock':     return <FeaturesBlock     data={block.props as FeaturesProps} />
+    case 'CallToActionBlock': return <CallToActionBlock data={block.props as CTAProps} />
+    case 'HeadingBlock':      return <HeadingBlock      data={block.props as HeadingProps} />
+    case 'TextBlock':         return <TextBlock         data={block.props as TextBlockProps} />
+    case 'ImageBlock':        return <ImageBlock        data={block.props as ImageBlockProps} />
+    case 'ButtonBlock':       return <ButtonBlock       data={block.props as ButtonBlockProps} />
+    case 'AccordionBlock':    return <AccordionBlock    data={block.props as AccordionBlockProps} />
+    case 'VideoBlock':        return <VideoBlock        data={block.props as VideoBlockProps} />
+    case 'CarouselBlock':     return <CarouselBlock     data={block.props as CarouselBlockProps} />
+    default:                  return null
   }
 }
 
