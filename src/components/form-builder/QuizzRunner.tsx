@@ -285,13 +285,18 @@ function WelcomeScreen({ node, pct, onStart }: {
         transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         <motion.div
-          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto"
-          style={{ background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}
+          className="flex items-center justify-center mx-auto"
+          style={node.logoUrl ? {} : {
+            width: 80, height: 80, borderRadius: 16,
+            background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)',
+          }}
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}
         >
-          <Sparkles className="w-8 h-8" style={{ color: '#E8521A' }} />
+          {node.logoUrl
+            ? <img src={node.logoUrl} alt="Logo" className="max-h-24 max-w-[240px] object-contain" />
+            : <Sparkles className="w-8 h-8" style={{ color: '#E8521A' }} />}
         </motion.div>
 
         <div>

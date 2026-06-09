@@ -4,9 +4,11 @@ import {
   Trash2, Plus, ArrowRight, GripVertical,
   MousePointerClick, Zap, Phone, Hash, Calendar,
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
-  XCircle, FileText, User,
+  XCircle, FileText, User, ImageIcon, X,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -46,6 +48,7 @@ export interface FormNode {
   type:          NodeType
   required?:     boolean      // se true, impede avançar sem responder
   allowOther?:   boolean      // habilita opção "Outra" em radio/select
+  logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -288,6 +291,31 @@ function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNo
   const focusSty  = 'rgba(232,82,26,0.45)'
   const blurSty   = 'rgba(255,255,255,0.08)'
 
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!fileRef.current) fileRef.current = e.target
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 3 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 3 MB.'); return }
+    setUploading(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `logos/${node.id}.${ext}`
+      const { error } = await supabase.storage.from('form-assets').upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('form-assets').getPublicUrl(path)
+      onUpdate({ ...node, logoUrl: publicUrl })
+      toast.success('Logo enviada!')
+    } catch {
+      toast.error('Erro ao enviar imagem.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
 
@@ -303,6 +331,57 @@ function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNo
             : 'Tela exibida após o término do formulário. Personalize a mensagem de encerramento.'}
         </p>
       </div>
+
+      {/* Logo / Imagem (só welcome) */}
+      {isWelcome && (
+        <div className="flex flex-col gap-2">
+          <label className={labelCls}>Logo / Imagem</label>
+
+          {node.logoUrl ? (
+            <div className="relative w-full flex items-center justify-center rounded-xl overflow-hidden"
+              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', minHeight: 120 }}>
+              <img src={node.logoUrl} alt="Logo" className="max-h-28 max-w-full object-contain p-3" />
+              <div className="absolute top-2 right-2 flex gap-1.5">
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                  style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>
+                  Trocar
+                </button>
+                <button
+                  onClick={() => onUpdate({ ...node, logoUrl: undefined })}
+                  className="p-1.5 rounded-lg transition-all"
+                  style={{ background: 'rgba(239,68,68,0.1)', color: '#F87171' }}>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-7 transition-all"
+              style={{ background: '#0D0E12', border: '1px dashed rgba(255,255,255,0.12)',
+                color: uploading ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)' }}>
+              <ImageIcon className="w-5 h-5" />
+              <span className="text-[12px]">
+                {uploading ? 'Enviando…' : 'Clique para enviar logo ou imagem'}
+              </span>
+              <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.15)' }}>
+                PNG, JPG, WebP · máx. 3 MB
+              </span>
+            </button>
+          )}
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+            className="hidden"
+            onChange={handleLogoUpload}
+          />
+        </div>
+      )}
 
       {/* Título */}
       <div className="flex flex-col gap-2">
