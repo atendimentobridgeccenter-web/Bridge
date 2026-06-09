@@ -118,8 +118,21 @@ f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${contai
   )
 }
 
+const META_STANDARD_EVENTS = new Set([
+  'PageView','AddPaymentInfo','AddToCart','AddToWishlist','CompleteRegistration',
+  'Contact','CustomizeProduct','Donate','FindLocation','InitiateCheckout',
+  'Lead','Purchase','Schedule','Search','StartTrial','SubmitApplication',
+  'Subscribe','ViewContent',
+])
+
 function fireMetaEvent(eventName: string) {
-  try { (window as Window & { fbq?: (...a: unknown[]) => void }).fbq?.('track', eventName) } catch { /* silent */ }
+  try {
+    const fbq = (window as Window & { fbq?: (...a: unknown[]) => void }).fbq
+    if (!fbq) return
+    // Non-standard names must use trackCustom to avoid Meta warnings
+    const method = META_STANDARD_EVENTS.has(eventName) ? 'track' : 'trackCustom'
+    fbq(method, eventName)
+  } catch { /* silent */ }
 }
 
 function fireGtagEvent(eventName: string, conversionId?: string, conversionLabel?: string) {
