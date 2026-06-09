@@ -19,7 +19,7 @@
   /* Borders — o segredo do luxo */
   --border:        rgba(255, 255, 255, 0.06);
   --border-hover:  rgba(255, 255, 255, 0.12);
-  --border-focus:  rgba(139, 92, 246, 0.5);
+  --border-focus:  rgba(232, 82, 26, 0.5);
 
   /* Text */
   --text-primary:   #EDEDED;
@@ -27,8 +27,8 @@
   --text-disabled:  #52525B;
 
   /* Accent */
-  --accent:        #8B5CF6;
-  --accent-dim:    rgba(139, 92, 246, 0.12);
+  --accent:        #E8521A;
+  --accent-dim:    rgba(232, 82, 26, 0.12);
 }
 
 /* ── Reset ───────────────────────────────────────────────────*/
@@ -73,7 +73,7 @@ html, body, #root {
 
 /* ── Selection ───────────────────────────────────────────────*/
 ::selection {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(232, 82, 26, 0.2);
   color: #fff;
 }
 
@@ -96,7 +96,7 @@ html, body, #root {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #fff 0%, #A78BFA 100%);
+  background: linear-gradient(135deg, #fff 0%, #F97316 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -206,18 +206,18 @@ html, body, #root {
 }
 
 /* Selected element highlight */
-.gjs-selected { outline: 2px solid #8B5CF6 !important; outline-offset: -2px !important; }
-.gjs-hovered  { outline: 1px dashed rgba(139,92,246,0.5) !important; }
+.gjs-selected { outline: 2px solid #E8521A !important; outline-offset: -2px !important; }
+.gjs-hovered  { outline: 1px dashed rgba(232,82,26,0.5) !important; }
 
 /* Canvas toolbar */
 .gjs-toolbar {
-  background-color: #8B5CF6 !important;
+  background-color: #E8521A !important;
   border-radius: 6px !important;
   border: none !important;
 }
 .gjs-toolbar-item { color: #fff !important; }
 .gjs-badge {
-  background-color: #8B5CF6 !important;
+  background-color: #E8521A !important;
   border-radius: 4px !important;
   font-family: var(--font-sans) !important;
   font-size: 11px !important;
@@ -228,7 +228,7 @@ html, body, #root {
 
 /* Views tabs */
 .gjs-pn-views .gjs-pn-btn.gjs-pn-active {
-  border-bottom: 2px solid #8B5CF6 !important;
+  border-bottom: 2px solid #E8521A !important;
   color: #EDEDED !important;
 }
 

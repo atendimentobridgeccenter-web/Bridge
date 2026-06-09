@@ -219,13 +219,13 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       .order('created_at', { ascending: false })
       .limit(12)
       .then(({ data }) => {
-        setItems((data ?? []).map((l: { id: string; name: string | null; email: string | null; qualified: boolean; created_at: string; products: { name: string } | null }) => ({
+        setItems((data ?? []).map((l: { id: string; name: string | null; email: string | null; qualified: boolean; created_at: string; products: { name: string }[] | { name: string } | null }) => ({
           id:           l.id,
           name:         l.name,
           email:        l.email,
           qualified:    l.qualified,
           created_at:   l.created_at,
-          product_name: l.products?.name ?? null,
+          product_name: Array.isArray(l.products) ? (l.products[0]?.name ?? null) : (l.products?.name ?? null),
         })))
         setLoading(false)
         // Mark all as read
@@ -410,7 +410,7 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[13px]">
-          <span style={{ color: '#52525B' }}>Bridge</span>
+          <span style={{ color: '#52525B' }}>Bridge HUB</span>
           <span style={{ color: '#3F3F46' }}>/</span>
           <span className="text-[#EDEDED] font-medium">{title}</span>
         </div>
