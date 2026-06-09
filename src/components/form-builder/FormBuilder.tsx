@@ -45,6 +45,7 @@ export interface FormNode {
   description?:  string       // subtítulo — usado em welcome / thankyou
   type:          NodeType
   required?:     boolean      // se true, impede avançar sem responder
+  allowOther?:   boolean      // habilita opção "Outra" em radio/select
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -489,6 +490,24 @@ function QuestionEditor({
             <span className="text-[10px] text-white/20">{node.options.length} opção{node.options.length !== 1 ? 'ções' : ''}</span>
           </div>
           <OptionsEditor options={node.options} onChange={opts => set('options', opts)} />
+
+          {/* Allow "Outra" toggle */}
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg mt-1"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div>
+              <p className="text-[12px] font-medium text-[#EDEDED]">Incluir opção "Outra"</p>
+              <p className="text-[11px] text-white/30 mt-0.5">Permite escrever resposta personalizada</p>
+            </div>
+            <button
+              onClick={() => set('allowOther', !node.allowOther)}
+              className="relative rounded-full transition-all duration-200 shrink-0"
+              style={{ width: 36, height: 20, background: node.allowOther ? '#E8521A' : 'rgba(255,255,255,0.1)' }}>
+              <span
+                className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
+                style={{ width: 16, height: 16, transform: node.allowOther ? 'translateX(16px)' : 'none' }}
+              />
+            </button>
+          </div>
         </div>
       )}
 

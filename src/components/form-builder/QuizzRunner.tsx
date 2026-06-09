@@ -620,6 +620,8 @@ export default function QuizzRunner({
   const [activePriceId,   setActivePriceId]   = useState<string | null>(defaultPriceId ?? null)
   const [activePriceInfo, setActivePriceInfo] = useState<OptionPrice | null>(null)
   const [leadSaved,       setLeadSaved]       = useState(false)
+  const [otherActive,     setOtherActive]     = useState(false)
+  const [otherDraft,      setOtherDraft]      = useState('')
   const finalAnswersRef = useRef<Record<string, string>>({})
   const dirRef          = useRef(1)
 
@@ -783,14 +785,22 @@ export default function QuizzRunner({
     setDraft(answers[prevId] ?? '')
   }, [history, answers])
 
+  // Reset "Outra" state when question changes
+  useEffect(() => {
+    setOtherActive(false)
+    setOtherDraft('')
+  }, [currentId])
+
   // ── Keyboard shortcuts ────────────────────────────────────────
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      // Don't intercept while user is typing in an input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (done || disqualified || !currentNode) return
       if (currentNode.type === 'welcome') return
 
-      if (isChoice) {
+      if (isChoice && !otherActive) {
         const idx = e.key.toUpperCase().charCodeAt(0) - 65
         if (idx >= 0 && idx < currentNode.options.length) {
           const opt = currentNode.options[idx]
@@ -803,7 +813,7 @@ export default function QuizzRunner({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [done, disqualified, currentNode, isChoice, draft, advance, handleNext])
+  }, [done, disqualified, currentNode, isChoice, draft, advance, handleNext, otherActive, currentId])
 
   // ── Edge cases ────────────────────────────────────────────────
 
@@ -905,13 +915,46 @@ export default function QuizzRunner({
                         key={opt}
                         letter={LETTER(i)}
                         label={opt}
-                        selected={draft === opt}
+                        selected={!otherActive && draft === opt}
                         priceTag={opPrice ? formatAmount(opPrice.amount, opPrice.currency) : undefined}
-                        onClick={() => { setDraft(opt); setTimeout(() => advance(opt), 280) }}
+                        onClick={() => {
+                          setOtherActive(false)
+                          setOtherDraft('')
+                          setDraft(opt)
+                          setTimeout(() => advance(opt), 280)
+                        }}
                       />
                     )
                   })}
-                  {currentNode.options.length === 0 && (
+
+                  {/* "Outra" option */}
+                  {currentNode.allowOther && (
+                    <OptionBtn
+                      letter={LETTER(currentNode.options.length)}
+                      label="Outra"
+                      selected={otherActive}
+                      onClick={() => { setOtherActive(true); setDraft('') }}
+                    />
+                  )}
+
+                  {/* Text input when "Outra" is selected */}
+                  {otherActive && (
+                    <div className="mt-1">
+                      <input
+                        autoFocus
+                        value={otherDraft}
+                        onChange={e => setOtherDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && otherDraft.trim()) advance(otherDraft.trim())
+                        }}
+                        placeholder="Escreva sua resposta…"
+                        className="w-full bg-transparent outline-none border-0 border-b-2 text-[18px] text-[#F1F5F9] placeholder:text-white/20 py-2 transition-colors"
+                        style={{ borderBottomColor: otherDraft ? '#E8521A' : 'rgba(255,255,255,0.12)' }}
+                      />
+                    </div>
+                  )}
+
+                  {currentNode.options.length === 0 && !currentNode.allowOther && (
                     <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
                       Nenhuma opção configurada.
                     </p>
@@ -933,26 +976,39 @@ export default function QuizzRunner({
                   </button>
                 )}
 
-                {!isChoice && (
-                  <button onClick={handleNext} disabled={isRequired && !draft}
+                {/* Submit button for text inputs OR "Outra" field */}
+                {(!isChoice || otherActive) && (
+                  <button
+                    onClick={() => otherActive ? (otherDraft.trim() && advance(otherDraft.trim())) : handleNext()}
+                    disabled={otherActive ? !otherDraft.trim() : (isRequired && !draft)}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all"
                     style={{
-                      background: (isRequired && !draft) ? 'rgba(255,255,255,0.05)' : '#E8521A',
-                      color:      (isRequired && !draft) ? 'rgba(255,255,255,0.2)'   : '#fff',
-                      boxShadow:  (isRequired && !draft) ? 'none' : '0 4px 20px rgba(232,82,26,0.25)',
-                      cursor:     (isRequired && !draft) ? 'not-allowed' : 'pointer',
+                      background: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                        ? 'rgba(255,255,255,0.05)' : '#E8521A',
+                      color: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                        ? 'rgba(255,255,255,0.2)' : '#fff',
+                      boxShadow: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                        ? 'none' : '0 4px 20px rgba(232,82,26,0.25)',
+                      cursor: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                        ? 'not-allowed' : 'pointer',
                     }}>
                     Continuar <CornerDownLeft className="w-3.5 h-3.5" />
                   </button>
                 )}
 
-                {!isChoice && draft && (
+                {(!isChoice && draft) && (
                   <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
                     ou pressione&nbsp;<KbdChip label="Enter" />
                   </span>
                 )}
 
-                {/* Pular — only for optional questions without a draft */}
+                {otherActive && otherDraft.trim() && (
+                  <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                    ou pressione&nbsp;<KbdChip label="Enter" />
+                  </span>
+                )}
+
+                {/* Pular — only for optional text questions without draft */}
                 {!isRequired && !isChoice && !draft && (
                   <button onClick={handleSkip}
                     className="text-[13px] transition-colors"
@@ -964,8 +1020,8 @@ export default function QuizzRunner({
                 )}
               </div>
 
-              {/* Skip for choice types */}
-              {!isRequired && isChoice && (
+              {/* Skip for choice types (not when "Outra" input is open) */}
+              {!isRequired && isChoice && !otherActive && (
                 <button onClick={handleSkip}
                   className="text-[12px] mt-1 transition-colors text-left"
                   style={{ color: 'rgba(255,255,255,0.2)' }}
