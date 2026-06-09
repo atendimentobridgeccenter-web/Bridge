@@ -71,7 +71,7 @@ function findAnswerByType(
 function injectInlineScript(code: string, id: string) {
   if (document.getElementById(id)) return
   const s = document.createElement('script')
-  s.id = id; s.innerHTML = code
+  s.id = id; s.textContent = code
   document.head.appendChild(s)
 }
 
@@ -83,13 +83,18 @@ function injectScript(src: string, id: string) {
 }
 
 function injectMetaPixel(pixelId: string) {
+  // 1. fbq queue stub — runs once regardless of pixel ID
   injectInlineScript(
-    `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','${pixelId}');fbq('track','PageView');`,
+    `!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);`,
+    'meta-pixel-stub',
+  )
+  // 2. Load fbevents.js (tracked by ID so it is never double-loaded)
+  injectScript('https://connect.facebook.net/en_US/fbevents.js', 'meta-pixel-sdk')
+  // 3. Init pixel and fire PageView (scoped to this pixel ID)
+  injectInlineScript(
+    `fbq('init','${pixelId}');fbq('track','PageView');`,
     `meta-pixel-${pixelId}`,
   )
 }
@@ -1045,16 +1050,16 @@ export default function QuizzRunner({
                 {(!isChoice || otherActive) && (
                   <button
                     onClick={() => otherActive ? (otherDraft.trim() && advance(otherDraft.trim())) : handleNext()}
-                    disabled={otherActive ? !otherDraft.trim() : (isRequired && !draft)}
+                    disabled={otherActive ? !otherDraft.trim() : !canSubmit}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all"
                     style={{
-                      background: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                      background: (otherActive ? !otherDraft.trim() : !canSubmit)
                         ? 'rgba(255,255,255,0.05)' : '#E8521A',
-                      color: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                      color: (otherActive ? !otherDraft.trim() : !canSubmit)
                         ? 'rgba(255,255,255,0.2)' : '#fff',
-                      boxShadow: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                      boxShadow: (otherActive ? !otherDraft.trim() : !canSubmit)
                         ? 'none' : '0 4px 20px rgba(232,82,26,0.25)',
-                      cursor: (otherActive ? !otherDraft.trim() : (isRequired && !draft))
+                      cursor: (otherActive ? !otherDraft.trim() : !canSubmit)
                         ? 'not-allowed' : 'pointer',
                     }}>
                     Continuar <CornerDownLeft className="w-3.5 h-3.5" />
