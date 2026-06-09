@@ -71,7 +71,7 @@ function findAnswerByType(
 function injectInlineScript(code: string, id: string) {
   if (document.getElementById(id)) return
   const s = document.createElement('script')
-  s.id = id; s.textContent = code
+  s.id = id; s.innerHTML = code
   document.head.appendChild(s)
 }
 
@@ -83,18 +83,14 @@ function injectScript(src: string, id: string) {
 }
 
 function injectMetaPixel(pixelId: string) {
-  // 1. fbq queue stub — runs once regardless of pixel ID
+  // Standard Meta Pixel base code — kept verbatim so Meta Pixel Helper detects it
   injectInlineScript(
-    `!function(f){if(f.fbq)return;var n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);`,
-    'meta-pixel-stub',
-  )
-  // 2. Load fbevents.js (tracked by ID so it is never double-loaded)
-  injectScript('https://connect.facebook.net/en_US/fbevents.js', 'meta-pixel-sdk')
-  // 3. Init pixel and fire PageView (scoped to this pixel ID)
-  injectInlineScript(
-    `fbq('init','${pixelId}');fbq('track','PageView');`,
+    `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${pixelId}');fbq('track','PageView');`,
     `meta-pixel-${pixelId}`,
   )
 }
