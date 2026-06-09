@@ -259,6 +259,7 @@ function AnswerInput({ node, value, onChange, onEnter }: {
       onChange={e => onChange(e.target.value)}
       onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
       placeholder={
+        node.type === 'name'  ? 'Seu nome completo' :
         node.type === 'email' ? 'seu@email.com' :
         node.type === 'city'  ? 'Ex: São Paulo' :
         node.type === 'state' ? 'Ex: SP' :
@@ -453,8 +454,8 @@ function CheckoutSummary({
   const [errMsg,            setErrMsg]            = useState<string | null>(null)
   const [resolvedPriceInfo, setResolvedPriceInfo] = useState<OptionPrice | null>(priceInfo)
 
+  const name  = findAnswerByType('name',  nodes, answers)
   const email = findAnswerByType('email', nodes, answers)
-  const name  = findAnswerByType('text',  nodes, answers)
 
   const canCheckout = !!priceId && !!productId
 
@@ -643,7 +644,7 @@ export default function QuizzRunner({
     const ans = finalAnswersRef.current
     const email = findAnswerByType('email', nodes, ans)
     const phone = findAnswerByType('phone', nodes, ans)
-    const name  = findAnswerByType('text',  nodes, ans)
+    const name  = findAnswerByType('name',  nodes, ans)
     const cpf   = findAnswerByType('cpf',   nodes, ans)
     const city  = findAnswerByType('city',  nodes, ans)
     const state = findAnswerByType('state', nodes, ans)

@@ -18,12 +18,14 @@ create table if not exists public.leads (
 alter table public.leads enable row level security;
 
 -- qualquer visitante pode inserir um lead (anon key)
+drop policy if exists "public_insert_leads" on public.leads;
 create policy "public_insert_leads" on public.leads
   for insert
   to anon, authenticated
   with check (true);
 
 -- somente admins podem ler leads
+drop policy if exists "admin_select_leads" on public.leads;
 create policy "admin_select_leads" on public.leads
   for select
   to authenticated

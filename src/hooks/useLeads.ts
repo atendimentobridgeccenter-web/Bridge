@@ -1,6 +1,16 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { Lead } from '@/lib/types'
+
+export interface LeadPatch {
+  name?:      string | null
+  email?:     string | null
+  phone?:     string | null
+  cpf?:       string | null
+  city?:      string | null
+  state?:     string | null
+  qualified?: boolean
+}
 
 // ── Row shape returned by Supabase join ───────────────────────
 
@@ -52,6 +62,32 @@ export function useLeads(productId?: string | null) {
       return (data as unknown as LeadRow[]).map(mapRow)
     },
     staleTime: 30_000,
+  })
+}
+
+// ── useUpdateLead ─────────────────────────────────────────────
+
+export function useUpdateLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: LeadPatch }) => {
+      const { error } = await supabase.from('leads').update(patch).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
+  })
+}
+
+// ── useDeleteLead ─────────────────────────────────────────────
+
+export function useDeleteLead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('leads').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
   })
 }
 

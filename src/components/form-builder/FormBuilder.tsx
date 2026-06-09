@@ -4,7 +4,7 @@ import {
   Trash2, Plus, ArrowRight, GripVertical,
   MousePointerClick, Zap, Phone, Hash, Calendar,
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
-  XCircle, FileText,
+  XCircle, FileText, User,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -12,6 +12,7 @@ import { cn } from '@/lib/cn'
 
 export type NodeType =
   | 'welcome'   // Tela de boas-vindas (intro)
+  | 'name'      // Nome completo (dado pessoal)
   | 'text'      // Texto Curto
   | 'email'     // E-mail
   | 'phone'     // Telefone
@@ -63,6 +64,7 @@ interface TypeMeta { label: string; icon: React.ElementType; color: string }
 
 const TYPE_META: Record<NodeType, TypeMeta> = {
   welcome:  { label: 'Boas-vindas',     icon: Sparkles,    color: '#E8521A' },
+  name:     { label: 'Nome',            icon: User,        color: '#60A5FA' },
   text:     { label: 'Texto Curto',     icon: Type,        color: '#60A5FA' },
   email:    { label: 'E-mail',          icon: Mail,        color: '#34D399' },
   phone:    { label: 'Telefone',        icon: Phone,       color: '#34D399' },
@@ -207,18 +209,31 @@ function LogicJumpRow({
   onChange: (j: LogicJump) => void
   onDelete: () => void
 }) {
-  const targets = nodes.filter(n => n.id !== nodeId)
-  const selCls  = 'px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer'
-  const selSty  = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const targets    = nodes.filter(n => n.id !== nodeId)
+  const hasOptions = options.length > 0
+  const selCls     = 'px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer'
+  const selSty     = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-[11px] font-semibold text-white/30 shrink-0">SE</span>
-      <select value={jump.ifOption} onChange={e => onChange({ ...jump, ifOption: e.target.value })}
-        className={selCls} style={selSty}>
-        <option value="">escolher opção…</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
+
+      {hasOptions ? (
+        <select value={jump.ifOption} onChange={e => onChange({ ...jump, ifOption: e.target.value })}
+          className={selCls} style={selSty}>
+          <option value="">escolher opção…</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input
+          value={jump.ifOption}
+          onChange={e => onChange({ ...jump, ifOption: e.target.value })}
+          placeholder="resposta contém…"
+          className="px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none placeholder:text-white/20"
+          style={selSty}
+        />
+      )}
+
       <ArrowRight className="w-3.5 h-3.5 text-[#E8521A] shrink-0" />
       <span className="text-[11px] font-semibold text-white/30 shrink-0">ir para</span>
       <select value={jump.jumpToNodeId} onChange={e => onChange({ ...jump, jumpToNodeId: e.target.value })}
@@ -340,9 +355,11 @@ function QuestionEditor({
   const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
   const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
 
-  // Personal data fields with special badge
-  const personalDataTypes: NodeType[] = ['email', 'phone', 'cpf', 'city', 'state']
+  // Personal data fields — linked to leads table columns, no logic rules
+  const personalDataTypes: NodeType[] = ['name', 'email', 'phone', 'cpf', 'city', 'state']
   const isPersonalData = personalDataTypes.includes(node.type)
+  // Show logic rules for any non-personal, non-options question
+  const showLogic = !isPersonalData && !SCREEN_TYPES.includes(node.type)
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
@@ -379,7 +396,7 @@ function QuestionEditor({
         {/* Dados pessoais */}
         <p className="text-[10px] text-white/20 uppercase tracking-wider font-semibold -mb-1">Dados Pessoais</p>
         <div className="grid grid-cols-2 gap-1.5">
-          {(['text', 'email', 'phone', 'cpf', 'city', 'state'] as NodeType[]).map(type => {
+          {(['name', 'email', 'phone', 'cpf', 'city', 'state'] as NodeType[]).map(type => {
             const meta   = TYPE_META[type]
             const active = node.type === type
             return (
@@ -402,7 +419,7 @@ function QuestionEditor({
         {/* Outros campos */}
         <p className="text-[10px] text-white/20 uppercase tracking-wider font-semibold mt-2 -mb-1">Outros</p>
         <div className="grid grid-cols-2 gap-1.5">
-          {(['number', 'date', 'radio', 'select', 'textarea'] as NodeType[]).map(type => {
+          {(['text', 'number', 'date', 'radio', 'select', 'textarea'] as NodeType[]).map(type => {
             const meta   = TYPE_META[type]
             const active = node.type === type
             return (
@@ -434,77 +451,77 @@ function QuestionEditor({
         </div>
       )}
 
-      {hasOptions && node.options.length > 0 && (
+      {showLogic && hasOptions && node.options.length > 0 && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
       )}
 
-      {/* Logic jumps */}
-      {hasOptions && node.options.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-[#E8521A]" />
-              <label className={labelCls}>Regras de Lógica</label>
-            </div>
-            <button onClick={addJump}
-              className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md text-[#E8521A] transition-colors"
-              style={{ background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}>
-              <Plus className="w-3 h-3" /> Adicionar Regra
-            </button>
+      {/* Logic jumps — available for all non-personal question types */}
+      {showLogic && (
+        hasOptions && node.options.length === 0 ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+            <Zap className="w-4 h-4 text-white/15 shrink-0" />
+            <p className="text-[12px] text-white/25">
+              Adicione pelo menos uma opção para criar lógicas de qualificação.
+            </p>
           </div>
-
-          {node.logicJumps.length === 0 ? (
-            <div className="flex items-start gap-3 px-4 py-3 rounded-lg"
-              style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
-              <MousePointerClick className="w-4 h-4 text-white/15 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[12px] text-white/25">Nenhuma regra ainda. Adicione para criar fluxos condicionais.</p>
-                <p className="text-[11px] text-white/15 mt-1">
-                  Use <strong className="text-white/25">Desqualificar lead</strong> para filtrar perfis fora do público-alvo.
-                </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-[#E8521A]" />
+                <label className={labelCls}>Regras de Lógica</label>
               </div>
+              <button onClick={addJump}
+                className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md text-[#E8521A] transition-colors"
+                style={{ background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}>
+                <Plus className="w-3 h-3" /> Adicionar Regra
+              </button>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {node.logicJumps.map(jump => (
-                <div key={jump.id} className="p-3 rounded-lg"
-                  style={{
-                    background: jump.jumpToNodeId === '__disqualify__'
-                      ? 'rgba(239,68,68,0.04)'
-                      : 'rgba(232,82,26,0.04)',
-                    border: jump.jumpToNodeId === '__disqualify__'
-                      ? '1px solid rgba(239,68,68,0.15)'
-                      : '1px solid rgba(232,82,26,0.12)',
-                  }}>
-                  {jump.jumpToNodeId === '__disqualify__' && (
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <XCircle className="w-3 h-3 text-red-400" />
-                      <span className="text-[10px] font-semibold text-red-400/70 uppercase tracking-wider">Desqualificação</span>
-                    </div>
-                  )}
-                  <LogicJumpRow
-                    jump={jump}
-                    options={node.options}
-                    nodes={nodes}
-                    nodeId={node.id}
-                    onChange={updated => set('logicJumps', node.logicJumps.map(j => j.id === jump.id ? updated : j))}
-                    onDelete={() => set('logicJumps', node.logicJumps.filter(j => j.id !== jump.id))}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {hasOptions && node.options.length === 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-lg"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
-          <Zap className="w-4 h-4 text-white/15 shrink-0" />
-          <p className="text-[12px] text-white/25">
-            Adicione pelo menos uma opção para criar lógicas de qualificação.
-          </p>
-        </div>
+            {node.logicJumps.length === 0 ? (
+              <div className="flex items-start gap-3 px-4 py-3 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+                <MousePointerClick className="w-4 h-4 text-white/15 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[12px] text-white/25">Nenhuma regra ainda. Adicione para criar fluxos condicionais.</p>
+                  <p className="text-[11px] text-white/15 mt-1">
+                    Use <strong className="text-white/25">Desqualificar lead</strong> para filtrar perfis fora do público-alvo.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {node.logicJumps.map(jump => (
+                  <div key={jump.id} className="p-3 rounded-lg"
+                    style={{
+                      background: jump.jumpToNodeId === '__disqualify__'
+                        ? 'rgba(239,68,68,0.04)'
+                        : 'rgba(232,82,26,0.04)',
+                      border: jump.jumpToNodeId === '__disqualify__'
+                        ? '1px solid rgba(239,68,68,0.15)'
+                        : '1px solid rgba(232,82,26,0.12)',
+                    }}>
+                    {jump.jumpToNodeId === '__disqualify__' && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <XCircle className="w-3 h-3 text-red-400" />
+                        <span className="text-[10px] font-semibold text-red-400/70 uppercase tracking-wider">Desqualificação</span>
+                      </div>
+                    )}
+                    <LogicJumpRow
+                      jump={jump}
+                      options={node.options}
+                      nodes={nodes}
+                      nodeId={node.id}
+                      onChange={updated => set('logicJumps', node.logicJumps.map(j => j.id === jump.id ? updated : j))}
+                      onDelete={() => set('logicJumps', node.logicJumps.filter(j => j.id !== jump.id))}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
       )}
     </div>
   )
