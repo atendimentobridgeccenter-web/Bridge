@@ -195,7 +195,7 @@ function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => 
 
     try {
       const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path = `avatars/${user.id}.${ext}`
+      const path = `${user.id}.${ext}`
 
       const { error: upErr } = await supabase.storage
         .from('avatars')
