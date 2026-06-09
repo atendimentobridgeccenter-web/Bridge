@@ -44,6 +44,7 @@ export interface FormNode {
   title:         string
   description?:  string       // subtítulo — usado em welcome / thankyou
   type:          NodeType
+  required?:     boolean      // se true, impede avançar sem responder
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -144,9 +145,14 @@ function QuestionCard({
           {node.type === 'welcome' ? 'INTRO' : 'FIM'}
         </span>
       ) : (
-        <span className="text-[10px] font-mono text-white/20 shrink-0 mt-0.5">
-          {String(index + 1).padStart(2, '0')}
-        </span>
+        <div className="flex items-center gap-1 shrink-0 mt-0.5">
+          <span className="text-[10px] font-mono text-white/20">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          {node.required && (
+            <span className="text-[10px] font-bold leading-none" style={{ color: '#F87171' }}>*</span>
+          )}
+        </div>
       )}
 
       <button
@@ -389,6 +395,26 @@ function QuestionEditor({
           </p>
         </div>
       )}
+
+      {/* Required toggle */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div>
+            <p className="text-[12px] font-semibold text-[#EDEDED]">Pergunta obrigatória</p>
+            <p className="text-[11px] text-white/30 mt-0.5">
+              {node.required ? 'Impede avançar sem responder' : 'Pode ser pulada pelo respondente'}
+            </p>
+          </div>
+          <button
+            onClick={() => set('required', !node.required)}
+            className="relative rounded-full transition-all duration-200 shrink-0"
+            style={{ width: 36, height: 20, background: node.required ? '#E8521A' : 'rgba(255,255,255,0.1)' }}>
+            <span
+              className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
+              style={{ width: 16, height: 16, transform: node.required ? 'translateX(16px)' : 'none' }}
+            />
+          </button>
+        </div>
 
       {/* Título */}
       <div className="flex flex-col gap-2">

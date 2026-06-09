@@ -767,9 +767,13 @@ export default function QuizzRunner({
   }, [currentNode, currentIdx, answers, nodes, onComplete])
 
   const handleNext = useCallback(() => {
-    if (!draft) return
+    if (!draft && currentNode?.required !== false) return
     advance(draft)
-  }, [draft, advance])
+  }, [draft, advance, currentNode])
+
+  const handleSkip = useCallback(() => {
+    advance('')
+  }, [advance])
 
   const handleBack = useCallback(() => {
     if (history.length <= 1) return
@@ -842,7 +846,9 @@ export default function QuizzRunner({
 
   // ── Regular question screen ───────────────────────────────────
 
-  const canSubmit = !!draft
+  // required = undefined or true → must answer; false → can skip
+  const isRequired = currentNode.required !== false
+  const canSubmit  = isRequired ? !!draft : true
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0D0E12' }}>
@@ -866,10 +872,20 @@ export default function QuizzRunner({
                 <span className="text-[13px] font-bold tabular-nums" style={{ color: '#E8521A' }}>
                   {String(currentIdx + 1).padStart(2, '0')}
                 </span>
+                {isRequired && (
+                  <span className="text-[13px] font-bold leading-none" style={{ color: '#F87171' }}
+                    title="Pergunta obrigatória">*</span>
+                )}
                 <ArrowRight className="w-3.5 h-3.5" style={{ color: '#E8521A' }} />
                 <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
                   de {nodes.filter(n => n.type !== 'welcome' && n.type !== 'thankyou').length}
                 </span>
+                {!isRequired && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+                    style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.25)' }}>
+                    opcional
+                  </span>
+                )}
               </div>
 
               {/* Question title */}
@@ -906,7 +922,7 @@ export default function QuizzRunner({
               )}
 
               {/* Actions */}
-              <div className="flex items-center gap-4 pt-1">
+              <div className="flex items-center gap-4 pt-1 flex-wrap">
                 {history.length > 1 && (
                   <button onClick={handleBack}
                     className="flex items-center gap-1.5 text-[13px] transition-colors"
@@ -918,13 +934,13 @@ export default function QuizzRunner({
                 )}
 
                 {!isChoice && (
-                  <button onClick={handleNext} disabled={!canSubmit}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold text-white transition-all"
+                  <button onClick={handleNext} disabled={isRequired && !draft}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[14px] font-semibold transition-all"
                     style={{
-                      background: canSubmit ? '#E8521A' : 'rgba(255,255,255,0.05)',
-                      color:      canSubmit ? '#fff'    : 'rgba(255,255,255,0.2)',
-                      boxShadow:  canSubmit ? '0 4px 20px rgba(232,82,26,0.25)' : 'none',
-                      cursor:     canSubmit ? 'pointer' : 'not-allowed',
+                      background: (isRequired && !draft) ? 'rgba(255,255,255,0.05)' : '#E8521A',
+                      color:      (isRequired && !draft) ? 'rgba(255,255,255,0.2)'   : '#fff',
+                      boxShadow:  (isRequired && !draft) ? 'none' : '0 4px 20px rgba(232,82,26,0.25)',
+                      cursor:     (isRequired && !draft) ? 'not-allowed' : 'pointer',
                     }}>
                     Continuar <CornerDownLeft className="w-3.5 h-3.5" />
                   </button>
@@ -935,7 +951,29 @@ export default function QuizzRunner({
                     ou pressione&nbsp;<KbdChip label="Enter" />
                   </span>
                 )}
+
+                {/* Pular — only for optional questions without a draft */}
+                {!isRequired && !isChoice && !draft && (
+                  <button onClick={handleSkip}
+                    className="text-[13px] transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.2)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}>
+                    Pular →
+                  </button>
+                )}
               </div>
+
+              {/* Skip for choice types */}
+              {!isRequired && isChoice && (
+                <button onClick={handleSkip}
+                  className="text-[12px] mt-1 transition-colors text-left"
+                  style={{ color: 'rgba(255,255,255,0.2)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}>
+                  Pular esta pergunta →
+                </button>
+              )}
 
               {isChoice && currentNode.options.length > 0 && (
                 <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
