@@ -2,10 +2,23 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock,
-  ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle,
+  ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle, Check,
+  InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { FormNode, OptionPrice, NodeType } from './FormBuilder'
+import type { FormNode, OptionPrice, NodeType, SocialLink } from './FormBuilder'
+
+// ── Social platform display config ───────────────────────────
+
+const SOCIAL_META: Record<string, { label: string; Icon: React.ElementType }> = {
+  instagram: { label: 'Instagram',  Icon: InstagramIcon },
+  whatsapp:  { label: 'WhatsApp',   Icon: MessageCircle },
+  linkedin:  { label: 'LinkedIn',   Icon: LinkedinIcon  },
+  youtube:   { label: 'YouTube',    Icon: PlayCircle    },
+  tiktok:    { label: 'TikTok',     Icon: Music2        },
+  telegram:  { label: 'Telegram',   Icon: Send          },
+  website:   { label: 'Website',    Icon: Globe         },
+}
 
 // ── Tracking config (exported — usado em Apply.tsx e ProductConfigPage) ──
 
@@ -369,13 +382,16 @@ function DisqualifiedScreen() {
 
 // ── Custom ThankyouScreen ─────────────────────────────────────
 
-function ThankyouScreen({ title, description }: { title: string; description?: string }) {
+function ThankyouScreen({ title, description, socialLinks }: {
+  title: string; description?: string; socialLinks?: SocialLink[]
+}) {
+  const links = (socialLinks ?? []).filter(s => s.url.trim())
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={1} />
       <motion.div
-        className="text-center max-w-md"
+        className="text-center max-w-md w-full"
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -397,6 +413,29 @@ function ThankyouScreen({ title, description }: { title: string; description?: s
             {description}
           </p>
         )}
+
+        {/* Social links */}
+        {links.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-3 mt-10">
+            {links.map(({ platform, url }) => {
+              const meta = SOCIAL_META[platform]
+              if (!meta) return null
+              const Icon = meta.Icon
+              return (
+                <a key={platform} href={url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)',
+                    border: '1px solid rgba(255,255,255,0.08)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.1)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.06)' }}>
+                  <Icon className="w-4 h-4" />
+                  {meta.label}
+                </a>
+              )
+            })}
+          </div>
+        )}
+
         <div className="mt-10 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold"
           style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)', color: '#E8521A' }}>
           <span className="w-1.5 h-1.5 rounded-full bg-[#E8521A] animate-pulse" />
@@ -621,7 +660,7 @@ export default function QuizzRunner({
   const [draft,           setDraft]           = useState('')
   const [done,            setDone]            = useState(false)
   const [disqualified,    setDisqualified]    = useState(false)
-  const [thankyouContent, setThankyouContent] = useState<{ title: string; description?: string } | null>(null)
+  const [thankyouContent, setThankyouContent] = useState<{ title: string; description?: string; socialLinks?: SocialLink[] } | null>(null)
   const [activePriceId,   setActivePriceId]   = useState<string | null>(defaultPriceId ?? null)
   const [activePriceInfo, setActivePriceInfo] = useState<OptionPrice | null>(null)
   const [leadSaved,       setLeadSaved]       = useState(false)
@@ -688,6 +727,7 @@ export default function QuizzRunner({
   const currentNode = nodes.find(n => n.id === currentId) ?? null
   const currentIdx  = nodes.findIndex(n => n.id === currentId)
   const isChoice    = currentNode?.type === 'radio' || currentNode?.type === 'select'
+  const isConfirm   = currentNode?.type === 'confirm'
   const pct         = done || disqualified ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
 
   // ── Advance from welcome (no answer) ─────────────────────────
@@ -696,13 +736,13 @@ export default function QuizzRunner({
     const nextNode = nodes[currentIdx + 1]
     if (!nextNode) {
       const customDone = nodes.find(n => n.type === 'thankyou')
-      if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description })
+      if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description, socialLinks: customDone.socialLinks })
       setDone(true)
       onComplete?.(answers)
       return
     }
     if (nextNode.type === 'thankyou') {
-      setThankyouContent({ title: nextNode.title, description: nextNode.description })
+      setThankyouContent({ title: nextNode.title, description: nextNode.description, socialLinks: nextNode.socialLinks })
       setDone(true)
       onComplete?.(answers)
       return
@@ -736,14 +776,14 @@ export default function QuizzRunner({
       }
       if (jump.jumpToNodeId === '__end__') {
         const customDone = nodes.find(n => n.type === 'thankyou')
-        if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description })
+        if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description, socialLinks: customDone.socialLinks })
         setDone(true)
         onComplete?.(newAnswers)
         return
       }
       const targetNode = nodes.find(n => n.id === jump.jumpToNodeId)
       if (targetNode?.type === 'thankyou') {
-        setThankyouContent({ title: targetNode.title, description: targetNode.description })
+        setThankyouContent({ title: targetNode.title, description: targetNode.description, socialLinks: targetNode.socialLinks })
         setDone(true)
         onComplete?.(newAnswers)
         return
@@ -762,7 +802,7 @@ export default function QuizzRunner({
       return
     }
     if (nextNode.type === 'thankyou') {
-      setThankyouContent({ title: nextNode.title, description: nextNode.description })
+      setThankyouContent({ title: nextNode.title, description: nextNode.description, socialLinks: nextNode.socialLinks })
       setDone(true)
       onComplete?.(newAnswers)
       return
@@ -835,7 +875,7 @@ export default function QuizzRunner({
   if (disqualified) return <DisqualifiedScreen />
 
   if (done) {
-    if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} />
+    if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} socialLinks={thankyouContent.socialLinks} />
     if (checkoutEnabled && productId) {
       return (
         <CheckoutSummary
@@ -911,7 +951,27 @@ export default function QuizzRunner({
               </h1>
 
               {/* Answer area */}
-              {isChoice ? (
+              {isConfirm ? (
+                <button
+                  onClick={() => setDraft(draft === 'true' ? '' : 'true')}
+                  className="flex items-center gap-4 p-5 rounded-2xl w-full text-left transition-all"
+                  style={{
+                    background: draft === 'true' ? 'rgba(232,82,26,0.08)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${draft === 'true' ? 'rgba(232,82,26,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                  }}>
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all"
+                    style={{
+                      background: draft === 'true' ? '#E8521A' : 'transparent',
+                      border: `2px solid ${draft === 'true' ? '#E8521A' : 'rgba(255,255,255,0.3)'}`,
+                    }}>
+                    {draft === 'true' && <Check className="w-4 h-4 text-white" />}
+                  </div>
+                  <span className="text-[16px] leading-snug transition-colors"
+                    style={{ color: draft === 'true' ? '#F1F5F9' : 'rgba(255,255,255,0.55)' }}>
+                    {currentNode.description || currentNode.title || 'Confirmar'}
+                  </span>
+                </button>
+              ) : isChoice ? (
                 <div className="flex flex-col gap-3">
                   {currentNode.options.map((opt, i) => {
                     const opPrice = currentNode.optionPrices?.[opt]

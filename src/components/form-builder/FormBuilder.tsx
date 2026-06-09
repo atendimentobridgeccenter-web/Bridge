@@ -4,7 +4,8 @@ import {
   Trash2, Plus, ArrowRight, GripVertical,
   MousePointerClick, Zap, Phone, Hash, Calendar,
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
-  XCircle, FileText, User, ImageIcon, X,
+  XCircle, FileText, User, ImageIcon, X, SquareCheck,
+  InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -26,6 +27,7 @@ export type NodeType =
   | 'radio'     // Múltipla Escolha
   | 'select'    // Lista Suspensa
   | 'textarea'  // Texto Longo
+  | 'confirm'   // Confirmação / aceite (checkbox)
   | 'thankyou'  // Tela de encerramento
 
 export interface LogicJump {
@@ -41,14 +43,20 @@ export interface OptionPrice {
   currency: string
 }
 
+export interface SocialLink {
+  platform: string
+  url:      string
+}
+
 export interface FormNode {
   id:            string
   title:         string
-  description?:  string       // subtítulo — usado em welcome / thankyou
+  description?:  string       // subtítulo — usado em welcome / thankyou / confirm (label do checkbox)
   type:          NodeType
   required?:     boolean      // se true, impede avançar sem responder
   allowOther?:   boolean      // habilita opção "Outra" em radio/select
   logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
+  socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -60,7 +68,7 @@ export interface FormNode {
 function uid(): string { return Math.random().toString(36).slice(2, 9) }
 
 function blankNode(): FormNode {
-  return { id: uid(), title: '', type: 'text', options: [], logicJumps: [] }
+  return { id: uid(), title: '', type: 'text', required: true, options: [], logicJumps: [] }
 }
 
 // ── Type metadata ─────────────────────────────────────────────
@@ -81,6 +89,7 @@ const TYPE_META: Record<NodeType, TypeMeta> = {
   radio:    { label: 'Múlt. Escolha',  icon: CheckSquare, color: '#F59E0B' },
   select:   { label: 'Lista Suspensa', icon: List,        color: '#A78BFA' },
   textarea: { label: 'Texto Longo',    icon: AlignLeft,   color: '#FB923C' },
+  confirm:  { label: 'Confirmação',    icon: SquareCheck, color: '#34D399' },
   thankyou: { label: 'Encerramento',   icon: CheckCircle, color: '#34D399' },
 }
 
@@ -280,6 +289,18 @@ function LogicJumpRow({
   )
 }
 
+// ── Social platform config ────────────────────────────────────
+
+const SOCIAL_PLATFORMS = [
+  { id: 'instagram', label: 'Instagram',  Icon: InstagramIcon, placeholder: 'https://instagram.com/seu_perfil' },
+  { id: 'whatsapp',  label: 'WhatsApp',   Icon: MessageCircle, placeholder: 'https://wa.me/5511999999999' },
+  { id: 'linkedin',  label: 'LinkedIn',   Icon: LinkedinIcon,  placeholder: 'https://linkedin.com/in/seu_perfil' },
+  { id: 'youtube',   label: 'YouTube',    Icon: PlayCircle,    placeholder: 'https://youtube.com/@canal' },
+  { id: 'tiktok',    label: 'TikTok',     Icon: Music2,        placeholder: 'https://tiktok.com/@perfil' },
+  { id: 'telegram',  label: 'Telegram',   Icon: Send,          placeholder: 'https://t.me/perfil' },
+  { id: 'website',   label: 'Website',    Icon: Globe,         placeholder: 'https://meusite.com.br' },
+]
+
 // ── ScreenEditor (welcome / thankyou) ─────────────────────────
 
 function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
@@ -296,7 +317,6 @@ function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNo
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!fileRef.current) fileRef.current = e.target
     e.target.value = ''
     if (!file) return
     if (file.size > 3 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 3 MB.'); return }
@@ -429,6 +449,58 @@ function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNo
           />
         </div>
       )}
+
+      {/* Redes Sociais (só thankyou) */}
+      {!isWelcome && (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className={labelCls}>Redes Sociais e Contatos</label>
+            <p className="text-[11px] text-white/25 mt-1">Exibidos como botões na tela final do formulário.</p>
+          </div>
+          {SOCIAL_PLATFORMS.map(({ id, label, Icon, placeholder }) => {
+            const current = node.socialLinks?.find(s => s.platform === id)
+            const active  = !!current
+            return (
+              <div key={id} className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg"
+                  style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: active ? '#E8521A' : 'rgba(255,255,255,0.3)' }} />
+                  <span className="text-[12px] flex-1" style={{ color: active ? '#EDEDED' : 'rgba(255,255,255,0.4)' }}>{label}</span>
+                  <button
+                    onClick={() => {
+                      const links = node.socialLinks ?? []
+                      onUpdate({ ...node, socialLinks: active
+                        ? links.filter(s => s.platform !== id)
+                        : [...links, { platform: id, url: '' }]
+                      })
+                    }}
+                    className="relative rounded-full transition-all duration-200 shrink-0"
+                    style={{ width: 32, height: 18, background: active ? '#E8521A' : 'rgba(255,255,255,0.1)' }}>
+                    <span className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
+                      style={{ width: 14, height: 14, transform: active ? 'translateX(14px)' : 'none' }} />
+                  </button>
+                </div>
+                {active && (
+                  <input
+                    value={current?.url ?? ''}
+                    onChange={e => {
+                      const links = (node.socialLinks ?? []).map(s =>
+                        s.platform === id ? { ...s, url: e.target.value } : s
+                      )
+                      onUpdate({ ...node, socialLinks: links })
+                    }}
+                    placeholder={placeholder}
+                    className={inputCls}
+                    style={inputSty}
+                    onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+                    onBlur={e  => { e.currentTarget.style.borderColor = blurSty }}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -477,32 +549,37 @@ function QuestionEditor({
       )}
 
       {/* Required toggle */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div>
-            <p className="text-[12px] font-semibold text-[#EDEDED]">Pergunta obrigatória</p>
-            <p className="text-[11px] text-white/30 mt-0.5">
-              {node.required ? 'Impede avançar sem responder' : 'Pode ser pulada pelo respondente'}
-            </p>
+      {(() => {
+        const isReq = node.required !== false
+        return (
+          <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div>
+              <p className="text-[12px] font-semibold text-[#EDEDED]">Pergunta obrigatória</p>
+              <p className="text-[11px] text-white/30 mt-0.5">
+                {isReq ? 'Impede avançar sem responder' : 'Pode ser pulada pelo respondente'}
+              </p>
+            </div>
+            <button
+              onClick={() => set('required', !isReq)}
+              className="relative rounded-full transition-all duration-200 shrink-0"
+              style={{ width: 36, height: 20, background: isReq ? '#E8521A' : 'rgba(255,255,255,0.1)' }}>
+              <span
+                className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
+                style={{ width: 16, height: 16, transform: isReq ? 'translateX(16px)' : 'none' }}
+              />
+            </button>
           </div>
-          <button
-            onClick={() => set('required', !node.required)}
-            className="relative rounded-full transition-all duration-200 shrink-0"
-            style={{ width: 36, height: 20, background: node.required ? '#E8521A' : 'rgba(255,255,255,0.1)' }}>
-            <span
-              className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
-              style={{ width: 16, height: 16, transform: node.required ? 'translateX(16px)' : 'none' }}
-            />
-          </button>
-        </div>
+        )
+      })()}
 
       {/* Título */}
       <div className="flex flex-col gap-2">
-        <label className={labelCls}>Título da Pergunta</label>
+        <label className={labelCls}>{node.type === 'confirm' ? 'Instrução / Título' : 'Título da Pergunta'}</label>
         <input
           value={node.title}
           onChange={e => set('title', e.target.value)}
-          placeholder="Ex: Qual é o seu nível de japonês?"
+          placeholder={node.type === 'confirm' ? 'Ex: Antes de continuar, confirme:' : 'Ex: Qual é o seu nível de japonês?'}
           className={inputCls}
           style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}
           onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,82,26,0.45)' }}
@@ -540,7 +617,7 @@ function QuestionEditor({
         {/* Outros campos */}
         <p className="text-[10px] text-white/20 uppercase tracking-wider font-semibold mt-2 -mb-1">Outros</p>
         <div className="grid grid-cols-2 gap-1.5">
-          {(['text', 'number', 'date', 'radio', 'select', 'textarea'] as NodeType[]).map(type => {
+          {(['text', 'number', 'date', 'radio', 'select', 'textarea', 'confirm'] as NodeType[]).map(type => {
             const meta   = TYPE_META[type]
             const active = node.type === type
             return (
