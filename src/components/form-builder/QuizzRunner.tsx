@@ -93,6 +93,10 @@ document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init','${pixelId}');fbq('track','PageView');`,
     `meta-pixel-${pixelId}`,
   )
+  // Fallback: if the IIFE failed to insert fbevents.js into the DOM, load it explicitly
+  if (!document.querySelector('script[src*="connect.facebook.net"]')) {
+    injectScript('https://connect.facebook.net/en_US/fbevents.js', 'meta-pixel-sdk')
+  }
 }
 
 function injectGA4(measurementId: string) {
