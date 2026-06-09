@@ -1,13 +1,3 @@
-// ── useAutoSave ────────────────────────────────────────────────
-//
-// Watches isDirty from the Zustand store and debounces a save to
-// the server via React Query mutation.
-//
-// Key: reads store values inside the timer callback via getState()
-// to avoid stale closures — the closure always sees the latest
-// draft state at the moment the timer fires, not at setup time.
-
-import { useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useBuilderStore } from '@/stores/useBuilderStore'
 import { useUpdateProduct } from './useProduct'
@@ -28,38 +18,16 @@ function buildFields(product: Product, formNodes: FormNode[]): Partial<Product> 
   }
 }
 
-export function useAutoSave(id: string | undefined, delay = 1500) {
-  const isDirty = useBuilderStore(s => s.isDirty)
+export function useAutoSave(id: string | undefined) {
   const { mutate: updateProduct, isPending: isSaving } = useUpdateProduct()
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function onSaveError(err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('[useAutoSave] Falha ao salvar produto:', err)
     toast.error(`Erro ao salvar: ${msg}`, { duration: 6000 })
   }
 
-  // Debounced auto-save whenever isDirty flips to true
-  useEffect(() => {
-    if (!isDirty || !id || id === 'new') return
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      const { product, formNodes, markAsSaved } = useBuilderStore.getState()
-      if (!product) return
-      updateProduct(
-        { id, fields: buildFields(product, formNodes) },
-        { onSuccess: markAsSaved, onError: onSaveError },
-      )
-    }, delay)
-    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [isDirty, id, delay, updateProduct])
-
-  // Cleanup on unmount
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
-
   function saveNow() {
     if (!id || id === 'new') return
-    if (timerRef.current) clearTimeout(timerRef.current)
     const { product, formNodes, markAsSaved } = useBuilderStore.getState()
     if (!product) return
     updateProduct(
