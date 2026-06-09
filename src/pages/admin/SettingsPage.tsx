@@ -4,6 +4,7 @@ import {
   Eye, EyeOff, CheckCircle2, Loader2,
   Mail, Lock, AtSign, Globe,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -170,26 +171,58 @@ function Toggle({ value, onChange, label, description }: {
 // ── Avatar ─────────────────────────────────────────────────────
 
 function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => void }) {
-  const fileRef   = useRef<HTMLInputElement>(null)
-  const [loading, setLoading] = useState(false)
-  const avatarUrl = user.user_metadata?.avatar_url as string | undefined
-  const name      = displayName(user)
-  const initial   = initials(name, user.email)
+  const fileRef    = useRef<HTMLInputElement>(null)
+  const [loading,  setLoading]  = useState(false)
+  const [preview,  setPreview]  = useState<string | null>(null)
+  const avatarUrl  = preview ?? (user.user_metadata?.avatar_url as string | undefined)
+  const name       = displayName(user)
+  const initial    = initials(name, user.email)
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validate size (max 3 MB)
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('Imagem muito grande. Máximo: 3 MB.')
+      return
+    }
+
+    // Optimistic preview
+    const objectUrl = URL.createObjectURL(file)
+    setPreview(objectUrl)
     setLoading(true)
+
     try {
-      const ext  = file.name.split('.').pop() ?? 'jpg'
+      const ext  = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
       const path = `avatars/${user.id}.${ext}`
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+
+      const { error: upErr } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type })
+
       if (upErr) throw upErr
+
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-      await supabase.auth.updateUser({ data: { avatar_url: `${publicUrl}?t=${Date.now()}` } })
+      const urlWithBust = `${publicUrl}?t=${Date.now()}`
+
+      const { error: authErr } = await supabase.auth.updateUser({
+        data: { avatar_url: urlWithBust },
+      })
+      if (authErr) throw authErr
+
+      setPreview(urlWithBust)
+      toast.success('Foto atualizada!')
       onUpdate()
-    } catch { /* avatar is non-critical */ } finally {
+    } catch (err) {
+      setPreview(null)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Erro ao enviar foto: ${msg}`)
+    } finally {
       setLoading(false)
+      URL.revokeObjectURL(objectUrl)
+      // Reset input so the same file can be re-selected
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
@@ -199,11 +232,11 @@ function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => 
         {avatarUrl ? (
           <img src={avatarUrl} alt="Avatar"
             className="w-16 h-16 rounded-2xl object-cover"
-            style={{ border: `2px solid ${BORDER}` }} />
+            style={{ border: `2px solid ${BORDER}`, opacity: loading ? 0.5 : 1, transition: 'opacity .2s' }} />
         ) : (
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, #E8521A, #C23F12)' }}
+            style={{ background: 'linear-gradient(135deg, #E8521A, #C23F12)', opacity: loading ? 0.5 : 1 }}
           >
             {initial}
           </div>
@@ -211,25 +244,28 @@ function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => 
         <button
           onClick={() => fileRef.current?.click()}
           disabled={loading}
-          className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+          className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
           style={{ background: '#2A2D38', border: `1px solid ${BORDER}` }}
         >
           {loading
             ? <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />
-            : <Camera  className="w-3.5 h-3.5 text-white/50" />}
+            : <Camera  className="w-3.5 h-3.5 text-white/60" />}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden" onChange={handleFile} />
       </div>
       <div>
         <p className="text-[14px] font-semibold text-[#EDEDED]">{name || user.email}</p>
         <p className="text-[12px] text-white/30 mt-0.5">{user.email}</p>
         <button
           onClick={() => fileRef.current?.click()}
-          className="text-[12px] mt-2 hover:underline transition-colors"
+          disabled={loading}
+          className="text-[12px] mt-2 hover:underline transition-colors disabled:opacity-40"
           style={{ color: ACCENT }}
         >
-          Trocar foto
+          {loading ? 'Enviando…' : 'Trocar foto'}
         </button>
+        <p className="text-[10px] text-white/20 mt-0.5">PNG, JPG ou WebP · máx. 3 MB</p>
       </div>
     </div>
   )

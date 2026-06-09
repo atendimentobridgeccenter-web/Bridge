@@ -85,26 +85,41 @@ const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou']
 
 function QuestionCard({
   node, index, active, onClick, onDelete,
+  onDragStart, onDragOver, onDrop, onDragEnd, isDragOver,
 }: {
-  node:     FormNode
-  index:    number
-  active:   boolean
-  onClick:  () => void
-  onDelete: () => void
+  node:        FormNode
+  index:       number
+  active:      boolean
+  onClick:     () => void
+  onDelete:    () => void
+  onDragStart: () => void
+  onDragOver:  (e: React.DragEvent) => void
+  onDrop:      () => void
+  onDragEnd:   () => void
+  isDragOver:  boolean
 }) {
   const { icon: Icon, label, color } = TYPE_META[node.type]
   const isScreen = SCREEN_TYPES.includes(node.type)
 
   return (
     <div
+      draggable
       onClick={onClick}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
       className={cn(
         'group relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-all duration-100',
         active ? 'bg-white/5' : 'hover:bg-white/3',
       )}
-      style={active ? { borderLeft: `2px solid ${color}` } : { borderLeft: '2px solid transparent' }}
+      style={{
+        borderLeft: active ? `2px solid ${color}` : isDragOver ? '2px solid rgba(232,82,26,0.6)' : '2px solid transparent',
+        background: isDragOver ? 'rgba(232,82,26,0.05)' : undefined,
+        opacity: 1,
+      }}
     >
-      <GripVertical className="w-3.5 h-3.5 text-white/15 mt-0.5 shrink-0 cursor-grab" />
+      <GripVertical className="w-3.5 h-3.5 text-white/15 mt-0.5 shrink-0 cursor-grab active:cursor-grabbing" />
 
       <div
         className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5"
@@ -566,6 +581,8 @@ interface FormBuilderProps {
 
 export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
   const [selectedId, setSelectedId] = useState<string | null>(nodes[0]?.id ?? null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const dragIdRef                   = useRef<string | null>(null)
 
   const selected    = nodes.find(n => n.id === selectedId) ?? null
   const hasWelcome  = nodes.some(n => n.type === 'welcome')
@@ -609,6 +626,20 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
     onChange(nodes.map(n => n.id === updated.id ? updated : n))
   }, [nodes, onChange])
 
+  function handleDrop(targetId: string) {
+    const fromId = dragIdRef.current
+    if (!fromId || fromId === targetId) { setDragOverId(null); return }
+    const from = nodes.findIndex(n => n.id === fromId)
+    const to   = nodes.findIndex(n => n.id === targetId)
+    if (from === -1 || to === -1) return
+    const reordered = [...nodes]
+    const [item]    = reordered.splice(from, 1)
+    reordered.splice(to, 0, item)
+    onChange(reordered)
+    dragIdRef.current = null
+    setDragOverId(null)
+  }
+
   // Count only real questions (non-screen)
   const questionCount = nodes.filter(n => !SCREEN_TYPES.includes(n.type)).length
 
@@ -645,8 +676,13 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
                 node={node}
                 index={idx}
                 active={selectedId === node.id}
+                isDragOver={dragOverId === node.id}
                 onClick={() => setSelectedId(node.id)}
                 onDelete={() => deleteNode(node.id)}
+                onDragStart={() => { dragIdRef.current = node.id }}
+                onDragOver={e => { e.preventDefault(); setDragOverId(node.id) }}
+                onDrop={() => handleDrop(node.id)}
+                onDragEnd={() => { dragIdRef.current = null; setDragOverId(null) }}
               />
             ))
           )}
