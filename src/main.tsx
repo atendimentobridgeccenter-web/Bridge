@@ -31,12 +31,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
         }}>
           <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</p>
           <h1 style={{ color: '#f1f5f9', fontSize: '1.5rem', marginBottom: '0.5rem' }}>
-            Erro ao inicializar o Bridge
+            Erro ao inicializar o Bridge HUB
           </h1>
           <p style={{ marginBottom: '1.5rem', textAlign: 'center', maxWidth: '480px' }}>
             Verifique se as variáveis de ambiente estão configuradas no Vercel:<br />
-            <code style={{ color: '#a78bfa' }}>VITE_SUPABASE_URL</code> e{' '}
-            <code style={{ color: '#a78bfa' }}>VITE_SUPABASE_ANON_KEY</code>
+            <code style={{ color: '#E8521A' }}>VITE_SUPABASE_URL</code> e{' '}
+            <code style={{ color: '#E8521A' }}>VITE_SUPABASE_ANON_KEY</code>
           </p>
           <pre style={{ background: '#0f172a', padding: '1rem', borderRadius: '0.75rem', fontSize: '0.75rem', color: '#f87171', maxWidth: '90vw', overflow: 'auto' }}>
             {(this.state.error as Error).message}

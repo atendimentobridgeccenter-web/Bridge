@@ -5,19 +5,6 @@ import { Eye, EyeOff, ArrowRight, Loader2, Mail, ArrowLeft, CheckCircle2, Check 
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 
-// ── Bridge logo ───────────────────────────────────────────────
-
-function BridgeLogo({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 46" fill="none">
-      <path
-        fill="white"
-        d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"
-      />
-    </svg>
-  )
-}
-
 type Screen = 'login' | 'forgot' | 'forgot-sent'
 
 export default function Login() {
@@ -90,15 +77,6 @@ export default function Login() {
       {/* ── Left: Form ── */}
       <div className="flex-1 flex items-center justify-center px-8 py-12 lg:max-w-[520px]">
         <div className="w-full max-w-sm">
-
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: '#E8521A', boxShadow: '0 4px 16px rgba(232,82,26,0.35)' }}>
-              <BridgeLogo size={20} />
-            </div>
-            <span className="text-lg font-semibold text-white tracking-tight">Bridge HUB</span>
-          </div>
 
           <AnimatePresence mode="wait">
 
@@ -266,18 +244,13 @@ export default function Login() {
             transition={{ delay: 0.15, duration: 0.6, ease }}
             className="flex flex-col items-center gap-6 w-full max-w-xs"
           >
-            {/* Logo grande */}
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.4)' }}>
-              <BridgeLogo size={34} />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">Bridge HUB</h2>
-              <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                Motor de Lançamentos Enterprise
-              </p>
-            </div>
+            {/* Logo oficial */}
+            <img
+              src="/logo-bridge.png"
+              alt="Bridge Cultural Center"
+              className="max-h-36 max-w-[280px] w-full object-contain"
+              style={{ filter: 'drop-shadow(0 4px 24px rgba(255,255,255,0.08))' }}
+            />
 
             {/* Feature list */}
             <div className="w-full flex flex-col gap-3 text-left">
