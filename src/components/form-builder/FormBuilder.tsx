@@ -6,6 +6,7 @@ import {
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
   XCircle, FileText, User, ImageIcon, X, SquareCheck,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
+  Landmark, Upload,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -27,8 +28,10 @@ export type NodeType =
   | 'radio'     // Múltipla Escolha
   | 'select'    // Lista Suspensa
   | 'textarea'  // Texto Longo
-  | 'confirm'   // Confirmação / aceite (checkbox)
-  | 'thankyou'  // Tela de encerramento
+  | 'confirm'        // Confirmação / aceite (checkbox)
+  | 'thankyou'       // Tela de encerramento
+  | 'bank-deposit'   // Tela com dados bancários / Pix
+  | 'receipt-upload' // Tela de upload de comprovante
 
 export interface LogicJump {
   id:           string
@@ -48,6 +51,17 @@ export interface SocialLink {
   url:      string
 }
 
+export interface BankInfo {
+  amount?:          string
+  pixKey?:          string
+  pixKeyType?:      string
+  beneficiaryName?: string
+  bankName?:        string
+  agency?:          string
+  account?:         string
+  accountType?:     string
+}
+
 export interface FormNode {
   id:            string
   title:         string
@@ -57,6 +71,7 @@ export interface FormNode {
   allowOther?:   boolean      // habilita opção "Outra" em radio/select
   logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
   socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
+  bankInfo?:     BankInfo     // dados bancários para nó bank-deposit
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -89,11 +104,13 @@ const TYPE_META: Record<NodeType, TypeMeta> = {
   radio:    { label: 'Múlt. Escolha',  icon: CheckSquare, color: '#F59E0B' },
   select:   { label: 'Lista Suspensa', icon: List,        color: '#A78BFA' },
   textarea: { label: 'Texto Longo',    icon: AlignLeft,   color: '#FB923C' },
-  confirm:  { label: 'Confirmação',    icon: SquareCheck, color: '#34D399' },
-  thankyou: { label: 'Encerramento',   icon: CheckCircle, color: '#34D399' },
+  confirm:          { label: 'Confirmação',    icon: SquareCheck, color: '#34D399' },
+  thankyou:         { label: 'Encerramento',   icon: CheckCircle, color: '#34D399' },
+  'bank-deposit':   { label: 'Dados Bancários', icon: Landmark,   color: '#3B82F6' },
+  'receipt-upload': { label: 'Comprovante',     icon: Upload,     color: '#8B5CF6' },
 }
 
-const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou']
+const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload']
 
 // ── QuestionCard (sidebar) ────────────────────────────────────
 
@@ -155,7 +172,7 @@ function QuestionCard({
       {isScreen ? (
         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
           style={{ background: `${color}18`, color }}>
-          {node.type === 'welcome' ? 'INTRO' : 'FIM'}
+          {node.type === 'welcome' ? 'INTRO' : node.type === 'thankyou' ? 'FIM' : node.type === 'bank-deposit' ? 'DEP' : 'COMP'}
         </span>
       ) : (
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
@@ -300,6 +317,172 @@ const SOCIAL_PLATFORMS = [
   { id: 'telegram',  label: 'Telegram',   Icon: Send,          placeholder: 'https://t.me/perfil' },
   { id: 'website',   label: 'Website',    Icon: Globe,         placeholder: 'https://meusite.com.br' },
 ]
+
+// ── BankDepositEditor ─────────────────────────────────────────
+
+function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+  const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
+  const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
+  const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const focusSty = 'rgba(59,130,246,0.45)'
+  const blurSty  = 'rgba(255,255,255,0.08)'
+
+  function setInfo(patch: Partial<BankInfo>) {
+    onUpdate({ ...node, bankInfo: { ...node.bankInfo, ...patch } })
+  }
+
+  const PIX_TYPES = ['CPF', 'CNPJ', 'E-mail', 'Telefone', 'Chave aleatória']
+  const bi = node.bankInfo ?? {}
+
+  return (
+    <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
+
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+        <Landmark className="w-4 h-4 shrink-0 text-blue-400" />
+        <p className="text-[12px] leading-relaxed text-blue-300/80">
+          Exibe os dados bancários e Pix para o lead realizar o depósito.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Título da Tela</label>
+        <input value={node.title} onChange={e => onUpdate({ ...node, title: e.target.value })}
+          placeholder="Ex: Realize o pagamento" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Instrução / Descrição</label>
+        <textarea value={node.description ?? ''} onChange={e => onUpdate({ ...node, description: e.target.value })}
+          placeholder="Ex: Realize o depósito e envie o comprovante na próxima etapa."
+          rows={3}
+          className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none resize-none transition-colors"
+          style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Valor Total</label>
+        <input value={bi.amount ?? ''} onChange={e => setInfo({ amount: e.target.value })}
+          placeholder="Ex: R$ 1.200,00" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Chave Pix</label>
+        <div className="flex gap-2">
+          <select value={bi.pixKeyType ?? ''} onChange={e => setInfo({ pixKeyType: e.target.value })}
+            className="px-2.5 py-2 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none"
+            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', minWidth: 120 }}>
+            <option value="">Tipo…</option>
+            {PIX_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input value={bi.pixKey ?? ''} onChange={e => setInfo({ pixKey: e.target.value })}
+            placeholder="Chave Pix" className={`${inputCls} flex-1`} style={inputSty}
+            onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+            onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Nome do Beneficiário</label>
+        <input value={bi.beneficiaryName ?? ''} onChange={e => setInfo({ beneficiaryName: e.target.value })}
+          placeholder="Ex: Bridge Cultural Center" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+      <p className={labelCls}>Dados para TED / DOC (opcional)</p>
+
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Banco</label>
+            <input value={bi.bankName ?? ''} onChange={e => setInfo({ bankName: e.target.value })}
+              placeholder="Ex: Nubank" className={inputCls} style={inputSty}
+              onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+              onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+          </div>
+          <div className="flex flex-col gap-1.5" style={{ width: 100 }}>
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Agência</label>
+            <input value={bi.agency ?? ''} onChange={e => setInfo({ agency: e.target.value })}
+              placeholder="0001" className={inputCls} style={inputSty}
+              onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+              onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Conta</label>
+            <input value={bi.account ?? ''} onChange={e => setInfo({ account: e.target.value })}
+              placeholder="12345-6" className={inputCls} style={inputSty}
+              onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+              onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+          </div>
+          <div className="flex flex-col gap-1.5" style={{ width: 120 }}>
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Tipo</label>
+            <select value={bi.accountType ?? ''} onChange={e => setInfo({ accountType: e.target.value })}
+              className="px-2.5 py-2 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none w-full"
+              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <option value="">Tipo…</option>
+              <option value="Corrente">Corrente</option>
+              <option value="Poupança">Poupança</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── ReceiptUploadEditor ───────────────────────────────────────
+
+function ReceiptUploadEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+  const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
+  const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
+  const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const focusSty = 'rgba(139,92,246,0.45)'
+  const blurSty  = 'rgba(255,255,255,0.08)'
+
+  return (
+    <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
+
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+        <Upload className="w-4 h-4 shrink-0 text-violet-400" />
+        <p className="text-[12px] leading-relaxed text-violet-300/80">
+          O lead faz o upload do comprovante de pagamento. O arquivo é salvo e vinculado ao lead.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Título da Tela</label>
+        <input value={node.title} onChange={e => onUpdate({ ...node, title: e.target.value })}
+          placeholder="Ex: Envie o comprovante" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Instrução</label>
+        <textarea value={node.description ?? ''} onChange={e => onUpdate({ ...node, description: e.target.value })}
+          placeholder="Ex: Envie a foto ou PDF do comprovante de depósito."
+          rows={3}
+          className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none resize-none transition-colors"
+          style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+    </div>
+  )
+}
 
 // ── ScreenEditor (welcome / thankyou) ─────────────────────────
 
@@ -750,6 +933,8 @@ function NodeEditor({ node, nodes, onUpdate }: {
   nodes:    FormNode[]
   onUpdate: (n: FormNode) => void
 }) {
+  if (node.type === 'bank-deposit')   return <BankDepositEditor   node={node} onUpdate={onUpdate} />
+  if (node.type === 'receipt-upload') return <ReceiptUploadEditor node={node} onUpdate={onUpdate} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
@@ -816,6 +1001,28 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
     onChange([...nodes, n])
     setSelectedId(n.id)
   }, [nodes, onChange, hasThankyou])
+
+  const addBankDeposit = useCallback(() => {
+    const n: FormNode = {
+      id: uid(), type: 'bank-deposit',
+      title: 'Realize o pagamento',
+      description: 'Realize o depósito e envie o comprovante na próxima etapa.',
+      options: [], logicJumps: [],
+    }
+    onChange([...nodes, n])
+    setSelectedId(n.id)
+  }, [nodes, onChange])
+
+  const addReceiptUpload = useCallback(() => {
+    const n: FormNode = {
+      id: uid(), type: 'receipt-upload',
+      title: 'Envie o comprovante',
+      description: 'Envie a foto ou PDF do comprovante de depósito.',
+      options: [], logicJumps: [],
+    }
+    onChange([...nodes, n])
+    setSelectedId(n.id)
+  }, [nodes, onChange])
 
   const deleteNode = useCallback((id: string) => {
     const next = nodes.filter(n => n.id !== id)
@@ -917,6 +1124,22 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               style={{ background: 'rgba(52,211,153,0.05)', border: '1px dashed rgba(52,211,153,0.2)', color: '#34D399' }}>
               <CheckCircle className="w-3 h-3" /> Final
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={addBankDeposit}
+              title="Adicionar tela de dados bancários"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: 'rgba(59,130,246,0.05)', border: '1px dashed rgba(59,130,246,0.2)', color: '#3B82F6' }}>
+              <Landmark className="w-3 h-3" /> Depósito
+            </button>
+            <button
+              onClick={addReceiptUpload}
+              title="Adicionar tela de upload de comprovante"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: 'rgba(139,92,246,0.05)', border: '1px dashed rgba(139,92,246,0.2)', color: '#8B5CF6' }}>
+              <Upload className="w-3 h-3" /> Comprovante
             </button>
           </div>
         </div>

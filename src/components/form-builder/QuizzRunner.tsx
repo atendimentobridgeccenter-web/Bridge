@@ -4,9 +4,10 @@ import {
   ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock,
   ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle, Check,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
+  Copy, Landmark, Upload,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { FormNode, OptionPrice, NodeType, SocialLink } from './FormBuilder'
+import type { FormNode, OptionPrice, NodeType, SocialLink, BankInfo } from './FormBuilder'
 
 // ── Social platform display config ───────────────────────────
 
@@ -653,6 +654,232 @@ function CheckoutSummary({
   )
 }
 
+// ── BankDepositScreen ─────────────────────────────────────────
+
+function InfoRow({ label, value, onCopy, copied }: {
+  label: string; value?: string; onCopy: () => void; copied: boolean
+}) {
+  if (!value) return null
+  return (
+    <div className="flex items-center justify-between py-3"
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="min-w-0 pr-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider mb-0.5"
+          style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
+        <p className="text-[15px] font-medium text-[#F1F5F9] break-all">{value}</p>
+      </div>
+      <button
+        onClick={onCopy}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all shrink-0"
+        style={{
+          background: copied ? 'rgba(52,211,153,0.1)'    : 'rgba(255,255,255,0.06)',
+          color:      copied ? '#34D399'                  : 'rgba(255,255,255,0.4)',
+          border:     copied ? '1px solid rgba(52,211,153,0.2)' : '1px solid rgba(255,255,255,0.08)',
+        }}>
+        {copied
+          ? <><Check className="w-3 h-3" /> Copiado</>
+          : <><Copy className="w-3 h-3" /> Copiar</>}
+      </button>
+    </div>
+  )
+}
+
+function BankDepositScreen({ node, pct, onAdvance }: {
+  node: FormNode; pct: number; onAdvance: () => void
+}) {
+  const [copied, setCopied] = useState<string | null>(null)
+  const bi: BankInfo = node.bankInfo ?? {}
+
+  function copyText(text: string, key: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(key)
+      setTimeout(() => setCopied(null), 2000)
+    }).catch(() => {})
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
+      <motion.div
+        className="w-full max-w-[520px] flex flex-col gap-6"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+            <Landmark className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-[22px] font-bold tracking-tight text-[#F1F5F9]">
+              {node.title || 'Realize o pagamento'}
+            </h2>
+            {node.description && (
+              <p className="text-[13px] mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                {node.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {bi.amount && (
+          <div className="px-5 py-4 rounded-xl"
+            style={{ background: 'rgba(232,82,26,0.07)', border: '1px solid rgba(232,82,26,0.2)' }}>
+            <p className="text-[12px] font-semibold uppercase tracking-wider mb-1"
+              style={{ color: 'rgba(232,82,26,0.6)' }}>Valor total</p>
+            <p className="text-[28px] font-bold text-[#F1F5F9]">{bi.amount}</p>
+          </div>
+        )}
+
+        <div className="rounded-xl overflow-hidden"
+          style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.05)' }}>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400">Chave Pix</p>
+          </div>
+          <div className="px-5">
+            <InfoRow label={bi.pixKeyType ?? 'Chave Pix'} value={bi.pixKey}
+              onCopy={() => copyText(bi.pixKey!, 'pixKey')} copied={copied === 'pixKey'} />
+            <InfoRow label="Beneficiário" value={bi.beneficiaryName}
+              onCopy={() => copyText(bi.beneficiaryName!, 'beneficiary')} copied={copied === 'beneficiary'} />
+          </div>
+        </div>
+
+        {(bi.bankName || bi.agency || bi.account) && (
+          <div className="rounded-xl overflow-hidden"
+            style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>TED / DOC</p>
+            </div>
+            <div className="px-5">
+              <InfoRow label="Banco" value={bi.bankName}
+                onCopy={() => copyText(bi.bankName!, 'bank')} copied={copied === 'bank'} />
+              <InfoRow label="Agência" value={bi.agency}
+                onCopy={() => copyText(bi.agency!, 'agency')} copied={copied === 'agency'} />
+              <InfoRow label={`Conta ${bi.accountType ?? ''}`.trim()} value={bi.account}
+                onCopy={() => copyText(bi.account!, 'account')} copied={copied === 'account'} />
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onAdvance}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-[15px] font-bold text-white transition-all"
+          style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.3)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#E8521A' }}>
+          Já realizei o pagamento <ArrowRight className="w-4 h-4" />
+        </button>
+
+        <p className="text-center text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>
+          POWERED BY BRIDGE
+        </p>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── ReceiptUploadScreen ───────────────────────────────────────
+
+function ReceiptUploadScreen({ node, pct, productId, onAdvance }: {
+  node: FormNode; pct: number; productId?: string; onAdvance: (url: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [errMsg,    setErrMsg]    = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) { setErrMsg('Arquivo muito grande. Máximo 10 MB.'); return }
+    setUploading(true)
+    setErrMsg(null)
+    try {
+      const ext  = file.name.split('.').pop() ?? 'jpg'
+      const path = `receipts/${productId ?? 'unknown'}/${Date.now()}.${ext}`
+      const { error: uploadErr } = await supabase.storage
+        .from('form-assets')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (uploadErr) throw uploadErr
+      const { data: { publicUrl } } = supabase.storage.from('form-assets').getPublicUrl(path)
+      onAdvance(publicUrl)
+    } catch {
+      setErrMsg('Erro ao enviar o comprovante. Tente novamente.')
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
+      <motion.div
+        className="w-full max-w-[480px] flex flex-col gap-6 text-center"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <motion.div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+          style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}>
+          <Upload className="w-7 h-7 text-violet-400" />
+        </motion.div>
+
+        <div>
+          <h2 className="text-[28px] font-bold tracking-tight text-[#F1F5F9]">
+            {node.title || 'Envie o comprovante'}
+          </h2>
+          {node.description && (
+            <p className="text-[15px] mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {node.description}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="w-full flex flex-col items-center justify-center gap-3 py-10 rounded-2xl transition-all"
+          style={{
+            background: uploading ? 'rgba(139,92,246,0.04)' : 'rgba(139,92,246,0.06)',
+            border: `2px dashed ${uploading ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.35)'}`,
+            cursor: uploading ? 'wait' : 'pointer',
+          }}>
+          {uploading
+            ? <><Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                <span className="text-[14px] font-medium text-violet-300">Enviando…</span></>
+            : <><Upload className="w-8 h-8 text-violet-400" />
+                <span className="text-[14px] font-medium text-violet-300">Clique para selecionar o arquivo</span>
+                <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>JPG, PNG, PDF · máx. 10 MB</span></>}
+        </button>
+
+        {errMsg && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <p className="text-[13px] text-red-400 text-left">{errMsg}</p>
+          </div>
+        )}
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          className="hidden"
+          onChange={handleUpload}
+        />
+
+        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>POWERED BY BRIDGE</p>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Animation ─────────────────────────────────────────────────
 
 const variants = {
@@ -741,12 +968,13 @@ export default function QuizzRunner({
 
   // ── Derived ──────────────────────────────────────────────────
 
-  const currentId   = history[history.length - 1]
-  const currentNode = nodes.find(n => n.id === currentId) ?? null
-  const currentIdx  = nodes.findIndex(n => n.id === currentId)
-  const isChoice    = currentNode?.type === 'radio' || currentNode?.type === 'select'
-  const isConfirm   = currentNode?.type === 'confirm'
-  const pct         = done || disqualified ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
+  const currentId      = history[history.length - 1]
+  const currentNode    = nodes.find(n => n.id === currentId) ?? null
+  const currentIdx     = nodes.findIndex(n => n.id === currentId)
+  const isChoice       = currentNode?.type === 'radio' || currentNode?.type === 'select'
+  const isConfirm      = currentNode?.type === 'confirm'
+  const pct            = done || disqualified ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
+  const hasDepositFlow = history.some(id => nodes.find(n => n.id === id)?.type === 'bank-deposit')
 
   // ── Advance from welcome (no answer) ─────────────────────────
 
@@ -862,6 +1090,7 @@ export default function QuizzRunner({
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (done || disqualified || !currentNode) return
       if (currentNode.type === 'welcome') return
+      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload') return
 
       if (isChoice && !otherActive) {
         const idx = e.key.toUpperCase().charCodeAt(0) - 65
@@ -894,7 +1123,7 @@ export default function QuizzRunner({
 
   if (done) {
     if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} socialLinks={thankyouContent.socialLinks} />
-    if (checkoutEnabled && productId) {
+    if (checkoutEnabled && productId && !hasDepositFlow) {
       return (
         <CheckoutSummary
           productId={productId}
@@ -915,6 +1144,31 @@ export default function QuizzRunner({
 
   if (currentNode.type === 'welcome') {
     return <WelcomeScreen node={currentNode} pct={pct} onStart={handleAdvanceWelcome} />
+  }
+
+  // ── Bank deposit screen ───────────────────────────────────────
+
+  if (currentNode.type === 'bank-deposit') {
+    return (
+      <BankDepositScreen
+        node={currentNode}
+        pct={pct}
+        onAdvance={() => advance('')}
+      />
+    )
+  }
+
+  // ── Receipt upload screen ─────────────────────────────────────
+
+  if (currentNode.type === 'receipt-upload') {
+    return (
+      <ReceiptUploadScreen
+        node={currentNode}
+        pct={pct}
+        productId={productId}
+        onAdvance={(url) => advance(url)}
+      />
+    )
   }
 
   // ── Regular question screen ───────────────────────────────────
@@ -951,7 +1205,7 @@ export default function QuizzRunner({
                 )}
                 <ArrowRight className="w-3.5 h-3.5" style={{ color: '#E8521A' }} />
                 <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  de {nodes.filter(n => n.type !== 'welcome' && n.type !== 'thankyou').length}
+                  de {nodes.filter(n => !['welcome','thankyou','bank-deposit','receipt-upload'].includes(n.type)).length}
                 </span>
                 {!isRequired && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
