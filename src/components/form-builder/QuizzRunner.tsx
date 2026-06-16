@@ -36,13 +36,14 @@ export interface TrackingConfig {
 // ── Props ─────────────────────────────────────────────────────
 
 export interface QuizzRunnerProps {
-  nodes:           FormNode[]
-  productId?:      string        // UUID do produto — para salvar lead + checkout
-  enableCheckout?: boolean       // mostra checkout no final (padrão: !!productId)
-  productName?:    string
-  defaultPriceId?: string
-  tracking?:       TrackingConfig
-  onComplete?:     (answers: Record<string, string>) => void
+  nodes:            FormNode[]
+  productId?:       string        // UUID do produto — para salvar lead + checkout
+  enableCheckout?:  boolean       // mostra checkout no final (padrão: !!productId)
+  productName?:     string
+  defaultPriceId?:  string
+  extraPriceIds?:   string[]      // preços adicionais incluídos no mesmo checkout Stripe
+  tracking?:        TrackingConfig
+  onComplete?:      (answers: Record<string, string>) => void
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -556,14 +557,15 @@ function DoneScreen() {
 // ── CheckoutSummary ───────────────────────────────────────────
 
 function CheckoutSummary({
-  productId, productName, priceId, priceInfo, nodes, answers,
+  productId, productName, priceId, extraPriceIds, priceInfo, nodes, answers,
 }: {
-  productId:   string
-  productName: string | undefined
-  priceId:     string | null
-  priceInfo:   OptionPrice | null
-  nodes:       FormNode[]
-  answers:     Record<string, string>
+  productId:      string
+  productName:    string | undefined
+  priceId:        string | null
+  extraPriceIds?: string[]
+  priceInfo:      OptionPrice | null
+  nodes:          FormNode[]
+  answers:        Record<string, string>
 }) {
   const [loading,           setLoading]           = useState(false)
   const [errMsg,            setErrMsg]            = useState<string | null>(null)
@@ -598,8 +600,9 @@ function CheckoutSummary({
     if (!canCheckout) return
     setLoading(true); setErrMsg(null)
     try {
+      const priceIds = [priceId, ...(extraPriceIds ?? [])].filter(Boolean)
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { productId, priceId, email, name },
+        body: { productId, priceIds, email, name },
       })
       if (error) throw new Error(typeof error === 'object' && 'message' in error
         ? String((error as { message: unknown }).message) : JSON.stringify(error))
@@ -1137,6 +1140,7 @@ export default function QuizzRunner({
   enableCheckout,
   productName,
   defaultPriceId,
+  extraPriceIds,
   tracking,
   onComplete,
 }: QuizzRunnerProps) {
@@ -1255,7 +1259,11 @@ export default function QuizzRunner({
     if (optPrice) { setActivePriceId(optPrice.priceId); setActivePriceInfo(optPrice) }
 
     // Resolve next via logic jumps first
-    const jump = currentNode.logicJumps.find(j => j.ifOption === answer)
+    // For screen-type nodes (receipt-upload, payment-done etc.) empty ifOption = unconditional
+    const isScreenNode = ['receipt-upload', 'bank-deposit', 'payment-done'].includes(currentNode.type)
+    const jump = currentNode.logicJumps.find(j =>
+      isScreenNode ? (j.ifOption === '' || j.ifOption === answer) : j.ifOption === answer
+    )
 
     if (jump) {
       if (jump.jumpToNodeId === '__disqualify__') {
@@ -1370,6 +1378,7 @@ export default function QuizzRunner({
           productId={productId}
           productName={productName}
           priceId={activePriceId}
+          extraPriceIds={extraPriceIds}
           priceInfo={activePriceInfo}
           nodes={nodes}
           answers={answers}

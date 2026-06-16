@@ -497,12 +497,23 @@ function PaymentDoneEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
 
 // ── ReceiptUploadEditor ───────────────────────────────────────
 
-function ReceiptUploadEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+function ReceiptUploadEditor({ node, nodes, onUpdate }: {
+  node:     FormNode
+  nodes:    FormNode[]
+  onUpdate: (n: FormNode) => void
+}) {
   const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
   const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
   const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
   const focusSty = 'rgba(139,92,246,0.45)'
   const blurSty  = 'rgba(255,255,255,0.08)'
+  const selCls   = 'px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer'
+
+  function addJump() {
+    onUpdate({ ...node, logicJumps: [...node.logicJumps, { id: uid(), ifOption: '', jumpToNodeId: '' }] })
+  }
+
+  const targets = nodes.filter(n => n.id !== node.id)
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
@@ -532,6 +543,53 @@ function ReceiptUploadEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n:
           style={inputSty}
           onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
           onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      {/* Logic jumps — unconditional redirects after upload */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-[#E8521A]" />
+            <label className={labelCls}>Redirecionar após envio</label>
+          </div>
+          <button onClick={addJump}
+            className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md text-[#E8521A] transition-colors"
+            style={{ background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}>
+            <Plus className="w-3 h-3" /> Adicionar
+          </button>
+        </div>
+
+        {node.logicJumps.length === 0 ? (
+          <p className="text-[12px] text-white/25 px-1">
+            Sem redirecionamento — avança para a próxima tela em sequência.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {node.logicJumps.map(jump => (
+              <div key={jump.id} className="flex items-center gap-2 p-3 rounded-lg"
+                style={{ background: 'rgba(232,82,26,0.04)', border: '1px solid rgba(232,82,26,0.12)' }}>
+                <span className="text-[11px] font-semibold text-white/30 shrink-0">Após envio →</span>
+                <select
+                  value={jump.jumpToNodeId}
+                  onChange={e => onUpdate({ ...node, logicJumps: node.logicJumps.map(j => j.id === jump.id ? { ...jump, jumpToNodeId: e.target.value, ifOption: '' } : j) })}
+                  className={selCls} style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', flex: 1 }}>
+                  <option value="">escolher destino…</option>
+                  {targets.map(n => (
+                    <option key={n.id} value={n.id}>
+                      {String(nodes.indexOf(n) + 1).padStart(2, '0')} — {n.title || 'Sem título'}
+                    </option>
+                  ))}
+                  <option value="__end__">⏹ Finalizar formulário</option>
+                </select>
+                <button onClick={() => onUpdate({ ...node, logicJumps: node.logicJumps.filter(j => j.id !== jump.id) })}
+                  className="p-1 rounded text-white/20 hover:text-red-400 transition-colors shrink-0">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -972,7 +1030,7 @@ function NodeEditor({ node, nodes, onUpdate }: {
   onUpdate: (n: FormNode) => void
 }) {
   if (node.type === 'bank-deposit')   return <BankDepositEditor   node={node} onUpdate={onUpdate} />
-  if (node.type === 'receipt-upload') return <ReceiptUploadEditor node={node} onUpdate={onUpdate} />
+  if (node.type === 'receipt-upload') return <ReceiptUploadEditor node={node} nodes={nodes} onUpdate={onUpdate} />
   if (node.type === 'payment-done')   return <PaymentDoneEditor   node={node} onUpdate={onUpdate} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />

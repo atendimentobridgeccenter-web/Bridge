@@ -66,11 +66,20 @@ function json(body: unknown, status = 200): Response {
 function buildAllowedPriceIds(product: {
   price_id_stripe:   string | null
   form_logic_config: unknown
+  checkout_config:   unknown
 }): Set<string> {
   const allowed = new Set<string>()
 
   if (product.price_id_stripe) {
     allowed.add(product.price_id_stripe)
+  }
+
+  // Extra prices configured in checkout_config.extra_price_ids
+  const checkoutCfg = product.checkout_config as Record<string, unknown> | null
+  if (Array.isArray(checkoutCfg?.extra_price_ids)) {
+    for (const pid of checkoutCfg.extra_price_ids as string[]) {
+      if (pid) allowed.add(pid)
+    }
   }
 
   const cfg = product.form_logic_config as Record<string, unknown> | null
@@ -132,7 +141,7 @@ Deno.serve(async (req: Request) => {
     // ── 2. Load product from DB ─────────────────────────────────
     const { data: product, error: dbErr } = await supabaseAdmin
       .from('products')
-      .select('id, name, price_id_stripe, form_logic_config, status')
+      .select('id, name, price_id_stripe, form_logic_config, checkout_config, status')
       .eq('id', productId)
       .single()
 

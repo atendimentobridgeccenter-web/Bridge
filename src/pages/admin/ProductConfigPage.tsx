@@ -441,6 +441,46 @@ function PrecificacaoPanel({
             </Section>
           </div>
 
+          {/* Preços Adicionais ao Checkout */}
+          {(() => {
+            const extraIds = ((checkoutCfg.extra_price_ids ?? []) as string[])
+            function setExtraIds(ids: string[]) {
+              onUpdate({ checkout_config: { ...checkoutCfg, extra_price_ids: ids } as Product['checkout_config'] })
+            }
+            return (
+              <Section
+                title="Cobranças Adicionais"
+                description="Adicione mais de um preço Stripe no mesmo checkout (ex: matrícula + mensalidade)."
+              >
+                {extraIds.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    {extraIds.map((pid, i) => (
+                      <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                        <span className="text-[11px] font-mono text-white/50 flex-1 truncate">{pid}</span>
+                        <button
+                          onClick={() => setExtraIds(extraIds.filter((_, j) => j !== i))}
+                          className="text-white/20 hover:text-red-400 transition-colors shrink-0 text-[14px] leading-none"
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <StripePricePicker
+                  value=""
+                  onChange={(priceId) => {
+                    if (!priceId || extraIds.includes(priceId)) return
+                    setExtraIds([...extraIds, priceId])
+                  }}
+                  placeholder="Selecionar e adicionar preço…"
+                />
+                <p className="text-[10px] text-white/20 mt-1">
+                  Todos os preços acima serão cobrados juntos no checkout do cartão.
+                </p>
+              </Section>
+            )
+          })()}
+
           {/* Preços do Quizz */}
           <Section title="Preços por Opção do Quizz" description="Price IDs definidos nas opções do Formulário.">
             {quizPrices.length === 0 ? (

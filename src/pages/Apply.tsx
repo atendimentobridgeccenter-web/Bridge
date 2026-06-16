@@ -63,6 +63,7 @@ export default function Apply() {
         enableCheckout={checkoutActive}
         productName={product.name}
         defaultPriceId={checkoutActive ? (product.price_id_stripe ?? undefined) : undefined}
+        extraPriceIds={checkoutActive ? ((checkoutCfg.extra_price_ids ?? []) as string[]) : undefined}
         tracking={hasTracking ? trackingCfg : undefined}
       />
     )
