@@ -360,7 +360,7 @@ function WelcomeScreen({ node, pct, onStart }: {
   node: FormNode; pct: number; onStart: () => void
 }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
       <motion.div
@@ -385,7 +385,7 @@ function WelcomeScreen({ node, pct, onStart }: {
         </motion.div>
 
         <div>
-          <h1 className="text-4xl font-bold tracking-tight leading-tight text-[#F1F5F9]">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight text-[#F1F5F9] break-words">
             {node.title || 'Bem-vindo!'}
           </h1>
           {node.description && (
@@ -418,7 +418,7 @@ function WelcomeScreen({ node, pct, onStart }: {
 
 function DisqualifiedScreen() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={1} />
       <motion.div
@@ -459,7 +459,7 @@ function ThankyouScreen({ title, description, socialLinks }: {
 }) {
   const links = (socialLinks ?? []).filter(s => s.url.trim())
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={1} />
       <motion.div
@@ -522,11 +522,11 @@ function ThankyouScreen({ title, description, socialLinks }: {
 
 function DoneScreen() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={1} />
       <motion.div
-        className="text-center max-w-md"
+        className="text-center max-w-md w-full"
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -615,7 +615,7 @@ function CheckoutSummary({
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={1} />
       <motion.div
@@ -817,7 +817,7 @@ function BankDepositScreen({ node, pct, onAdvance }: {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
       <motion.div
@@ -832,7 +832,7 @@ function BankDepositScreen({ node, pct, onAdvance }: {
             <Landmark className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <h2 className="text-[22px] font-bold tracking-tight text-[#F1F5F9]">
+            <h2 className="text-[20px] sm:text-[22px] font-bold tracking-tight text-[#F1F5F9] break-words">
               {node.title || 'Realize o pagamento'}
             </h2>
             {node.description && (
@@ -1005,7 +1005,7 @@ function ReceiptUploadScreen({ node, pct, productId, onAdvance }: {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
       <motion.div
@@ -1024,7 +1024,7 @@ function ReceiptUploadScreen({ node, pct, productId, onAdvance }: {
         </motion.div>
 
         <div>
-          <h2 className="text-[28px] font-bold tracking-tight text-[#F1F5F9]">
+          <h2 className="text-[24px] sm:text-[28px] font-bold tracking-tight text-[#F1F5F9] break-words">
             {node.title || 'Envie o comprovante'}
           </h2>
           {node.description && (
@@ -1079,7 +1079,7 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
   node: FormNode; pct: number; onAdvance: () => void
 }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
       <motion.div
@@ -1098,7 +1098,7 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
         </motion.div>
 
         <div>
-          <h2 className="text-[28px] font-bold tracking-tight text-[#F1F5F9]">
+          <h2 className="text-[24px] sm:text-[28px] font-bold tracking-tight text-[#F1F5F9] break-words">
             {node.title || 'Pagamento em dinheiro registrado'}
           </h2>
           {node.description && (
@@ -1166,7 +1166,7 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
       style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
       <motion.div
@@ -1374,7 +1374,8 @@ export default function QuizzRunner({
     // For screen-type nodes (receipt-upload, payment-done etc.) empty ifOption = unconditional
     const isScreenNode = ['receipt-upload', 'bank-deposit', 'payment-done', 'stripe-checkout'].includes(currentNode.type)
     const jump = currentNode.logicJumps.find(j =>
-      isScreenNode ? (j.ifOption === '' || j.ifOption === answer) : j.ifOption === answer
+      !!j.jumpToNodeId &&
+      (isScreenNode ? (j.ifOption === '' || j.ifOption === answer) : j.ifOption === answer)
     )
 
     if (jump) {
@@ -1568,7 +1569,7 @@ export default function QuizzRunner({
   const canSubmit  = isRequired ? !!draft : true
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0D0E12' }}>
+    <div className="min-h-screen flex flex-col overflow-x-hidden" style={{ background: '#0D0E12' }}>
       <ProgressBar pct={pct} />
 
       <div className="flex-1 flex items-center justify-center px-6 py-20">
@@ -1606,7 +1607,7 @@ export default function QuizzRunner({
               </div>
 
               {/* Question title */}
-              <h1 className="text-4xl font-bold tracking-tight leading-tight" style={{ color: '#F1F5F9' }}>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight break-words" style={{ color: '#F1F5F9' }}>
                 {currentNode.title || (
                   <span style={{ color: 'rgba(255,255,255,0.2)' }}>Pergunta sem título</span>
                 )}
