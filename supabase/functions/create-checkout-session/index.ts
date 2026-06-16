@@ -42,11 +42,12 @@ interface OptionPrice {
 }
 
 interface FormNode {
-  id:            string
-  type:          string
-  options:       string[]
-  optionPrices?: Record<string, OptionPrice>
-  logicJumps:    unknown[]
+  id:                     string
+  type:                   string
+  options:                string[]
+  optionPrices?:          Record<string, OptionPrice>
+  logicJumps:             unknown[]
+  stripeCheckoutPriceId?: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -91,13 +92,18 @@ function buildAllowedPriceIds(product: {
     }
   }
 
-  // FormNode format: walk nodes and collect all optionPrice IDs
+  // FormNode format: walk nodes and collect all priceIds
   if (Array.isArray(cfg?.nodes)) {
     for (const node of cfg.nodes as FormNode[]) {
+      // option prices (from radio/select questions)
       if (node.optionPrices) {
         for (const op of Object.values(node.optionPrices)) {
           if (op?.priceId) allowed.add(op.priceId)
         }
+      }
+      // stripe-checkout node price override
+      if (node.stripeCheckoutPriceId) {
+        allowed.add(node.stripeCheckoutPriceId)
       }
     }
   }

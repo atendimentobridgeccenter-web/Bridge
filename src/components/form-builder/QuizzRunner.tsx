@@ -1157,7 +1157,16 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
         body: { productId, priceIds: [resolvedPriceId], email, name },
       })
-      if (fnErr || !data?.url) throw new Error(fnErr?.message ?? 'Erro ao criar sessão de pagamento.')
+      if (fnErr) {
+        // Try to parse the actual error body from the Edge Function response
+        let msg = fnErr.message
+        try {
+          const body = await (fnErr as unknown as { context?: Response }).context?.json?.()
+          if (body?.error) msg = body.error
+        } catch { /* ignore parse errors */ }
+        throw new Error(msg ?? 'Erro ao criar sessão de pagamento.')
+      }
+      if (!data?.url) throw new Error(data?.error ?? 'URL de checkout não retornada.')
       window.location.href = data.url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro inesperado.')
