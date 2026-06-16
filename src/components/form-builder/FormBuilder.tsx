@@ -501,7 +501,7 @@ function PaymentDoneEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
 
 // ── StripeCheckoutEditor ──────────────────────────────────────
 
-function StripeCheckoutEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+function StripeCheckoutEditor({ node, onUpdate, allowedPriceIds }: { node: FormNode; onUpdate: (n: FormNode) => void; allowedPriceIds?: string[] }) {
   const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
   const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
   const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
@@ -549,6 +549,7 @@ function StripeCheckoutEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n
           value={node.stripeCheckoutPriceId ?? ''}
           onChange={(priceId) => onUpdate({ ...node, stripeCheckoutPriceId: priceId })}
           placeholder="Usar preço padrão do produto"
+          allowedPriceIds={allowedPriceIds}
         />
         {node.stripeCheckoutPriceId && (
           <button
@@ -1092,15 +1093,16 @@ function QuestionEditor({
 
 // ── NodeEditor dispatcher ─────────────────────────────────────
 
-function NodeEditor({ node, nodes, onUpdate }: {
-  node:     FormNode
-  nodes:    FormNode[]
-  onUpdate: (n: FormNode) => void
+function NodeEditor({ node, nodes, onUpdate, allowedPriceIds }: {
+  node:             FormNode
+  nodes:            FormNode[]
+  onUpdate:         (n: FormNode) => void
+  allowedPriceIds?: string[]
 }) {
   if (node.type === 'bank-deposit')     return <BankDepositEditor     node={node} onUpdate={onUpdate} />
   if (node.type === 'receipt-upload')   return <ReceiptUploadEditor   node={node} nodes={nodes} onUpdate={onUpdate} />
   if (node.type === 'payment-done')     return <PaymentDoneEditor     node={node} onUpdate={onUpdate} />
-  if (node.type === 'stripe-checkout')  return <StripeCheckoutEditor  node={node} onUpdate={onUpdate} />
+  if (node.type === 'stripe-checkout')  return <StripeCheckoutEditor  node={node} onUpdate={onUpdate} allowedPriceIds={allowedPriceIds} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
@@ -1127,11 +1129,12 @@ function EmptyEditor() {
 // ── Main component ────────────────────────────────────────────
 
 interface FormBuilderProps {
-  nodes:    FormNode[]
-  onChange: (nodes: FormNode[]) => void
+  nodes:            FormNode[]
+  onChange:         (nodes: FormNode[]) => void
+  allowedPriceIds?: string[]
 }
 
-export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
+export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBuilderProps) {
   const [selectedId, setSelectedId] = useState<string | null>(nodes[0]?.id ?? null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const dragIdRef                   = useRef<string | null>(null)
@@ -1352,7 +1355,7 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
       {/* ── Right: editor ── */}
       <div className="flex-1 overflow-hidden" style={{ background: '#13151A' }}>
         {selected
-          ? <NodeEditor node={selected} nodes={nodes} onUpdate={updateNode} />
+          ? <NodeEditor node={selected} nodes={nodes} onUpdate={updateNode} allowedPriceIds={allowedPriceIds} />
           : <EmptyEditor />}
       </div>
     </div>

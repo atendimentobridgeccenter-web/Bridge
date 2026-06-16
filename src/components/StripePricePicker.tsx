@@ -18,10 +18,11 @@ export interface StripePrice {
 }
 
 interface Props {
-  value:     string
-  onChange:  (priceId: string, price: StripePrice) => void
-  label?:    string
-  placeholder?: string
+  value:           string
+  onChange:        (priceId: string, price: StripePrice) => void
+  label?:          string
+  placeholder?:    string
+  allowedPriceIds?: string[]  // when set, only shows prices with these IDs
 }
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -43,7 +44,7 @@ function intervalLabel(interval: string | null): string {
 
 // ── Component ────────────────────────────────────────────────
 
-export default function StripePricePicker({ value, onChange, placeholder = 'Selecionar preço do Stripe' }: Props) {
+export default function StripePricePicker({ value, onChange, placeholder = 'Selecionar preço do Stripe', allowedPriceIds }: Props) {
   const [open,     setOpen]     = useState(false)
   const [prices,   setPrices]   = useState<StripePrice[]>([])
   const [loading,  setLoading]  = useState(false)
@@ -81,13 +82,17 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
     if (prices.length === 0 && !loading) fetchPrices()
   }
 
+  const pool = allowedPriceIds?.length
+    ? prices.filter(p => allowedPriceIds.includes(p.priceId))
+    : prices
+
   const filtered = query.trim()
-    ? prices.filter(p =>
+    ? pool.filter(p =>
         p.productName.toLowerCase().includes(query.toLowerCase()) ||
         p.priceId.toLowerCase().includes(query.toLowerCase()) ||
         (p.nickname ?? '').toLowerCase().includes(query.toLowerCase()),
       )
-    : prices
+    : pool
 
   return (
     <div ref={ref} className="relative w-full">

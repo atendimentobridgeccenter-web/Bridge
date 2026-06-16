@@ -538,8 +538,8 @@ function PrecificacaoPanel({
 
 // ── Formulário tab ────────────────────────────────────────────
 
-function FormularioPanel({ nodes, onChange }: { nodes: FormNode[]; onChange: (nodes: FormNode[]) => void }) {
-  return <FormBuilder nodes={nodes} onChange={onChange} />
+function FormularioPanel({ nodes, onChange, allowedPriceIds }: { nodes: FormNode[]; onChange: (nodes: FormNode[]) => void; allowedPriceIds?: string[] }) {
+  return <FormBuilder nodes={nodes} onChange={onChange} allowedPriceIds={allowedPriceIds} />
 }
 
 // ── Rastreio tab ──────────────────────────────────────────────
@@ -910,7 +910,14 @@ export default function ProductConfigPage() {
       {/* Tab content */}
       {tab === 'formulario' ? (
         <div className="flex-1 overflow-hidden">
-          <FormularioPanel nodes={formNodes} onChange={setFormNodes} />
+          <FormularioPanel
+            nodes={formNodes}
+            onChange={setFormNodes}
+            allowedPriceIds={[
+              ...(displayProduct.price_id_stripe ? [displayProduct.price_id_stripe] : []),
+              ...(((displayProduct.checkout_config ?? {}) as Record<string, unknown>).extra_price_ids as string[] ?? []),
+            ]}
+          />
         </div>
       ) : (
         <div className="flex-1 overflow-auto px-8 py-6">
