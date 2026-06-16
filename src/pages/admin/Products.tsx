@@ -656,8 +656,14 @@ export default function Products() {
   }
 
   async function handleDuplicate(id: string) {
-    const src = products.find(p => p.id === id)
-    if (!src) return
+    // Fetch full product (list query omits config fields)
+    const { data: src, error: fetchErr } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (fetchErr || !src) { toast.error('Erro ao buscar produto.'); return }
+
     const slug = `${src.slug}-copia-${Date.now()}`
     const { data, error } = await supabase
       .from('products')
@@ -670,6 +676,7 @@ export default function Products() {
         landing_page_config: src.landing_page_config,
         form_logic_config:   src.form_logic_config,
         checkout_config:     src.checkout_config,
+        price_id_stripe:     src.price_id_stripe,
       })
       .select('id')
       .single()
