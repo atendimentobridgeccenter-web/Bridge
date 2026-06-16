@@ -779,12 +779,17 @@ export default function ProductConfigPage() {
   const [tab,       setTab]       = useState<TabId>('geral')
   const [uploading, setUploading] = useState(false)
   const [showSaved, setShowSaved] = useState(false)
-  const fileInputRef   = useRef<HTMLInputElement>(null)
-  const prevSavedAtRef = useRef<Date | null>(null)
+  const fileInputRef      = useRef<HTMLInputElement>(null)
+  const prevSavedAtRef    = useRef<Date | null>(null)
+  const lastInitializedId = useRef<string | null>(null)
 
-  // Init store when server data arrives
+  // Init store only when product ID changes — NOT on every post-save cache refresh.
+  // Re-initialising after a save resets savedAt→null, which cancels the "Salvo!" flash timeout.
   useEffect(() => {
-    if (serverProduct) initFromServer(serverProduct)
+    if (serverProduct && lastInitializedId.current !== serverProduct.id) {
+      lastInitializedId.current = serverProduct.id
+      initFromServer(serverProduct)
+    }
   }, [serverProduct, initFromServer])
 
   // Reset store on unmount
