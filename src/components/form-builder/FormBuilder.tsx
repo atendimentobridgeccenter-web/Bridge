@@ -53,14 +53,17 @@ export interface SocialLink {
 }
 
 export interface BankInfo {
-  amount?:          string
-  pixKey?:          string
-  pixKeyType?:      string
-  beneficiaryName?: string
-  bankName?:        string
-  agency?:          string
-  account?:         string
-  accountType?:     string
+  amount?:            string   // kept for backward compat (single amount)
+  enrollmentAmount?:  string   // valor da matrícula (número, ex: "1200.00")
+  monthlyAmount?:     string   // valor da mensalidade (número, ex: "250.00")
+  currency?:          string   // BRL | JPY | USD (default BRL)
+  pixKey?:            string
+  pixKeyType?:        string
+  beneficiaryName?:   string
+  bankName?:          string
+  agency?:            string
+  account?:           string
+  accountType?:       string
 }
 
 export interface FormNode {
@@ -365,12 +368,37 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
           onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label className={labelCls}>Valor Total</label>
-        <input value={bi.amount ?? ''} onChange={e => setInfo({ amount: e.target.value })}
-          placeholder="Ex: ¥150,000 / R$ 1.200,00" className={inputCls} style={inputSty}
-          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
-          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>Valores</label>
+          <select
+            value={bi.currency ?? 'BRL'}
+            onChange={e => setInfo({ currency: e.target.value })}
+            className="px-2.5 py-1.5 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none"
+            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <option value="BRL">BRL — Real</option>
+            <option value="JPY">JPY — Yen</option>
+            <option value="USD">USD — Dólar</option>
+          </select>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Matrícula</label>
+            <input value={bi.enrollmentAmount ?? ''} onChange={e => setInfo({ enrollmentAmount: e.target.value })}
+              placeholder="Ex: 1200.00" className={inputCls} style={inputSty}
+              onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+              onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+          </div>
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[10px] text-white/25 uppercase tracking-wider">Mensalidade</label>
+            <input value={bi.monthlyAmount ?? ''} onChange={e => setInfo({ monthlyAmount: e.target.value })}
+              placeholder="Ex: 250.00" className={inputCls} style={inputSty}
+              onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+              onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+          </div>
+        </div>
+        <p className="text-[10px] text-white/20">Use apenas números (ex: 1200.00). A moeda é definida pelo campo acima.</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -736,25 +764,10 @@ function QuestionEditor({
   const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
   const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
 
-  // Personal data fields — linked to leads table columns, no logic rules
-  const personalDataTypes: NodeType[] = ['name', 'email', 'phone', 'cpf', 'city', 'state']
-  const isPersonalData = personalDataTypes.includes(node.type)
-  // Show logic rules for any non-personal, non-options question
-  const showLogic = !isPersonalData && !SCREEN_TYPES.includes(node.type)
+  const showLogic = !SCREEN_TYPES.includes(node.type)
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
-
-      {/* Personal data hint */}
-      {isPersonalData && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-          style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)' }}>
-          <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <p className="text-[11px] text-emerald-300/70">
-            Campo de dado pessoal — salvo automaticamente no CRM ao finalizar o formulário.
-          </p>
-        </div>
-      )}
 
       {/* Required toggle */}
       {(() => {

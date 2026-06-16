@@ -151,11 +151,12 @@ function toRow(p: Product): ProductRow {
 // ── Actions Dropdown (fixed-position, escapes overflow) ────────
 
 function ActionsDropdown({
-  row, onEdit, onDelete,
+  row, onEdit, onDelete, onDuplicate,
 }: {
-  row:      ProductRow
-  onEdit:   (id: string) => void
-  onDelete: (id: string) => void
+  row:         ProductRow
+  onEdit:      (id: string) => void
+  onDelete:    (id: string) => void
+  onDuplicate: (id: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [pos,  setPos]  = useState<{ top: number; right: number } | null>(null)
@@ -217,6 +218,7 @@ function ActionsDropdown({
       }}
     >
       <DropMenuItem icon={Edit3} label="Editar Produto" onClick={() => { onEdit(row.id); setOpen(false) }} />
+      <DropMenuItem icon={Copy} label="Duplicar Formulário" onClick={() => { onDuplicate(row.id); setOpen(false) }} />
       <DropSep />
       <p style={{ padding: '4px 16px 2px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)' }}>
         Copiar Link
@@ -290,10 +292,11 @@ function DropSep() {
 
 // ── List row ──────────────────────────────────────────────────
 
-function ProductListRow({ row, onEdit, onDelete }: {
-  row:      ProductRow
-  onEdit:   (id: string) => void
-  onDelete: (id: string) => void
+function ProductListRow({ row, onEdit, onDelete, onDuplicate }: {
+  row:         ProductRow
+  onEdit:      (id: string) => void
+  onDelete:    (id: string) => void
+  onDuplicate: (id: string) => void
 }) {
   const status = STATUS_MAP[row.status]
   return (
@@ -348,7 +351,7 @@ function ProductListRow({ row, onEdit, onDelete }: {
       {/* Ações */}
       <td className="px-4 py-3.5" style={{ width: 52 }}>
         <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-          <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} />
+          <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />
         </div>
       </td>
     </tr>
@@ -357,10 +360,11 @@ function ProductListRow({ row, onEdit, onDelete }: {
 
 // ── Grid card ─────────────────────────────────────────────────
 
-function ProductGridCard({ row, onEdit, onDelete }: {
-  row:      ProductRow
-  onEdit:   (id: string) => void
-  onDelete: (id: string) => void
+function ProductGridCard({ row, onEdit, onDelete, onDuplicate }: {
+  row:         ProductRow
+  onEdit:      (id: string) => void
+  onDelete:    (id: string) => void
+  onDuplicate: (id: string) => void
 }) {
   const status = STATUS_MAP[row.status]
   const [from, to] = AVATAR_GRADIENTS[row.name.charCodeAt(0) % AVATAR_GRADIENTS.length]
@@ -405,7 +409,7 @@ function ProductGridCard({ row, onEdit, onDelete }: {
         {/* Actions — visible on hover */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <div style={{ background: 'rgba(15,17,23,0.85)', borderRadius: 10, backdropFilter: 'blur(6px)' }}>
-            <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} />
+            <ActionsDropdown row={row} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />
           </div>
         </div>
       </div>
@@ -651,6 +655,29 @@ export default function Products() {
     toast.success('Produto excluído.')
   }
 
+  async function handleDuplicate(id: string) {
+    const src = products.find(p => p.id === id)
+    if (!src) return
+    const slug = `${src.slug}-copia-${Date.now()}`
+    const { data, error } = await supabase
+      .from('products')
+      .insert({
+        name:                `${src.name} (Cópia)`,
+        slug,
+        description:         src.description,
+        status:              'draft',
+        thumbnail_url:       src.thumbnail_url,
+        landing_page_config: src.landing_page_config,
+        form_logic_config:   src.form_logic_config,
+        checkout_config:     src.checkout_config,
+      })
+      .select('id')
+      .single()
+    if (error) { toast.error(`Erro ao duplicar: ${error.message}`); return }
+    toast.success('Formulário duplicado!')
+    if (data) navigate(`/admin/products/${data.id}`)
+  }
+
   async function handleCreate(name: string, model: ProductModel) {
     setDrawer(false)
     const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + `-${Date.now()}`
@@ -790,6 +817,7 @@ export default function Products() {
                         row={row}
                         onEdit={id => navigate(`/admin/products/${id}`)}
                         onDelete={deleteProduct}
+                        onDuplicate={handleDuplicate}
                       />
                     ))}
                   </tbody>
@@ -819,6 +847,7 @@ export default function Products() {
                     row={row}
                     onEdit={id => navigate(`/admin/products/${id}`)}
                     onDelete={deleteProduct}
+                    onDuplicate={handleDuplicate}
                   />
                 ))}
               </div>

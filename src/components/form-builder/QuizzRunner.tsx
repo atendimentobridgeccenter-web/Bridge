@@ -736,17 +736,81 @@ function InfoRow({ label, value, onCopy, copied }: {
   )
 }
 
+// ── Coupon types ──────────────────────────────────────────────
+
+interface CouponRecord {
+  id:             string
+  code:           string
+  description:    string | null
+  discount_type:  'percentage' | 'fixed'
+  discount_value: number
+  applies_to:     'enrollment' | 'monthly' | 'both'
+  max_uses:       number | null
+  uses_count:     number
+  active:         boolean
+  expires_at:     string | null
+}
+
+function fmtMoney(value: number, currency = 'BRL'): string {
+  if (currency === 'JPY') return `¥${Math.round(value).toLocaleString('ja-JP')}`
+  if (currency === 'USD') return `$${value.toFixed(2)}`
+  return `R$ ${value.toFixed(2).replace('.', ',')}`
+}
+
+function calcDiscount(amount: number, coupon: CouponRecord): number {
+  if (coupon.discount_type === 'percentage') return amount * (coupon.discount_value / 100)
+  return Math.min(coupon.discount_value, amount)
+}
+
 function BankDepositScreen({ node, pct, onAdvance }: {
   node: FormNode; pct: number; onAdvance: () => void
 }) {
   const [copied, setCopied] = useState<string | null>(null)
+  const [couponCode,  setCouponCode]  = useState('')
+  const [applying,    setApplying]    = useState(false)
+  const [coupon,      setCoupon]      = useState<CouponRecord | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
   const bi: BankInfo = node.bankInfo ?? {}
+  const currency = bi.currency ?? 'BRL'
+
+  const enrollNum = parseFloat(bi.enrollmentAmount ?? '')
+  const monthNum  = parseFloat(bi.monthlyAmount   ?? '')
+  const hasBreakdown = !isNaN(enrollNum) || !isNaN(monthNum)
+
+  const enrollDiscount = coupon && !isNaN(enrollNum) && (coupon.applies_to === 'enrollment' || coupon.applies_to === 'both')
+    ? calcDiscount(enrollNum, coupon) : 0
+  const monthDiscount = coupon && !isNaN(monthNum) && (coupon.applies_to === 'monthly' || coupon.applies_to === 'both')
+    ? calcDiscount(monthNum, coupon) : 0
+
+  const totalDiscount = enrollDiscount + monthDiscount
+  const totalOriginal = (isNaN(enrollNum) ? 0 : enrollNum) + (isNaN(monthNum) ? 0 : monthNum)
+  const totalFinal    = totalOriginal - totalDiscount
 
   function copyText(text: string, key: string) {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(key)
       setTimeout(() => setCopied(null), 2000)
     }).catch(() => {})
+  }
+
+  async function applyCoupon() {
+    const code = couponCode.trim().toUpperCase()
+    if (!code) return
+    setApplying(true)
+    setCouponError(null)
+    setCoupon(null)
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code)
+      .eq('active', true)
+      .single()
+    setApplying(false)
+    if (error || !data) { setCouponError('Cupom inválido ou inativo.'); return }
+    const c = data as CouponRecord
+    if (c.expires_at && new Date(c.expires_at) < new Date()) { setCouponError('Este cupom expirou.'); return }
+    if (c.max_uses !== null && c.uses_count >= c.max_uses) { setCouponError('Este cupom atingiu o limite de usos.'); return }
+    setCoupon(c)
   }
 
   return (
@@ -776,12 +840,97 @@ function BankDepositScreen({ node, pct, onAdvance }: {
           </div>
         </div>
 
-        {bi.amount && (
+        {/* Amount breakdown */}
+        {hasBreakdown ? (
+          <div className="rounded-xl overflow-hidden"
+            style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(232,82,26,0.15)', background: 'rgba(232,82,26,0.05)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(232,82,26,0.7)' }}>
+                Resumo do Pagamento
+              </p>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-3">
+              {!isNaN(enrollNum) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-white/50">Matrícula</span>
+                  <span className="text-[14px] font-semibold text-[#F1F5F9]">{fmtMoney(enrollNum, currency)}</span>
+                </div>
+              )}
+              {!isNaN(monthNum) && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-white/50">Mensalidade</span>
+                  <span className="text-[14px] font-semibold text-[#F1F5F9]">{fmtMoney(monthNum, currency)}</span>
+                </div>
+              )}
+              {coupon && totalDiscount > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[13px] text-emerald-400">
+                    Cupom <span className="font-mono font-bold">{coupon.code}</span>
+                  </span>
+                  <span className="text-[14px] font-semibold text-emerald-400">
+                    -{fmtMoney(totalDiscount, currency)}
+                  </span>
+                </div>
+              )}
+              <div className="pt-3 flex justify-between items-center"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <span className="text-[13px] font-bold text-white/70">Total a pagar</span>
+                <span className="text-[22px] font-bold text-[#F1F5F9]">{fmtMoney(totalFinal, currency)}</span>
+              </div>
+            </div>
+          </div>
+        ) : bi.amount ? (
           <div className="px-5 py-4 rounded-xl"
             style={{ background: 'rgba(232,82,26,0.07)', border: '1px solid rgba(232,82,26,0.2)' }}>
             <p className="text-[12px] font-semibold uppercase tracking-wider mb-1"
               style={{ color: 'rgba(232,82,26,0.6)' }}>Valor total</p>
             <p className="text-[28px] font-bold text-[#F1F5F9]">{bi.amount}</p>
+          </div>
+        ) : null}
+
+        {/* Coupon field — only when breakdown values exist */}
+        {hasBreakdown && (
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              Cupom de desconto
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={couponCode}
+                onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponError(null); if (!e.target.value) setCoupon(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') applyCoupon() }}
+                placeholder="Ex: BRIDGE10"
+                disabled={!!coupon}
+                className="flex-1 px-3.5 py-2.5 rounded-lg text-[13px] font-mono text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors uppercase"
+                style={{
+                  background: '#0D0E12',
+                  border: `1px solid ${coupon ? 'rgba(52,211,153,0.4)' : couponError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                }}
+              />
+              {coupon ? (
+                <button
+                  onClick={() => { setCoupon(null); setCouponCode(''); setCouponError(null) }}
+                  className="px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all"
+                  style={{ background: 'rgba(239,68,68,0.1)', color: '#F87171', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  Remover
+                </button>
+              ) : (
+                <button
+                  onClick={applyCoupon}
+                  disabled={applying || !couponCode.trim()}
+                  className="px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all disabled:opacity-40"
+                  style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  {applying ? '...' : 'Aplicar'}
+                </button>
+              )}
+            </div>
+            {couponError && <p className="text-[11px] text-red-400">{couponError}</p>}
+            {coupon && (
+              <p className="text-[11px] text-emerald-400">
+                Cupom aplicado! {coupon.discount_type === 'percentage' ? `${coupon.discount_value}% de desconto` : `${fmtMoney(coupon.discount_value, currency)} de desconto`}
+                {coupon.applies_to !== 'both' ? ` na ${coupon.applies_to === 'enrollment' ? 'matrícula' : 'mensalidade'}` : ''}
+              </p>
+            )}
           </div>
         )}
 

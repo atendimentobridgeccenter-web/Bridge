@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import {
   User, Bell, Shield, Camera, Save,
   Eye, EyeOff, CheckCircle2, Loader2,
-  Mail, Lock, AtSign, Globe,
+  Mail, Lock, AtSign, Globe, Tag,
+  Plus, Trash2, X, Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -19,7 +20,7 @@ const ACCENT   = '#E8521A'
 
 // ── Types ──────────────────────────────────────────────────────
 
-type TabId = 'perfil' | 'notificacoes' | 'seguranca'
+type TabId = 'perfil' | 'notificacoes' | 'seguranca' | 'cupons'
 
 interface NotifSettings {
   new_lead:        boolean
@@ -484,12 +485,335 @@ function SegurancaTab({ user }: { user: SupabaseUser }) {
   )
 }
 
+// ── CuponsTab ──────────────────────────────────────────────────
+
+interface Coupon {
+  id:             string
+  code:           string
+  description:    string | null
+  discount_type:  'percentage' | 'fixed'
+  discount_value: number
+  applies_to:     'enrollment' | 'monthly' | 'both'
+  max_uses:       number | null
+  uses_count:     number
+  active:         boolean
+  expires_at:     string | null
+  created_at:     string
+}
+
+const BLANK_FORM = {
+  code:           '',
+  description:    '',
+  discount_type:  'percentage' as 'percentage' | 'fixed',
+  discount_value: '',
+  applies_to:     'both' as 'enrollment' | 'monthly' | 'both',
+  max_uses:       '',
+  expires_at:     '',
+}
+
+function CuponsTab() {
+  const [coupons,   setCoupons]   = useState<Coupon[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [creating,  setCreating]  = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [form,      setForm]      = useState(BLANK_FORM)
+
+  const labelCls  = 'block text-[12px] font-semibold text-white/40 mb-1.5 uppercase tracking-wider'
+  const inputCls  = 'w-full rounded-xl px-4 py-2.5 text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+  const inputSty  = { background: BG_INPUT, border: `1px solid ${BORDER}` }
+  const focusBdr  = 'rgba(232,82,26,0.4)'
+
+  async function load() {
+    setLoading(true)
+    const { data } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    setCoupons((data ?? []) as Coupon[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    const code = form.code.trim().toUpperCase()
+    if (!code) { toast.error('Informe o código do cupom.'); return }
+    const value = parseFloat(form.discount_value)
+    if (isNaN(value) || value <= 0) { toast.error('Informe um valor de desconto válido.'); return }
+    setSaving(true)
+    const { error } = await supabase.from('coupons').insert({
+      code,
+      description:    form.description.trim() || null,
+      discount_type:  form.discount_type,
+      discount_value: value,
+      applies_to:     form.applies_to,
+      max_uses:       form.max_uses ? parseInt(form.max_uses) : null,
+      expires_at:     form.expires_at || null,
+    })
+    setSaving(false)
+    if (error) { toast.error(`Erro: ${error.message}`); return }
+    toast.success('Cupom criado!')
+    setForm(BLANK_FORM)
+    setCreating(false)
+    load()
+  }
+
+  async function toggleActive(c: Coupon) {
+    const { error } = await supabase.from('coupons').update({ active: !c.active }).eq('id', c.id)
+    if (error) { toast.error('Erro ao atualizar.'); return }
+    setCoupons(cs => cs.map(x => x.id === c.id ? { ...x, active: !c.active } : x))
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Excluir este cupom?')) return
+    const { error } = await supabase.from('coupons').delete().eq('id', id)
+    if (error) { toast.error('Erro ao excluir.'); return }
+    setCoupons(cs => cs.filter(c => c.id !== id))
+    toast.success('Cupom excluído.')
+  }
+
+  function discountLabel(c: Coupon) {
+    if (c.discount_type === 'percentage') return `${c.discount_value}%`
+    return `R$ ${c.discount_value.toFixed(2).replace('.', ',')}`
+  }
+
+  function appliesToLabel(a: string) {
+    if (a === 'enrollment') return 'Matrícula'
+    if (a === 'monthly')    return 'Mensalidade'
+    return 'Ambos'
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-[15px] font-bold text-[#EDEDED]">Cupons de Desconto</h2>
+          <p className="text-[13px] text-white/30 mt-0.5">Gerenciar códigos aplicados no formulário de pagamento</p>
+        </div>
+        {!creating && (
+          <button
+            onClick={() => setCreating(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all"
+            style={{ background: ACCENT, boxShadow: '0 6px 20px rgba(232,82,26,0.25)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = ACCENT }}
+          >
+            <Plus className="w-3.5 h-3.5" /> Novo Cupom
+          </button>
+        )}
+      </div>
+
+      {/* Create form */}
+      {creating && (
+        <form onSubmit={handleCreate}
+          className="mb-6 rounded-xl p-5 flex flex-col gap-4"
+          style={{ background: 'rgba(232,82,26,0.05)', border: '1px solid rgba(232,82,26,0.15)' }}>
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] font-semibold text-[#EDEDED]">Novo Cupom</p>
+            <button type="button" onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
+              className="text-white/30 hover:text-white/70 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Código</label>
+              <input
+                value={form.code}
+                onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                placeholder="Ex: BRIDGE10"
+                className={inputCls + ' font-mono'}
+                style={inputSty}
+                onFocus={e => { (e.target as HTMLInputElement).style.borderColor = focusBdr }}
+                onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Descrição</label>
+              <input
+                value={form.description}
+                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Ex: Desconto de boas-vindas"
+                className={inputCls}
+                style={inputSty}
+                onFocus={e => { (e.target as HTMLInputElement).style.borderColor = focusBdr }}
+                onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className={labelCls}>Tipo</label>
+              <select
+                value={form.discount_type}
+                onChange={e => setForm(f => ({ ...f, discount_type: e.target.value as 'percentage' | 'fixed' }))}
+                className={inputCls + ' appearance-none'}
+                style={inputSty}
+              >
+                <option value="percentage">Percentual (%)</option>
+                <option value="fixed">Valor fixo (R$)</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>{form.discount_type === 'percentage' ? 'Porcentagem' : 'Valor (R$)'}</label>
+              <input
+                type="number"
+                min="0"
+                step={form.discount_type === 'percentage' ? '1' : '0.01'}
+                value={form.discount_value}
+                onChange={e => setForm(f => ({ ...f, discount_value: e.target.value }))}
+                placeholder={form.discount_type === 'percentage' ? '10' : '50.00'}
+                className={inputCls}
+                style={inputSty}
+                onFocus={e => { (e.target as HTMLInputElement).style.borderColor = focusBdr }}
+                onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Aplica em</label>
+              <select
+                value={form.applies_to}
+                onChange={e => setForm(f => ({ ...f, applies_to: e.target.value as 'enrollment' | 'monthly' | 'both' }))}
+                className={inputCls + ' appearance-none'}
+                style={inputSty}
+              >
+                <option value="both">Ambos</option>
+                <option value="enrollment">Matrícula</option>
+                <option value="monthly">Mensalidade</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Máx. de usos</label>
+              <input
+                type="number"
+                min="1"
+                value={form.max_uses}
+                onChange={e => setForm(f => ({ ...f, max_uses: e.target.value }))}
+                placeholder="Ilimitado"
+                className={inputCls}
+                style={inputSty}
+                onFocus={e => { (e.target as HTMLInputElement).style.borderColor = focusBdr }}
+                onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Expira em</label>
+              <input
+                type="date"
+                value={form.expires_at}
+                onChange={e => setForm(f => ({ ...f, expires_at: e.target.value }))}
+                className={inputCls}
+                style={{ ...inputSty, colorScheme: 'dark' }}
+                onFocus={e => { (e.target as HTMLInputElement).style.borderColor = focusBdr }}
+                onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
+              className="px-4 py-2 rounded-xl text-[13px] font-medium text-white/40 hover:text-white/70 transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-semibold text-white transition-all disabled:opacity-50"
+              style={{ background: ACCENT }}
+              onMouseEnter={e => { if (!saving) (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = ACCENT }}>
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              Salvar Cupom
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-10">
+          <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+        </div>
+      ) : coupons.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)' }}>
+            <Tag className="w-5 h-5 text-[#E8521A]" />
+          </div>
+          <p className="text-[13px] text-white/30">Nenhum cupom criado ainda.</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {coupons.map(c => (
+            <div key={c.id}
+              className="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+
+              {/* Code badge */}
+              <span className="font-mono font-bold text-[13px] px-2.5 py-1 rounded-lg shrink-0"
+                style={{
+                  background: c.active ? 'rgba(232,82,26,0.1)' : 'rgba(255,255,255,0.05)',
+                  color:      c.active ? '#E8521A'              : 'rgba(255,255,255,0.3)',
+                  border:     `1px solid ${c.active ? 'rgba(232,82,26,0.2)' : 'rgba(255,255,255,0.08)'}`,
+                }}>
+                {c.code}
+              </span>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[13px] font-semibold text-[#EDEDED]">{discountLabel(c)}</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-md text-white/40"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    {appliesToLabel(c.applies_to)}
+                  </span>
+                  {c.max_uses !== null && (
+                    <span className="text-[11px] text-white/30">
+                      {c.uses_count}/{c.max_uses} usos
+                    </span>
+                  )}
+                  {c.expires_at && (
+                    <span className="text-[11px] text-white/30">
+                      Expira {new Date(c.expires_at).toLocaleDateString('pt-BR')}
+                    </span>
+                  )}
+                </div>
+                {c.description && (
+                  <p className="text-[11px] text-white/25 mt-0.5 truncate">{c.description}</p>
+                )}
+              </div>
+
+              {/* Toggle active */}
+              <button
+                onClick={() => toggleActive(c)}
+                title={c.active ? 'Desativar' : 'Ativar'}
+                className="relative rounded-full transition-all duration-200 shrink-0"
+                style={{ width: 36, height: 20, background: c.active ? ACCENT : 'rgba(255,255,255,0.1)' }}>
+                <span className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
+                  style={{ width: 16, height: 16, transform: c.active ? 'translateX(16px)' : 'none' }} />
+              </button>
+
+              {/* Delete */}
+              <button onClick={() => handleDelete(c.id)}
+                className="text-white/20 hover:text-red-400 transition-colors shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'perfil',       label: 'Perfil',       icon: User   },
   { id: 'notificacoes', label: 'Notificações', icon: Bell   },
   { id: 'seguranca',    label: 'Segurança',    icon: Shield },
+  { id: 'cupons',       label: 'Cupons',        icon: Tag    },
 ]
 
 export default function SettingsPage() {
@@ -558,6 +882,7 @@ export default function SettingsPage() {
             {tab === 'perfil'       && <PerfilTab       user={user} onRefresh={loadUser} />}
             {tab === 'notificacoes' && <NotificacoesTab />}
             {tab === 'seguranca'    && <SegurancaTab    user={user} />}
+            {tab === 'cupons'       && <CuponsTab />}
           </div>
         </div>
       </div>
