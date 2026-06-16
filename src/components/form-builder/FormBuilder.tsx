@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import StripePricePicker from '@/components/StripePricePicker'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -30,9 +31,10 @@ export type NodeType =
   | 'textarea'  // Texto Longo
   | 'confirm'        // Confirmação / aceite (checkbox)
   | 'thankyou'       // Tela de encerramento
-  | 'bank-deposit'   // Tela com dados bancários para depósito
-  | 'receipt-upload' // Tela de upload de comprovante
-  | 'payment-done'   // Tela de confirmação de pagamento em dinheiro
+  | 'bank-deposit'      // Tela com dados bancários para depósito
+  | 'receipt-upload'   // Tela de upload de comprovante
+  | 'payment-done'     // Tela de confirmação de pagamento em dinheiro
+  | 'stripe-checkout'  // Tela de checkout do Stripe (cartão de crédito)
 
 export interface LogicJump {
   id:           string
@@ -75,7 +77,8 @@ export interface FormNode {
   allowOther?:   boolean      // habilita opção "Outra" em radio/select
   logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
   socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
-  bankInfo?:     BankInfo     // dados bancários para nó bank-deposit
+  bankInfo?:              BankInfo  // dados bancários para nó bank-deposit
+  stripeCheckoutPriceId?: string    // preço Stripe específico para nó stripe-checkout
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -110,12 +113,13 @@ const TYPE_META: Record<NodeType, TypeMeta> = {
   textarea: { label: 'Texto Longo',    icon: AlignLeft,   color: '#FB923C' },
   confirm:          { label: 'Confirmação',    icon: SquareCheck, color: '#34D399' },
   thankyou:         { label: 'Encerramento',   icon: CheckCircle, color: '#34D399' },
-  'bank-deposit':   { label: 'Dados Bancários', icon: Landmark,  color: '#3B82F6' },
-  'receipt-upload': { label: 'Comprovante',     icon: Upload,    color: '#8B5CF6' },
-  'payment-done':   { label: 'Pag. Dinheiro',   icon: Banknote,  color: '#10B981' },
+  'bank-deposit':     { label: 'Dados Bancários', icon: Landmark,   color: '#3B82F6' },
+  'receipt-upload':   { label: 'Comprovante',     icon: Upload,     color: '#8B5CF6' },
+  'payment-done':     { label: 'Pag. Dinheiro',   icon: Banknote,   color: '#10B981' },
+  'stripe-checkout':  { label: 'Pag. Cartão',     icon: CreditCard, color: '#A855F7' },
 }
 
-const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done']
+const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done', 'stripe-checkout']
 
 // ── QuestionCard (sidebar) ────────────────────────────────────
 
@@ -177,7 +181,7 @@ function QuestionCard({
       {isScreen ? (
         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
           style={{ background: `${color}18`, color }}>
-          {node.type === 'welcome' ? 'INTRO' : node.type === 'thankyou' ? 'FIM' : node.type === 'bank-deposit' ? 'DEP' : node.type === 'receipt-upload' ? 'COMP' : 'DIN'}
+          {node.type === 'welcome' ? 'INTRO' : node.type === 'thankyou' ? 'FIM' : node.type === 'bank-deposit' ? 'DEP' : node.type === 'receipt-upload' ? 'COMP' : node.type === 'stripe-checkout' ? 'PAG' : 'DIN'}
         </span>
       ) : (
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
@@ -490,6 +494,70 @@ function PaymentDoneEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
           style={inputSty}
           onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
           onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+    </div>
+  )
+}
+
+// ── StripeCheckoutEditor ──────────────────────────────────────
+
+function StripeCheckoutEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+  const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
+  const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
+  const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const focusSty = 'rgba(168,85,247,0.45)'
+  const blurSty  = 'rgba(255,255,255,0.08)'
+
+  return (
+    <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
+
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)' }}>
+        <CreditCard className="w-4 h-4 shrink-0" style={{ color: '#A855F7' }} />
+        <p className="text-[12px] leading-relaxed" style={{ color: 'rgba(168,85,247,0.8)' }}>
+          Exibe o resumo do pedido e redireciona automaticamente para o checkout do Stripe.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Título da Tela</label>
+        <input value={node.title} onChange={e => onUpdate({ ...node, title: e.target.value })}
+          placeholder="Ex: Pagamento com Cartão" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Descrição</label>
+        <textarea value={node.description ?? ''} onChange={e => onUpdate({ ...node, description: e.target.value })}
+          placeholder="Ex: Você será redirecionado para o ambiente seguro de pagamento."
+          rows={2}
+          className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none resize-none transition-colors"
+          style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Preço Stripe (opcional)</label>
+        <p className="text-[11px] text-white/25 -mt-1">
+          Substitui o preço padrão do produto apenas neste caminho do formulário.
+        </p>
+        <StripePricePicker
+          value={node.stripeCheckoutPriceId ?? ''}
+          onChange={(priceId) => onUpdate({ ...node, stripeCheckoutPriceId: priceId })}
+          placeholder="Usar preço padrão do produto"
+        />
+        {node.stripeCheckoutPriceId && (
+          <button
+            onClick={() => onUpdate({ ...node, stripeCheckoutPriceId: undefined })}
+            className="text-[11px] text-white/30 hover:text-red-400 transition-colors text-left"
+          >
+            × Remover override de preço
+          </button>
+        )}
       </div>
     </div>
   )
@@ -1029,9 +1097,10 @@ function NodeEditor({ node, nodes, onUpdate }: {
   nodes:    FormNode[]
   onUpdate: (n: FormNode) => void
 }) {
-  if (node.type === 'bank-deposit')   return <BankDepositEditor   node={node} onUpdate={onUpdate} />
-  if (node.type === 'receipt-upload') return <ReceiptUploadEditor node={node} nodes={nodes} onUpdate={onUpdate} />
-  if (node.type === 'payment-done')   return <PaymentDoneEditor   node={node} onUpdate={onUpdate} />
+  if (node.type === 'bank-deposit')     return <BankDepositEditor     node={node} onUpdate={onUpdate} />
+  if (node.type === 'receipt-upload')   return <ReceiptUploadEditor   node={node} nodes={nodes} onUpdate={onUpdate} />
+  if (node.type === 'payment-done')     return <PaymentDoneEditor     node={node} onUpdate={onUpdate} />
+  if (node.type === 'stripe-checkout')  return <StripeCheckoutEditor  node={node} onUpdate={onUpdate} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
@@ -1126,6 +1195,17 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
       id: uid(), type: 'payment-done',
       title: 'Pagamento em dinheiro registrado',
       description: 'Compareça ao local com o valor exato no dia da matrícula.',
+      options: [], logicJumps: [],
+    }
+    onChange([...nodes, n])
+    setSelectedId(n.id)
+  }, [nodes, onChange])
+
+  const addStripeCheckout = useCallback(() => {
+    const n: FormNode = {
+      id: uid(), type: 'stripe-checkout',
+      title: 'Pagamento com Cartão',
+      description: 'Você será redirecionado para o ambiente seguro de pagamento.',
       options: [], logicJumps: [],
     }
     onChange([...nodes, n])
@@ -1257,6 +1337,13 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
               style={{ background: 'rgba(16,185,129,0.05)', border: '1px dashed rgba(16,185,129,0.2)', color: '#10B981' }}>
               <Banknote className="w-3 h-3" /> Dinheiro
+            </button>
+            <button
+              onClick={addStripeCheckout}
+              title="Adicionar tela de checkout com cartão de crédito"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: 'rgba(168,85,247,0.05)', border: '1px dashed rgba(168,85,247,0.2)', color: '#A855F7' }}>
+              <CreditCard className="w-3 h-3" /> Cartão
             </button>
           </div>
         </div>

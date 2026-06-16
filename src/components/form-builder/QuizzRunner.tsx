@@ -4,7 +4,7 @@ import {
   ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock,
   ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle, Check,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Copy, Landmark, Upload, Banknote,
+  Copy, Landmark, Upload, Banknote, CreditCard,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { FormNode, OptionPrice, NodeType, SocialLink, BankInfo } from './FormBuilder'
@@ -1123,6 +1123,118 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
   )
 }
 
+// ── StripeCheckoutScreen ──────────────────────────────────────
+
+function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes }: {
+  node:        FormNode
+  pct:         number
+  priceId:     string | null
+  productId:   string | undefined
+  productName: string | undefined
+  answers:     Record<string, string>
+  nodes:       FormNode[]
+}) {
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState<string | null>(null)
+
+  const resolvedPriceId = node.stripeCheckoutPriceId || priceId
+
+  const email = Object.entries(answers).find(([id]) => {
+    const n = nodes.find(x => x.id === id)
+    return n?.type === 'email'
+  })?.[1] ?? undefined
+
+  const name = Object.entries(answers).find(([id]) => {
+    const n = nodes.find(x => x.id === id)
+    return n?.type === 'name'
+  })?.[1] ?? undefined
+
+  async function handlePay() {
+    if (!productId || !resolvedPriceId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
+        body: { productId, priceIds: [resolvedPriceId], email, name },
+      })
+      if (fnErr || !data?.url) throw new Error(fnErr?.message ?? 'Erro ao criar sessão de pagamento.')
+      window.location.href = data.url
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro inesperado.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
+      <motion.div
+        className="w-full max-w-[480px] flex flex-col gap-6 text-center"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <motion.div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+          style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}>
+          <CreditCard className="w-7 h-7" style={{ color: '#A855F7' }} />
+        </motion.div>
+
+        <div>
+          <h2 className="text-[28px] font-bold tracking-tight text-[#F1F5F9]">
+            {node.title || 'Pagamento com Cartão'}
+          </h2>
+          {node.description && (
+            <p className="text-[15px] mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {node.description}
+            </p>
+          )}
+        </div>
+
+        {productName && (
+          <div className="px-4 py-3 rounded-xl text-left"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <p className="text-[11px] uppercase tracking-widest font-semibold text-white/25 mb-1">Produto</p>
+            <p className="text-[14px] font-medium text-[#EDEDED]">{productName}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-left"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+            <p className="text-[13px] text-red-300">{error}</p>
+          </div>
+        )}
+
+        <button
+          onClick={handlePay}
+          disabled={loading || !resolvedPriceId}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-[15px] font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: '#A855F7', boxShadow: '0 8px 32px rgba(168,85,247,0.3)' }}
+          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#9333EA' }}
+          onMouseLeave={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = '#A855F7' }}>
+          {loading
+            ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecionando…</>
+            : <><Lock className="w-4 h-4" /> Pagar com Cartão</>}
+        </button>
+
+        {!resolvedPriceId && (
+          <p className="text-[12px] text-amber-400/70">
+            Nenhum preço configurado para este nó.
+          </p>
+        )}
+
+        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>POWERED BY BRIDGE</p>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Animation ─────────────────────────────────────────────────
 
 const variants = {
@@ -1260,7 +1372,7 @@ export default function QuizzRunner({
 
     // Resolve next via logic jumps first
     // For screen-type nodes (receipt-upload, payment-done etc.) empty ifOption = unconditional
-    const isScreenNode = ['receipt-upload', 'bank-deposit', 'payment-done'].includes(currentNode.type)
+    const isScreenNode = ['receipt-upload', 'bank-deposit', 'payment-done', 'stripe-checkout'].includes(currentNode.type)
     const jump = currentNode.logicJumps.find(j =>
       isScreenNode ? (j.ifOption === '' || j.ifOption === answer) : j.ifOption === answer
     )
@@ -1339,7 +1451,7 @@ export default function QuizzRunner({
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (done || disqualified || !currentNode) return
       if (currentNode.type === 'welcome') return
-      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload' || currentNode.type === 'payment-done') return
+      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload' || currentNode.type === 'payment-done' || currentNode.type === 'stripe-checkout') return
 
       if (isChoice && !otherActive) {
         const idx = e.key.toUpperCase().charCodeAt(0) - 65
@@ -1420,6 +1532,22 @@ export default function QuizzRunner({
     )
   }
 
+  // ── Stripe checkout screen (cartão) ───────────────────────────
+
+  if (currentNode.type === 'stripe-checkout') {
+    return (
+      <StripeCheckoutScreen
+        node={currentNode}
+        pct={pct}
+        priceId={activePriceId}
+        productId={productId}
+        productName={productName}
+        answers={answers}
+        nodes={nodes}
+      />
+    )
+  }
+
   // ── Receipt upload screen ─────────────────────────────────────
 
   if (currentNode.type === 'receipt-upload') {
@@ -1467,7 +1595,7 @@ export default function QuizzRunner({
                 )}
                 <ArrowRight className="w-3.5 h-3.5" style={{ color: '#E8521A' }} />
                 <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  de {nodes.filter(n => !['welcome','thankyou','bank-deposit','receipt-upload'].includes(n.type)).length}
+                  de {nodes.filter(n => !['welcome','thankyou','bank-deposit','receipt-upload','payment-done','stripe-checkout'].includes(n.type)).length}
                 </span>
                 {!isRequired && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded font-medium"
