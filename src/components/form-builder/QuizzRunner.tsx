@@ -4,7 +4,7 @@ import {
   ArrowRight, ChevronLeft, CornerDownLeft, Sparkles, Lock,
   ShieldCheck, Loader2, AlertTriangle, CheckCircle, XCircle, Check,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Copy, Landmark, Upload,
+  Copy, Landmark, Upload, Banknote,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { FormNode, OptionPrice, NodeType, SocialLink, BankInfo } from './FormBuilder'
@@ -222,6 +222,64 @@ function maskPhone(v: string): string {
   return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
 }
 
+// ── Phone country selector ────────────────────────────────────
+
+const PHONE_COUNTRIES = [
+  { code: '+55', flag: '🇧🇷', label: 'Brasil',   mask: true  },
+  { code: '+81', flag: '🇯🇵', label: 'Japão',    mask: false },
+  { code: '+1',  flag: '🇺🇸', label: 'EUA',      mask: false },
+  { code: '+351',flag: '🇵🇹', label: 'Portugal', mask: false },
+  { code: '+49', flag: '🇩🇪', label: 'Alemanha', mask: false },
+]
+
+function PhoneInput({ value, onChange, onEnter }: {
+  value: string; onChange: (v: string) => void; onEnter: () => void
+}) {
+  const detected = PHONE_COUNTRIES.find(c => value.startsWith(c.code + ' '))
+  const [countryCode, setCountryCode] = useState(detected?.code ?? '+55')
+
+  const numberPart = value.startsWith(countryCode + ' ')
+    ? value.slice(countryCode.length + 1)
+    : (detected ? value.slice(detected.code.length + 1) : value)
+
+  const isBR = countryCode === '+55'
+  const borderColor = numberPart ? '#E8521A' : 'rgba(255,255,255,0.12)'
+
+  function handleNumber(raw: string) {
+    const num = isBR ? maskPhone(raw) : raw
+    onChange(countryCode + ' ' + num)
+  }
+
+  function handleCountry(code: string) {
+    setCountryCode(code)
+    onChange(code + ' ' + numberPart)
+  }
+
+  return (
+    <div className="flex items-end gap-3">
+      <select
+        value={countryCode}
+        onChange={e => handleCountry(e.target.value)}
+        className="shrink-0 px-2 py-3 rounded-lg text-[14px] text-[#F1F5F9] outline-none appearance-none cursor-pointer transition-colors"
+        style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.08)', minWidth: 90 }}>
+        {PHONE_COUNTRIES.map(c => (
+          <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+        ))}
+      </select>
+      <input
+        autoFocus
+        type="tel"
+        value={numberPart}
+        onChange={e => handleNumber(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
+        placeholder={isBR ? '(11) 99999-9999' : '…'}
+        className="flex-1 bg-transparent outline-none border-0 border-b-2 text-[22px] text-[#F1F5F9] placeholder:text-white/20 py-3 transition-colors leading-snug"
+        style={{ borderBottomColor: borderColor }}
+      />
+    </div>
+  )
+}
+
 function AnswerInput({ node, value, onChange, onEnter }: {
   node: FormNode; value: string; onChange: (v: string) => void; onEnter: () => void
 }) {
@@ -244,13 +302,7 @@ function AnswerInput({ node, value, onChange, onEnter }: {
   }
 
   if (node.type === 'phone') {
-    return (
-      <input autoFocus type="tel" value={value}
-        onChange={e => onChange(maskPhone(e.target.value))}
-        onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
-        placeholder="(11) 99999-9999"
-        className={sharedCls} style={{ borderBottomColor: borderColor }} />
-    )
+    return <PhoneInput value={value} onChange={onChange} onEnter={onEnter} />
   }
 
   if (node.type === 'cpf') {
@@ -733,31 +785,20 @@ function BankDepositScreen({ node, pct, onAdvance }: {
           </div>
         )}
 
-        <div className="rounded-xl overflow-hidden"
-          style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.05)' }}>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400">Chave Pix</p>
-          </div>
-          <div className="px-5">
-            <InfoRow label={bi.pixKeyType ?? 'Chave Pix'} value={bi.pixKey}
-              onCopy={() => copyText(bi.pixKey!, 'pixKey')} copied={copied === 'pixKey'} />
-            <InfoRow label="Beneficiário" value={bi.beneficiaryName}
-              onCopy={() => copyText(bi.beneficiaryName!, 'beneficiary')} copied={copied === 'beneficiary'} />
-          </div>
-        </div>
-
-        {(bi.bankName || bi.agency || bi.account) && (
+        {(bi.beneficiaryName || bi.bankName || bi.agency || bi.account) && (
           <div className="rounded-xl overflow-hidden"
             style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-              <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>TED / DOC</p>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.05)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400">Dados para Transferência</p>
             </div>
             <div className="px-5">
-              <InfoRow label="Banco" value={bi.bankName}
+              <InfoRow label="Beneficiário / 受取人" value={bi.beneficiaryName}
+                onCopy={() => copyText(bi.beneficiaryName!, 'beneficiary')} copied={copied === 'beneficiary'} />
+              <InfoRow label="Banco / 銀行" value={bi.bankName}
                 onCopy={() => copyText(bi.bankName!, 'bank')} copied={copied === 'bank'} />
-              <InfoRow label="Agência" value={bi.agency}
+              <InfoRow label="Agência / 支店" value={bi.agency}
                 onCopy={() => copyText(bi.agency!, 'agency')} copied={copied === 'agency'} />
-              <InfoRow label={`Conta ${bi.accountType ?? ''}`.trim()} value={bi.account}
+              <InfoRow label={`Conta${bi.accountType ? ' (' + bi.accountType + ')' : ''}`} value={bi.account}
                 onCopy={() => copyText(bi.account!, 'account')} copied={copied === 'account'} />
             </div>
           </div>
@@ -880,6 +921,56 @@ function ReceiptUploadScreen({ node, pct, productId, onAdvance }: {
   )
 }
 
+// ── PaymentDoneScreen ─────────────────────────────────────────
+
+function PaymentDoneScreen({ node, pct, onAdvance }: {
+  node: FormNode; pct: number; onAdvance: () => void
+}) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-16"
+      style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
+      <motion.div
+        className="w-full max-w-[480px] flex flex-col gap-6 text-center"
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      >
+        <motion.div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+          style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}>
+          <Banknote className="w-7 h-7 text-emerald-400" />
+        </motion.div>
+
+        <div>
+          <h2 className="text-[28px] font-bold tracking-tight text-[#F1F5F9]">
+            {node.title || 'Pagamento em dinheiro registrado'}
+          </h2>
+          {node.description && (
+            <p className="text-[15px] mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {node.description}
+            </p>
+          )}
+        </div>
+
+        <button
+          onClick={onAdvance}
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-[15px] font-bold text-white transition-all"
+          style={{ background: '#10B981', boxShadow: '0 8px 32px rgba(16,185,129,0.25)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#059669' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#10B981' }}>
+          Concluir <CheckCircle className="w-4 h-4" />
+        </button>
+
+        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>POWERED BY BRIDGE</p>
+      </motion.div>
+    </div>
+  )
+}
+
 // ── Animation ─────────────────────────────────────────────────
 
 const variants = {
@@ -974,7 +1065,10 @@ export default function QuizzRunner({
   const isChoice       = currentNode?.type === 'radio' || currentNode?.type === 'select'
   const isConfirm      = currentNode?.type === 'confirm'
   const pct            = done || disqualified ? 1 : nodes.length ? (history.length - 1) / nodes.length : 0
-  const hasDepositFlow = history.some(id => nodes.find(n => n.id === id)?.type === 'bank-deposit')
+  const hasManualPayment = history.some(id => {
+    const t = nodes.find(n => n.id === id)?.type
+    return t === 'bank-deposit' || t === 'payment-done'
+  })
 
   // ── Advance from welcome (no answer) ─────────────────────────
 
@@ -1021,8 +1115,6 @@ export default function QuizzRunner({
         return
       }
       if (jump.jumpToNodeId === '__end__') {
-        const customDone = nodes.find(n => n.type === 'thankyou')
-        if (customDone) setThankyouContent({ title: customDone.title, description: customDone.description, socialLinks: customDone.socialLinks })
         setDone(true)
         onComplete?.(newAnswers)
         return
@@ -1090,7 +1182,7 @@ export default function QuizzRunner({
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (done || disqualified || !currentNode) return
       if (currentNode.type === 'welcome') return
-      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload') return
+      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload' || currentNode.type === 'payment-done') return
 
       if (isChoice && !otherActive) {
         const idx = e.key.toUpperCase().charCodeAt(0) - 65
@@ -1123,7 +1215,7 @@ export default function QuizzRunner({
 
   if (done) {
     if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} socialLinks={thankyouContent.socialLinks} />
-    if (checkoutEnabled && productId && !hasDepositFlow) {
+    if (checkoutEnabled && productId && !hasManualPayment) {
       return (
         <CheckoutSummary
           productId={productId}
@@ -1151,6 +1243,18 @@ export default function QuizzRunner({
   if (currentNode.type === 'bank-deposit') {
     return (
       <BankDepositScreen
+        node={currentNode}
+        pct={pct}
+        onAdvance={() => advance('')}
+      />
+    )
+  }
+
+  // ── Payment done screen (dinheiro) ───────────────────────────
+
+  if (currentNode.type === 'payment-done') {
+    return (
+      <PaymentDoneScreen
         node={currentNode}
         pct={pct}
         onAdvance={() => advance('')}

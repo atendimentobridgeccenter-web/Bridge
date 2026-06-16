@@ -6,7 +6,7 @@ import {
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
   XCircle, FileText, User, ImageIcon, X, SquareCheck,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Landmark, Upload,
+  Landmark, Upload, Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -30,8 +30,9 @@ export type NodeType =
   | 'textarea'  // Texto Longo
   | 'confirm'        // Confirmação / aceite (checkbox)
   | 'thankyou'       // Tela de encerramento
-  | 'bank-deposit'   // Tela com dados bancários / Pix
+  | 'bank-deposit'   // Tela com dados bancários para depósito
   | 'receipt-upload' // Tela de upload de comprovante
+  | 'payment-done'   // Tela de confirmação de pagamento em dinheiro
 
 export interface LogicJump {
   id:           string
@@ -106,11 +107,12 @@ const TYPE_META: Record<NodeType, TypeMeta> = {
   textarea: { label: 'Texto Longo',    icon: AlignLeft,   color: '#FB923C' },
   confirm:          { label: 'Confirmação',    icon: SquareCheck, color: '#34D399' },
   thankyou:         { label: 'Encerramento',   icon: CheckCircle, color: '#34D399' },
-  'bank-deposit':   { label: 'Dados Bancários', icon: Landmark,   color: '#3B82F6' },
-  'receipt-upload': { label: 'Comprovante',     icon: Upload,     color: '#8B5CF6' },
+  'bank-deposit':   { label: 'Dados Bancários', icon: Landmark,  color: '#3B82F6' },
+  'receipt-upload': { label: 'Comprovante',     icon: Upload,    color: '#8B5CF6' },
+  'payment-done':   { label: 'Pag. Dinheiro',   icon: Banknote,  color: '#10B981' },
 }
 
-const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload']
+const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done']
 
 // ── QuestionCard (sidebar) ────────────────────────────────────
 
@@ -172,7 +174,7 @@ function QuestionCard({
       {isScreen ? (
         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0"
           style={{ background: `${color}18`, color }}>
-          {node.type === 'welcome' ? 'INTRO' : node.type === 'thankyou' ? 'FIM' : node.type === 'bank-deposit' ? 'DEP' : 'COMP'}
+          {node.type === 'welcome' ? 'INTRO' : node.type === 'thankyou' ? 'FIM' : node.type === 'bank-deposit' ? 'DEP' : node.type === 'receipt-upload' ? 'COMP' : 'DIN'}
         </span>
       ) : (
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
@@ -331,7 +333,6 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
     onUpdate({ ...node, bankInfo: { ...node.bankInfo, ...patch } })
   }
 
-  const PIX_TYPES = ['CPF', 'CNPJ', 'E-mail', 'Telefone', 'Chave aleatória']
   const bi = node.bankInfo ?? {}
 
   return (
@@ -341,7 +342,7 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
         style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
         <Landmark className="w-4 h-4 shrink-0 text-blue-400" />
         <p className="text-[12px] leading-relaxed text-blue-300/80">
-          Exibe os dados bancários e Pix para o lead realizar o depósito.
+          Exibe os dados bancários para o lead realizar a transferência.
         </p>
       </div>
 
@@ -367,31 +368,13 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
       <div className="flex flex-col gap-2">
         <label className={labelCls}>Valor Total</label>
         <input value={bi.amount ?? ''} onChange={e => setInfo({ amount: e.target.value })}
-          placeholder="Ex: R$ 1.200,00" className={inputCls} style={inputSty}
+          placeholder="Ex: ¥150,000 / R$ 1.200,00" className={inputCls} style={inputSty}
           onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
           onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
-
       <div className="flex flex-col gap-2">
-        <label className={labelCls}>Chave Pix</label>
-        <div className="flex gap-2">
-          <select value={bi.pixKeyType ?? ''} onChange={e => setInfo({ pixKeyType: e.target.value })}
-            className="px-2.5 py-2 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none"
-            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', minWidth: 120 }}>
-            <option value="">Tipo…</option>
-            {PIX_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-          <input value={bi.pixKey ?? ''} onChange={e => setInfo({ pixKey: e.target.value })}
-            placeholder="Chave Pix" className={`${inputCls} flex-1`} style={inputSty}
-            onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
-            onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className={labelCls}>Nome do Beneficiário</label>
+        <label className={labelCls}>Nome do Beneficiário / 受取人名</label>
         <input value={bi.beneficiaryName ?? ''} onChange={e => setInfo({ beneficiaryName: e.target.value })}
           placeholder="Ex: Bridge Cultural Center" className={inputCls} style={inputSty}
           onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
@@ -399,7 +382,7 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
       </div>
 
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
-      <p className={labelCls}>Dados para TED / DOC (opcional)</p>
+      <p className={labelCls}>Dados para Transferência Bancária</p>
 
       <div className="flex flex-col gap-3">
         <div className="flex gap-3">
@@ -437,6 +420,48 @@ function BankDepositEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: F
             </select>
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ── PaymentDoneEditor ─────────────────────────────────────────
+
+function PaymentDoneEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNode) => void }) {
+  const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
+  const inputCls = 'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors'
+  const inputSty = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const focusSty = 'rgba(16,185,129,0.45)'
+  const blurSty  = 'rgba(255,255,255,0.08)'
+
+  return (
+    <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
+
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+        style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+        <Banknote className="w-4 h-4 shrink-0 text-emerald-400" />
+        <p className="text-[12px] leading-relaxed text-emerald-300/80">
+          Tela de confirmação para pagamento em dinheiro. Exibe uma mensagem e finaliza o formulário.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Título da Tela</label>
+        <input value={node.title} onChange={e => onUpdate({ ...node, title: e.target.value })}
+          placeholder="Ex: Pagamento em dinheiro confirmado" className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Mensagem / Instrução</label>
+        <textarea value={node.description ?? ''} onChange={e => onUpdate({ ...node, description: e.target.value })}
+          placeholder="Ex: Compareça ao local com o valor exato no dia da matrícula."
+          rows={4}
+          className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none resize-none transition-colors"
+          style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }} />
       </div>
     </div>
   )
@@ -935,6 +960,7 @@ function NodeEditor({ node, nodes, onUpdate }: {
 }) {
   if (node.type === 'bank-deposit')   return <BankDepositEditor   node={node} onUpdate={onUpdate} />
   if (node.type === 'receipt-upload') return <ReceiptUploadEditor node={node} onUpdate={onUpdate} />
+  if (node.type === 'payment-done')   return <PaymentDoneEditor   node={node} onUpdate={onUpdate} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
@@ -1018,6 +1044,17 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
       id: uid(), type: 'receipt-upload',
       title: 'Envie o comprovante',
       description: 'Envie a foto ou PDF do comprovante de depósito.',
+      options: [], logicJumps: [],
+    }
+    onChange([...nodes, n])
+    setSelectedId(n.id)
+  }, [nodes, onChange])
+
+  const addPaymentDone = useCallback(() => {
+    const n: FormNode = {
+      id: uid(), type: 'payment-done',
+      title: 'Pagamento em dinheiro registrado',
+      description: 'Compareça ao local com o valor exato no dia da matrícula.',
       options: [], logicJumps: [],
     }
     onChange([...nodes, n])
@@ -1140,6 +1177,15 @@ export default function FormBuilder({ nodes, onChange }: FormBuilderProps) {
               className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
               style={{ background: 'rgba(139,92,246,0.05)', border: '1px dashed rgba(139,92,246,0.2)', color: '#8B5CF6' }}>
               <Upload className="w-3 h-3" /> Comprovante
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={addPaymentDone}
+              title="Adicionar tela de confirmação de pagamento em dinheiro"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+              style={{ background: 'rgba(16,185,129,0.05)', border: '1px dashed rgba(16,185,129,0.2)', color: '#10B981' }}>
+              <Banknote className="w-3 h-3" /> Dinheiro
             </button>
           </div>
         </div>
