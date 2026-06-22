@@ -5,7 +5,7 @@ import {
   Mail, Phone, MapPin, User, CheckCircle2,
   XCircle, Calendar, Package, FileText,
   Download, Edit2, Trash2, Loader2, AlertTriangle,
-  Save,
+  Save, ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLeads, useProductsForFilter, useUpdateLead, useDeleteLead } from '@/hooks/useLeads'
@@ -371,6 +371,30 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
             ))}
           </div>
 
+          {/* UTM / origem */}
+          {(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_term || lead.utm_content || lead.referrer) && (
+            <div className="rounded-xl p-4 flex flex-col gap-3"
+              style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-1">Origem do Lead</p>
+              {[
+                { label: 'Fonte',     value: lead.utm_source   },
+                { label: 'Mídia',     value: lead.utm_medium   },
+                { label: 'Campanha',  value: lead.utm_campaign },
+                { label: 'Termo',     value: lead.utm_term     },
+                { label: 'Conteúdo', value: lead.utm_content  },
+                { label: 'Referrer', value: lead.referrer     },
+              ].filter(r => !!r.value).map(({ label, value }) => (
+                <div key={label} className="flex items-start gap-3">
+                  <ExternalLink className="w-3.5 h-3.5 text-white/25 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-white/25 uppercase tracking-wider">{label}</p>
+                    <p className="text-[13px] text-[#EDEDED] mt-0.5 break-all">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Form answers */}
           {answersEntries.length > 0 && (
             <div className="flex flex-col gap-3">
@@ -544,11 +568,13 @@ export default function LeadsPage() {
   }
 
   function exportCSV() {
-    const header = ['Nome', 'Email', 'Telefone', 'Produto', 'Status', 'Cidade', 'Estado', 'Data']
+    const header = ['Nome', 'Email', 'Telefone', 'Produto', 'Status', 'Cidade', 'Estado', 'Fonte (UTM)', 'Mídia', 'Campanha', 'Referrer', 'Data']
     const rows   = filtered.map(l => [
       displayName(l), l.email ?? '', l.phone ?? '', l.product_name ?? '',
       l.qualified ? 'Qualificado' : 'Desqualificado',
-      l.city ?? '', l.state ?? '', fmtDateShort(l.created_at),
+      l.city ?? '', l.state ?? '',
+      l.utm_source ?? '', l.utm_medium ?? '', l.utm_campaign ?? '', l.referrer ?? '',
+      fmtDateShort(l.created_at),
     ])
     const csv  = [header, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })

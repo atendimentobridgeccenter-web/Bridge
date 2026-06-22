@@ -43,6 +43,7 @@ export interface QuizzRunnerProps {
   defaultPriceId?:  string
   extraPriceIds?:   string[]      // preços adicionais incluídos no mesmo checkout Stripe
   tracking?:        TrackingConfig
+  utmParams?:       Record<string, string>  // utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer
   onComplete?:      (answers: Record<string, string>) => void
 }
 
@@ -223,31 +224,39 @@ function maskPhone(v: string): string {
   return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
 }
 
+function maskPhoneJP(v: string): string {
+  const d = v.replace(/\D/g, '').slice(0, 11)
+  if (d.length === 0)  return ''
+  if (d.length <= 3)   return d
+  if (d.length <= 7)   return `${d.slice(0,3)}-${d.slice(3)}`
+  return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`
+}
+
 // ── Phone country selector ────────────────────────────────────
 
 const PHONE_COUNTRIES = [
-  { code: '+55', flag: '🇧🇷', label: 'Brasil',   mask: true  },
-  { code: '+81', flag: '🇯🇵', label: 'Japão',    mask: false },
-  { code: '+1',  flag: '🇺🇸', label: 'EUA',      mask: false },
-  { code: '+351',flag: '🇵🇹', label: 'Portugal', mask: false },
-  { code: '+49', flag: '🇩🇪', label: 'Alemanha', mask: false },
+  { code: '+81', flag: '🇯🇵', label: 'Japão',    placeholder: '090-1234-5678',  maskFn: maskPhoneJP },
+  { code: '+55', flag: '🇧🇷', label: 'Brasil',   placeholder: '(11) 99999-9999', maskFn: maskPhone   },
+  { code: '+1',  flag: '🇺🇸', label: 'EUA',      placeholder: '...',             maskFn: null        },
+  { code: '+351',flag: '🇵🇹', label: 'Portugal', placeholder: '...',             maskFn: null        },
+  { code: '+49', flag: '🇩🇪', label: 'Alemanha', placeholder: '...',             maskFn: null        },
 ]
 
 function PhoneInput({ value, onChange, onEnter }: {
   value: string; onChange: (v: string) => void; onEnter: () => void
 }) {
   const detected = PHONE_COUNTRIES.find(c => value.startsWith(c.code + ' '))
-  const [countryCode, setCountryCode] = useState(detected?.code ?? '+55')
+  const [countryCode, setCountryCode] = useState(detected?.code ?? '+81')
 
   const numberPart = value.startsWith(countryCode + ' ')
     ? value.slice(countryCode.length + 1)
     : (detected ? value.slice(detected.code.length + 1) : value)
 
-  const isBR = countryCode === '+55'
+  const countryDef = PHONE_COUNTRIES.find(c => c.code === countryCode) ?? PHONE_COUNTRIES[0]
   const borderColor = numberPart ? '#E8521A' : 'rgba(255,255,255,0.12)'
 
   function handleNumber(raw: string) {
-    const num = isBR ? maskPhone(raw) : raw
+    const num = countryDef.maskFn ? countryDef.maskFn(raw) : raw
     onChange(countryCode + ' ' + num)
   }
 
@@ -273,7 +282,7 @@ function PhoneInput({ value, onChange, onEnter }: {
         value={numberPart}
         onChange={e => handleNumber(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
-        placeholder={isBR ? '(11) 99999-9999' : '…'}
+        placeholder={countryDef.placeholder}
         className="flex-1 bg-transparent outline-none border-0 border-b-2 text-[22px] text-[#F1F5F9] placeholder:text-white/20 py-3 transition-colors leading-snug"
         style={{ borderBottomColor: borderColor }}
       />
@@ -1263,6 +1272,7 @@ export default function QuizzRunner({
   defaultPriceId,
   extraPriceIds,
   tracking,
+  utmParams,
   onComplete,
 }: QuizzRunnerProps) {
   const [history,         setHistory]         = useState<string[]>(nodes[0] ? [nodes[0].id] : [])
@@ -1308,15 +1318,21 @@ export default function QuizzRunner({
     // Save to leads table (fire and forget)
     if (productId) {
       supabase.from('leads').insert({
-        product_id: productId,
-        email:      email || null,
-        phone:      phone || null,
-        name:       name  || null,
-        cpf:        cpf   || null,
-        city:       city  || null,
-        state:      state || null,
-        answers:    ans,
-        qualified:  !disqualified,
+        product_id:   productId,
+        email:        email || null,
+        phone:        phone || null,
+        name:         name  || null,
+        cpf:          cpf   || null,
+        city:         city  || null,
+        state:        state || null,
+        answers:      ans,
+        qualified:    !disqualified,
+        utm_source:   utmParams?.utm_source   || null,
+        utm_medium:   utmParams?.utm_medium   || null,
+        utm_campaign: utmParams?.utm_campaign || null,
+        utm_term:     utmParams?.utm_term     || null,
+        utm_content:  utmParams?.utm_content  || null,
+        referrer:     utmParams?.referrer     || null,
       }).then(() => {}, () => {})
     }
 

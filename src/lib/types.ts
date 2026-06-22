@@ -300,6 +300,12 @@ export interface Lead {
   answers:      Record<string, string>
   qualified:    boolean
   created_at:   string
+  utm_source?:   string | null
+  utm_medium?:   string | null
+  utm_campaign?: string | null
+  utm_term?:     string | null
+  utm_content?:  string | null
+  referrer?:     string | null
   // joined
   product_name?:        string | null
   product_form_nodes?:  unknown  // form_logic_config.nodes para resolver títulos

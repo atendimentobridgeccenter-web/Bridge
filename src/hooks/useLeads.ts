@@ -15,18 +15,24 @@ export interface LeadPatch {
 // ── Row shape returned by Supabase join ───────────────────────
 
 interface LeadRow {
-  id:         string
-  product_id: string | null
-  email:      string | null
-  phone:      string | null
-  name:       string | null
-  cpf:        string | null
-  city:       string | null
-  state:      string | null
-  answers:    Record<string, string>
-  qualified:  boolean
-  created_at: string
-  products:   { name: string; form_logic_config: unknown } | null
+  id:          string
+  product_id:  string | null
+  email:       string | null
+  phone:       string | null
+  name:        string | null
+  cpf:         string | null
+  city:        string | null
+  state:       string | null
+  answers:     Record<string, string>
+  qualified:   boolean
+  created_at:  string
+  utm_source?:   string | null
+  utm_medium?:   string | null
+  utm_campaign?: string | null
+  utm_term?:     string | null
+  utm_content?:  string | null
+  referrer?:     string | null
+  products:    { name: string; form_logic_config: unknown } | null
 }
 
 function mapRow(r: LeadRow): Lead {
@@ -50,6 +56,7 @@ export function useLeads(productId?: string | null) {
         .select(`
           id, product_id, email, phone, name, cpf, city, state,
           answers, qualified, created_at,
+          utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer,
           products ( name, form_logic_config )
         `)
         .order('created_at', { ascending: false })

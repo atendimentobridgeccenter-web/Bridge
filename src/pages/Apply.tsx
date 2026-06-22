@@ -13,6 +13,15 @@ export default function Apply() {
   const productSlug = params.get('product') ?? params.get('form') ?? null
   const fromSlug    = params.get('from') ?? undefined
 
+  const utmParams = (() => {
+    const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content']
+    const obj: Record<string, string> = {}
+    for (const k of keys) { const v = params.get(k); if (v) obj[k] = v }
+    const ref = typeof document !== 'undefined' ? document.referrer : ''
+    if (ref) obj.referrer = ref
+    return Object.keys(obj).length > 0 ? obj : undefined
+  })()
+
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(false)
@@ -65,6 +74,7 @@ export default function Apply() {
         defaultPriceId={checkoutActive ? (product.price_id_stripe ?? undefined) : undefined}
         extraPriceIds={checkoutActive ? ((checkoutCfg.extra_price_ids ?? []) as string[]) : undefined}
         tracking={hasTracking ? trackingCfg : undefined}
+        utmParams={utmParams}
       />
     )
   }
