@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Package, Users,
+  LayoutDashboard, Package, Users, UserCheck,
   LogOut, Settings, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -23,9 +23,10 @@ function BridgeLogo({ size = 16 }: { size?: number }) {
 // ── Nav items ─────────────────────────────────────────────────
 
 const NAV_MAIN = [
-  { to: '/admin',          icon: LayoutDashboard, label: 'Dashboard', end: true  },
-  { to: '/admin/leads',    icon: Users,           label: 'Leads CRM', end: false },
-  { to: '/admin/products', icon: Package,         label: 'Produtos',  end: false },
+  { to: '/admin',            icon: LayoutDashboard, label: 'Dashboard', end: true  },
+  { to: '/admin/contatos',   icon: UserCheck,       label: 'Contatos',  end: false },
+  { to: '/admin/leads',      icon: Users,           label: 'Leads CRM', end: false },
+  { to: '/admin/products',   icon: Package,         label: 'Produtos',  end: false },
 ]
 
 const NAV_BOTTOM = [
