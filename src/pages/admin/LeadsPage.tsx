@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   Search, X, RefreshCw, ChevronDown, Eye,
@@ -531,9 +532,9 @@ function StatChip({ value, label, color }: { value: number; label: string; color
 // ── Page ──────────────────────────────────────────────────────
 
 export default function LeadsPage() {
+  const navigate = useNavigate()
   const [productId,    setProductId]    = useState('')
   const [search,       setSearch]       = useState('')
-  const [viewLead,     setViewLead]     = useState<Lead | null>(null)
   const [editLead,     setEditLead]     = useState<Lead | null>(null)
   const [deleteLead,   setDeleteLead]   = useState<Lead | null>(null)
   const qc = useQueryClient()
@@ -689,7 +690,7 @@ export default function LeadsPage() {
                       <LeadRow
                         key={lead.id}
                         lead={lead}
-                        onView={() => setViewLead(lead)}
+                        onView={() => navigate(`/admin/leads/${lead.id}`)}
                         onEdit={() => setEditLead(lead)}
                         onDelete={() => setDeleteLead(lead)}
                       />
@@ -711,15 +712,6 @@ export default function LeadsPage() {
           </div>
         </div>
       </div>
-
-      {/* Detail drawer */}
-      {viewLead && (
-        <LeadDrawer
-          lead={viewLead}
-          onClose={() => setViewLead(null)}
-          onEdit={() => { setEditLead(viewLead); setViewLead(null) }}
-        />
-      )}
 
       {/* Edit drawer */}
       {editLead && (

@@ -5,8 +5,9 @@ import AdminLayout from '@/components/layout/AdminLayout'
 
 // ── Admin (within AdminLayout sidebar shell) ──────────────────
 const AdminHome      = lazy(() => import('@/pages/admin/AdminHome'))
-const Leads          = lazy(() => import('@/pages/admin/LeadsPage'))
-const Products       = lazy(() => import('@/pages/admin/Products'))
+const Leads           = lazy(() => import('@/pages/admin/LeadsPage'))
+const LeadProfile     = lazy(() => import('@/pages/admin/LeadProfilePage'))
+const Products        = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
 const SettingsPage      = lazy(() => import('@/pages/admin/SettingsPage'))
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index                          element={<AdminHome />} />
             <Route path="leads"                   element={<Leads />} />
+            <Route path="leads/:id"               element={<LeadProfile />} />
             <Route path="products"                element={<Products />} />
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />
