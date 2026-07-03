@@ -7,6 +7,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLeads, useProductsForFilter } from '@/hooks/useLeads'
+import { useContactStagesBatch } from '@/hooks/useContactStage'
+import type { ContactStageRow } from '@/hooks/useContactStage'
+import { STAGES } from '@/lib/stageConfig'
+import type { Stage } from '@/lib/stageConfig'
+import StageSelector from '@/components/StageSelector'
 import type { Lead } from '@/lib/types'
 
 // ── Tokens ────────────────────────────────────────────────────
@@ -172,7 +177,13 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
 
 // ── Contact table row ─────────────────────────────────────────
 
-function ContactRow({ contact, onView }: { contact: Contact; onView: () => void }) {
+function ContactRow({
+  contact, onView, currentStage,
+}: {
+  contact:      Contact
+  onView:       () => void
+  currentStage: ContactStageRow | null | undefined
+}) {
   const initials = contact.name
     ? contact.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
     : (contact.email?.[0] ?? contact.phone?.[0] ?? '?').toUpperCase()
@@ -270,6 +281,11 @@ function ContactRow({ contact, onView }: { contact: Contact; onView: () => void 
         )}
       </td>
 
+      {/* Estágio */}
+      <td className="px-5 py-3.5">
+        <StageSelector compact contactKey={contact.key} currentStage={currentStage} />
+      </td>
+
       {/* Último contato */}
       <td className="px-5 py-3.5">
         <p className="text-[12px] text-white/40">{fmtDateShort(contact.lastSeen)}</p>
@@ -294,20 +310,28 @@ function ContactRow({ contact, onView }: { contact: Contact; onView: () => void 
 
 export default function ContactsPage() {
   const navigate = useNavigate()
-  const [search,     setSearch]     = useState('')
-  const [productId,  setProductId]  = useState('')
-  const [sortBy,     setSortBy]     = useState<SortKey>('lastSeen')
-  const [onlyQual,   setOnlyQual]   = useState(false)
+  const [search,       setSearch]      = useState('')
+  const [productId,    setProductId]   = useState('')
+  const [sortBy,       setSortBy]      = useState<SortKey>('lastSeen')
+  const [onlyQual,     setOnlyQual]    = useState(false)
+  const [stageFilter,  setStageFilter] = useState<Stage | 'all'>('all')
 
   const { data: leads = [], isLoading, isFetching, refetch } = useLeads(productId || null)
   const { data: products = [] } = useProductsForFilter()
 
   const contacts = useMemo(() => buildContacts(leads), [leads])
 
+  const contactKeys = useMemo(() => contacts.map(c => c.key), [contacts])
+  const { data: stagesMap = {} } = useContactStagesBatch(contactKeys)
+
   const filtered = useMemo(() => {
     let list = contacts
 
     if (onlyQual) list = list.filter(c => c.qualifiedCount > 0)
+
+    if (stageFilter !== 'all') {
+      list = list.filter(c => (stagesMap[c.key]?.stage ?? 'novo') === stageFilter)
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase()
@@ -324,7 +348,7 @@ export default function ContactsPage() {
       if (sortBy === 'firstSeen')    return new Date(a.firstSeen).getTime() - new Date(b.firstSeen).getTime()
       return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()
     })
-  }, [contacts, search, onlyQual, sortBy])
+  }, [contacts, search, onlyQual, sortBy, stageFilter, stagesMap])
 
   const totalInteractions = leads.length
   const qualifiedContacts = contacts.filter(c => c.qualifiedCount > 0).length
@@ -426,6 +450,38 @@ export default function ContactsPage() {
           {/* Sort */}
           <SortDropdown value={sortBy} onChange={setSortBy} />
         </div>
+
+        {/* Stage filter tabs */}
+        <div className="flex items-center gap-1 mt-3 flex-wrap">
+          <button
+            onClick={() => setStageFilter('all')}
+            className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all',
+              stageFilter === 'all' ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60')}
+            style={{
+              background: stageFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
+              border: `1px solid ${stageFilter === 'all' ? 'rgba(255,255,255,0.15)' : 'transparent'}`,
+            }}
+          >
+            Todos
+          </button>
+          {STAGES.map(s => {
+            const active = stageFilter === s.value
+            return (
+              <button
+                key={s.value}
+                onClick={() => setStageFilter(active ? 'all' : s.value as Stage)}
+                className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all')}
+                style={{
+                  background: active ? s.bg : 'transparent',
+                  color:      active ? s.color : 'rgba(255,255,255,0.35)',
+                  border:     `1px solid ${active ? s.border : 'transparent'}`,
+                }}
+              >
+                {s.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* ── Table ── */}
@@ -444,7 +500,7 @@ export default function ContactsPage() {
           <table className="w-full">
             <thead className="sticky top-0 z-10" style={{ background: '#111318' }}>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                {['Nome', 'E-mail', 'Telefone', 'Produtos', 'Interações', 'Status', 'Último contato', ''].map((h, i) => (
+                {['Nome', 'E-mail', 'Telefone', 'Produtos', 'Interações', 'Status', 'Estágio', 'Último contato', ''].map((h, i) => (
                   <th key={i}
                     className="text-left px-5 py-3.5 text-[10px] font-semibold uppercase tracking-wider"
                     style={{ color: 'rgba(255,255,255,0.25)' }}>
@@ -458,6 +514,7 @@ export default function ContactsPage() {
                 <ContactRow
                   key={contact.key}
                   contact={contact}
+                  currentStage={stagesMap[contact.key] ?? null}
                   onView={() => navigate(`/admin/leads/${contact.primaryLeadId}`)}
                 />
               ))}

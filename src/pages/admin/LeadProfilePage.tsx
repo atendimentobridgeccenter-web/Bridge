@@ -10,6 +10,9 @@ import { cn } from '@/lib/cn'
 import { useLeadProfile } from '@/hooks/useLeadProfile'
 import type { LeadInteraction, LeadPurchase } from '@/hooks/useLeadProfile'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
+import { useContactStage, useContactStageHistory } from '@/hooks/useContactStage'
+import { STAGES, stageOf } from '@/lib/stageConfig'
+import StageSelector from '@/components/StageSelector'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -89,10 +92,10 @@ function InteractionCard({
       <div className="px-5 py-4 flex items-start gap-4">
         {/* Timeline dot */}
         <div className="flex flex-col items-center gap-1 shrink-0 pt-0.5">
-          <div className="w-3 h-3 rounded-full ring-2 ring-offset-2"
+          <div className="w-3 h-3 rounded-full ring-2"
             style={{
               background: purchase ? '#34D399' : interaction.qualified ? '#E8521A' : '#6B7280',
-              ringOffsetColor: BG_CARD,
+              outline: `2px solid ${BG_CARD}`,
             }} />
         </div>
 
@@ -248,6 +251,10 @@ export default function LeadProfilePage() {
   // Build a set of product_ids that have confirmed purchases
   const purchasedProductIds = new Set(purchases.map(p => p.product_id))
 
+  const contactKey = primary.email ? primary.email.toLowerCase() : (primary.phone ?? primary.id)
+  const { data: currentStage } = useContactStage(contactKey)
+  const { data: stageHistory = [] } = useContactStageHistory(contactKey)
+
   return (
     <div className="min-h-screen" style={{ background: BG_PAGE }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
@@ -294,6 +301,7 @@ export default function LeadProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            <StageSelector contactKey={contactKey} currentStage={currentStage} />
             {primary.qualified
               ? <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
                   style={{ background: 'rgba(52,211,153,0.08)', color: '#34D399', border: '1px solid rgba(52,211,153,0.15)' }}>
@@ -403,6 +411,54 @@ export default function LeadProfilePage() {
                 </p>
                 <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">Produtos</p>
               </div>
+            </div>
+
+            {/* Pipeline steps */}
+            <div className="rounded-xl p-4 flex flex-col gap-3"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Pipeline</p>
+              <div className="flex flex-col gap-1">
+                {STAGES.map((s, idx) => {
+                  const currentIdx = STAGES.findIndex(x => x.value === (currentStage?.stage ?? 'novo'))
+                  const done    = idx <  currentIdx
+                  const active  = idx === currentIdx
+                  return (
+                    <div key={s.value} className="flex items-center gap-2.5">
+                      <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                        style={{
+                          background: active ? s.bg : done ? 'rgba(255,255,255,0.06)' : 'transparent',
+                          border: `1px solid ${active ? s.border : done ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)'}`,
+                        }}>
+                        {done && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'block' }} />}
+                        {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'block' }} />}
+                      </div>
+                      <span className="text-[12px]" style={{ color: active ? s.color : done ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)' }}>
+                        {s.label}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* History */}
+              {stageHistory.length > 0 && (
+                <div className="flex flex-col gap-1.5 mt-1 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-white/20">Histórico</p>
+                  {stageHistory.map(h => {
+                    const def = stageOf(h.stage)
+                    return (
+                      <div key={h.id} className="flex items-start gap-2">
+                        <span className="mt-0.5 inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: def.color }} />
+                        <div className="min-w-0">
+                          <p className="text-[11px]" style={{ color: def.color }}>{def.label}</p>
+                          {h.note && <p className="text-[10px] text-white/30 truncate">{h.note}</p>}
+                          <p className="text-[9px] text-white/20">{fmtDate(h.changed_at)}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
