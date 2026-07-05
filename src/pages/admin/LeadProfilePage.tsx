@@ -221,6 +221,14 @@ export default function LeadProfilePage() {
   const navigate = useNavigate()
   const { data: profile, isLoading, error, refetch } = useLeadProfile(id)
 
+  // Hooks must be called unconditionally — before any early returns
+  const primary    = profile?.primary
+  const contactKey = primary?.email
+    ? primary.email.toLowerCase()
+    : (primary?.phone ?? primary?.id)
+  const { data: currentStage } = useContactStage(contactKey)
+  const { data: stageHistory = [] } = useContactStageHistory(contactKey)
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG_PAGE }}>
@@ -229,7 +237,7 @@ export default function LeadProfilePage() {
     )
   }
 
-  if (error || !profile) {
+  if (error || !profile || !primary) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: BG_PAGE }}>
         <p className="text-[14px] text-white/30">Lead não encontrado.</p>
@@ -241,7 +249,7 @@ export default function LeadProfilePage() {
     )
   }
 
-  const { primary, interactions, purchases } = profile
+  const { interactions, purchases } = profile
   const name     = displayName(primary)
   const initials_ = initials(name, primary.email ?? primary.phone ?? '?')
 
@@ -250,10 +258,6 @@ export default function LeadProfilePage() {
 
   // Build a set of product_ids that have confirmed purchases
   const purchasedProductIds = new Set(purchases.map(p => p.product_id))
-
-  const contactKey = primary.email ? primary.email.toLowerCase() : (primary.phone ?? primary.id)
-  const { data: currentStage } = useContactStage(contactKey)
-  const { data: stageHistory = [] } = useContactStageHistory(contactKey)
 
   return (
     <div className="min-h-screen" style={{ background: BG_PAGE }}>
