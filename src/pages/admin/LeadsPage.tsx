@@ -6,10 +6,13 @@ import {
   Mail, Phone, MapPin, User, CheckCircle2,
   XCircle, Calendar, Package, FileText,
   Download, Edit2, Trash2, Loader2, AlertTriangle,
-  Save, ExternalLink,
+  Save, ExternalLink, List, Columns, ChevronLeft, ChevronRight,
+  GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLeads, useProductsForFilter, useUpdateLead, useDeleteLead } from '@/hooks/useLeads'
+import { useContactStagesBatch } from '@/hooks/useContactStage'
+import { STAGES, stageOf } from '@/lib/stageConfig'
 import type { LeadPatch } from '@/hooks/useLeads'
 import type { Lead } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
@@ -21,6 +24,8 @@ const BG_CARD  = '#1A1C23'
 const BG_INPUT = '#0D0E12'
 const BG_DROP  = '#1E202A'
 const BORDER   = 'rgba(255,255,255,0.07)'
+
+const PAGE_SIZE = 25
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -53,6 +58,19 @@ function displayName(lead: Lead) {
   if (lead.name) return lead.name
   const a = lead.answers ?? {}
   return a['name'] ?? a['nome'] ?? a['full_name'] ?? ''
+}
+
+function displayStudentName(lead: Lead): string {
+  const nodes = (lead.product_form_nodes ?? []) as FormNode[]
+  const answers = lead.answers ?? {}
+  const node = nodes.find(n =>
+    /aluno|estudante|student|filho|criança/i.test(n.title ?? '')
+  )
+  return node ? (answers[node.id] ?? '') : ''
+}
+
+function contactKey(lead: Lead) {
+  return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
 }
 
 const PRODUCT_COLORS = [
@@ -166,7 +184,6 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
         onClick={onClose} />
       <div className="absolute top-0 right-0 h-full w-full max-w-[480px] flex flex-col"
         style={{ background: '#16181F', borderLeft: `1px solid ${BORDER}` }}>
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 shrink-0"
           style={{ borderBottom: `1px solid ${BORDER}` }}>
           <div>
@@ -178,10 +195,7 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
             <X className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Form */}
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
-          {/* Status toggle */}
           <div className="flex items-center justify-between px-4 py-3 rounded-xl"
             style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
             <div>
@@ -196,8 +210,6 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
                 style={{ width: 18, height: 18, transform: form.qualified ? 'translateX(18px)' : 'none' }} />
             </button>
           </div>
-
-          {/* Personal fields */}
           {fields.map(({ key, label, placeholder, icon: Icon }) => (
             <div key={key}>
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">{label}</label>
@@ -214,8 +226,6 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
             </div>
           ))}
         </div>
-
-        {/* Footer */}
         <div className="px-6 py-4 flex gap-3 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
           <button onClick={onClose}
             className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40 transition-all"
@@ -304,7 +314,6 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
         onClick={onClose} />
       <div className="absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col"
         style={{ background: '#16181F', borderLeft: `1px solid ${BORDER}` }}>
-        {/* Header */}
         <div className="flex items-start justify-between px-6 py-5 shrink-0"
           style={{ borderBottom: `1px solid ${BORDER}` }}>
           <div className="flex items-start gap-3 min-w-0">
@@ -334,7 +343,6 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-          {/* Badges */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
               style={lead.qualified
@@ -350,7 +358,6 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
             )}
           </div>
 
-          {/* Contact info */}
           <div className="rounded-xl p-4 flex flex-col gap-3"
             style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-1">Dados de Contato</p>
@@ -372,7 +379,6 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
             ))}
           </div>
 
-          {/* UTM / origem */}
           {(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_term || lead.utm_content || lead.referrer) && (
             <div className="rounded-xl p-4 flex flex-col gap-3"
               style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
@@ -396,7 +402,6 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
             </div>
           )}
 
-          {/* Form answers */}
           {answersEntries.length > 0 && (
             <div className="flex flex-col gap-3">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25">Respostas do Formulário</p>
@@ -433,8 +438,9 @@ function LeadRow({
 }: {
   lead: Lead; onView: () => void; onEdit: () => void; onDelete: () => void
 }) {
-  const name  = displayName(lead)
-  const color = productColor(lead.product_name)
+  const name        = displayName(lead)
+  const studentName = displayStudentName(lead)
+  const color       = productColor(lead.product_name)
 
   return (
     <tr className="group border-b transition-colors duration-100"
@@ -442,16 +448,24 @@ function LeadRow({
       onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = '#22242F' }}
       onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}>
 
-      {/* Nome */}
+      {/* Nome responsável + aluno */}
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold shrink-0"
             style={{ background: 'rgba(232,82,26,0.1)', color: '#E8521A' }}>
             {(name || lead.email || '?')[0]?.toUpperCase()}
           </div>
-          <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
-            {name || <span className="text-white/35 font-normal">—</span>}
-          </p>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-[#EDEDED] truncate leading-tight">
+              {name || <span className="text-white/35 font-normal">—</span>}
+            </p>
+            {studentName && (
+              <p className="flex items-center gap-1 text-[11px] text-white/35 truncate mt-0.5">
+                <GraduationCap className="w-3 h-3 shrink-0 text-white/20" />
+                {studentName}
+              </p>
+            )}
+          </div>
         </div>
       </td>
 
@@ -517,6 +531,133 @@ function LeadRow({
   )
 }
 
+// ── Pipeline card ─────────────────────────────────────────────
+
+function PipelineCard({ lead, onView, onEdit, onDelete }: {
+  lead: Lead; onView: () => void; onEdit: () => void; onDelete: () => void
+}) {
+  const name        = displayName(lead)
+  const studentName = displayStudentName(lead)
+  const color       = productColor(lead.product_name)
+
+  return (
+    <div
+      className="rounded-xl p-3.5 flex flex-col gap-2.5 cursor-pointer group transition-all"
+      style={{ background: '#13151A', border: `1px solid ${BORDER}` }}
+      onClick={onView}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER }}
+    >
+      {/* Name row */}
+      <div className="flex items-start gap-2.5">
+        <div className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
+          style={{ background: 'rgba(232,82,26,0.1)', color: '#E8521A' }}>
+          {(name || lead.email || '?')[0]?.toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[12px] font-semibold text-[#EDEDED] truncate leading-tight">
+            {name || <span className="text-white/30 font-normal">Sem nome</span>}
+          </p>
+          {studentName && (
+            <p className="flex items-center gap-1 text-[10px] text-white/35 truncate mt-0.5">
+              <GraduationCap className="w-2.5 h-2.5 shrink-0" />
+              {studentName}
+            </p>
+          )}
+        </div>
+        {/* Hover actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+          <button onClick={e => { e.stopPropagation(); onEdit() }}
+            className="p-1 rounded text-white/25 hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors">
+            <Edit2 className="w-3 h-3" />
+          </button>
+          <button onClick={e => { e.stopPropagation(); onDelete() }}
+            className="p-1 rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* Product badge */}
+      {lead.product_name && (
+        <span className="inline-flex items-center self-start px-2 py-0.5 rounded text-[10px] font-semibold"
+          style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}>
+          {lead.product_name}
+        </span>
+      )}
+
+      {/* Footer row */}
+      <div className="flex items-center justify-between mt-0.5">
+        <span className="inline-flex items-center gap-1 text-[10px] font-medium"
+          style={lead.qualified
+            ? { color: '#34D399' }
+            : { color: '#F87171' }}>
+          {lead.qualified
+            ? <><CheckCircle2 className="w-2.5 h-2.5" />Qualificado</>
+            : <><XCircle      className="w-2.5 h-2.5" />Desqualificado</>}
+        </span>
+        <span className="text-[10px] text-white/20">{timeAgo(lead.created_at)}</span>
+      </div>
+
+      {lead.email && (
+        <p className="text-[10px] text-white/25 truncate">{lead.email}</p>
+      )}
+    </div>
+  )
+}
+
+// ── Pipeline view ─────────────────────────────────────────────
+
+function PipelineView({ leads, stagesMap, onView, onEdit, onDelete }: {
+  leads:      Lead[]
+  stagesMap:  Record<string, { stage: string } | undefined>
+  onView:     (lead: Lead) => void
+  onEdit:     (lead: Lead) => void
+  onDelete:   (lead: Lead) => void
+}) {
+  // Group leads by contact_key's stage (default: 'novo')
+  const columns = useMemo(() => {
+    return STAGES.map(s => ({
+      stage: s,
+      leads: leads.filter(l => (stagesMap[contactKey(l)]?.stage ?? 'novo') === s.value),
+    }))
+  }, [leads, stagesMap])
+
+  return (
+    <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
+      {columns.map(({ stage, leads: colLeads }) => (
+        <div key={stage.value} className="flex flex-col gap-3 shrink-0" style={{ width: 280 }}>
+          {/* Column header */}
+          <div className="flex items-center gap-2 px-1">
+            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: stage.color }} />
+            <span className="text-[12px] font-semibold" style={{ color: stage.color }}>{stage.label}</span>
+            <span className="ml-auto text-[11px] text-white/25 tabular-nums">{colLeads.length}</span>
+          </div>
+          {/* Cards */}
+          <div className="flex flex-col gap-2.5">
+            {colLeads.length === 0 ? (
+              <div className="rounded-xl py-8 flex items-center justify-center"
+                style={{ border: `1px dashed rgba(255,255,255,0.06)` }}>
+                <p className="text-[11px] text-white/20">Nenhum lead</p>
+              </div>
+            ) : (
+              colLeads.map(lead => (
+                <PipelineCard
+                  key={lead.id}
+                  lead={lead}
+                  onView={() => onView(lead)}
+                  onEdit={() => onEdit(lead)}
+                  onDelete={() => onDelete(lead)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Stat chip ─────────────────────────────────────────────────
 
 function StatChip({ value, label, color }: { value: number; label: string; color: string }) {
@@ -537,6 +678,8 @@ export default function LeadsPage() {
   const [search,       setSearch]       = useState('')
   const [editLead,     setEditLead]     = useState<Lead | null>(null)
   const [deleteLead,   setDeleteLead]   = useState<Lead | null>(null)
+  const [viewMode,     setViewMode]     = useState<'list' | 'pipeline'>('list')
+  const [page,         setPage]         = useState(1)
   const qc = useQueryClient()
 
   const { data: leads = [], isLoading, isFetching, error } = useLeads(productId || null)
@@ -547,11 +690,24 @@ export default function LeadsPage() {
     if (!q) return leads
     return leads.filter(l =>
       displayName(l).toLowerCase().includes(q) ||
+      displayStudentName(l).toLowerCase().includes(q) ||
       (l.email ?? '').toLowerCase().includes(q) ||
       (l.phone ?? '').includes(q) ||
       (l.city  ?? '').toLowerCase().includes(q),
     )
   }, [leads, search])
+
+  // Batch-fetch stages for pipeline view
+  const allKeys = useMemo(() => filtered.map(l => contactKey(l)), [filtered])
+  const { data: stagesMap = {} } = useContactStagesBatch(allKeys)
+
+  // Pagination (list view only)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage   = Math.min(page, totalPages)
+  const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  // Reset to page 1 when filters change
+  useMemo(() => { setPage(1) }, [search, productId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const total       = filtered.length
   const qualified   = filtered.filter(l => l.qualified).length
@@ -563,15 +719,14 @@ export default function LeadsPage() {
 
   const productOptions = products.map(p => ({ value: p.id, label: p.name }))
 
-  // Fix: use refetchQueries (force refetch, não apenas invalidate)
   function refresh() {
     qc.refetchQueries({ queryKey: ['leads'] })
   }
 
   function exportCSV() {
-    const header = ['Nome', 'Email', 'Telefone', 'Produto', 'Status', 'Cidade', 'Estado', 'Fonte (UTM)', 'Mídia', 'Campanha', 'Referrer', 'Data']
+    const header = ['Nome', 'Aluno', 'Email', 'Telefone', 'Produto', 'Status', 'Cidade', 'Estado', 'Fonte (UTM)', 'Mídia', 'Campanha', 'Referrer', 'Data']
     const rows   = filtered.map(l => [
-      displayName(l), l.email ?? '', l.phone ?? '', l.product_name ?? '',
+      displayName(l), displayStudentName(l), l.email ?? '', l.phone ?? '', l.product_name ?? '',
       l.qualified ? 'Qualificado' : 'Desqualificado',
       l.city ?? '', l.state ?? '',
       l.utm_source ?? '', l.utm_medium ?? '', l.utm_campaign ?? '', l.referrer ?? '',
@@ -628,7 +783,7 @@ export default function LeadsPage() {
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <Search className="w-4 h-4 text-white/25 shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar por nome, e-mail ou telefone…"
+                placeholder="Buscar por nome, aluno, e-mail ou telefone…"
                 className="flex-1 bg-transparent border-0 outline-none text-[13px] text-white/70 placeholder:text-white/25" />
               {search && (
                 <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/60 transition-colors">
@@ -638,55 +793,87 @@ export default function LeadsPage() {
             </div>
             <SelectFilter value={productId} onChange={setProductId}
               placeholder="Todos os produtos" options={productOptions} />
+
+            {/* View toggle */}
+            <div className="flex items-center rounded-xl overflow-hidden shrink-0"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn('flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all')}
+                style={viewMode === 'list'
+                  ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
+                  : { color: 'rgba(255,255,255,0.35)' }}>
+                <List className="w-3.5 h-3.5" /> Lista
+              </button>
+              <button
+                onClick={() => setViewMode('pipeline')}
+                className={cn('flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all')}
+                style={viewMode === 'pipeline'
+                  ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
+                  : { color: 'rgba(255,255,255,0.35)' }}>
+                <Columns className="w-3.5 h-3.5" /> Pipeline
+              </button>
+            </div>
           </div>
 
-          {/* Table */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="w-5 h-5 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
+          {/* Content */}
+          {isLoading ? (
+            <div className="rounded-2xl flex items-center justify-center py-20"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              <div className="w-5 h-5 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl flex flex-col items-center justify-center py-16 gap-3"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              <p className="text-[13px] text-red-400">Erro ao carregar leads.</p>
+              <button onClick={refresh} className="text-[12px] text-[#E8521A] hover:underline">
+                Tentar novamente
+              </button>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl flex flex-col items-center justify-center py-20 gap-4"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
+                <User className="w-5 h-5 text-white/20" />
               </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <p className="text-[13px] text-red-400">Erro ao carregar leads.</p>
-                <p className="text-[11px] text-white/25">Verifique se a tabela <code>leads</code> existe no Supabase.</p>
-                <button onClick={refresh} className="text-[12px] text-[#E8521A] hover:underline">
-                  Tentar novamente
-                </button>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
-                  <User className="w-5 h-5 text-white/20" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[14px] font-medium text-white/40">
-                    {search || productId ? 'Nenhum lead encontrado' : 'Nenhum lead ainda'}
+              <div className="text-center">
+                <p className="text-[14px] font-medium text-white/40">
+                  {search || productId ? 'Nenhum lead encontrado' : 'Nenhum lead ainda'}
+                </p>
+                {(search || productId) && (
+                  <p className="text-[12px] text-white/20 mt-1">
+                    <button className="text-[#E8521A] hover:underline"
+                      onClick={() => { setSearch(''); setProductId('') }}>
+                      Limpar filtros
+                    </button>
                   </p>
-                  {(search || productId) && (
-                    <p className="text-[12px] text-white/20 mt-1">
-                      <button className="text-[#E8521A] hover:underline"
-                        onClick={() => { setSearch(''); setProductId('') }}>
-                        Limpar filtros
-                      </button>
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
-            ) : (
+            </div>
+          ) : viewMode === 'pipeline' ? (
+            <PipelineView
+              leads={filtered}
+              stagesMap={stagesMap}
+              onView={lead => navigate(`/admin/leads/${lead.id}`)}
+              onEdit={lead => setEditLead(lead)}
+              onDelete={lead => setDeleteLead(lead)}
+            />
+          ) : (
+            /* ── List view ── */
+            <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      {['Nome', 'E-mail', 'Telefone', 'Produto', 'Status', 'Data', ''].map((h, i) => (
+                      {['Nome / Aluno', 'E-mail', 'Telefone', 'Produto', 'Status', 'Data', ''].map((h, i) => (
                         <th key={i} className="text-left px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider"
                           style={{ color: 'rgba(255,255,255,0.28)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map(lead => (
+                    {paginated.map(lead => (
                       <LeadRow
                         key={lead.id}
                         lead={lead}
@@ -697,31 +884,62 @@ export default function LeadsPage() {
                     ))}
                   </tbody>
                 </table>
-                <div className="px-5 py-3 flex items-center justify-between"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="text-[11px] text-white/25">
-                    {filtered.length} lead{filtered.length !== 1 ? 's' : ''}
-                    {(search || productId) ? ' encontrados' : ' no total'}
-                  </p>
-                  <p className="text-[10px] text-white/15">
-                    {isFetching ? 'Atualizando…' : 'Dados em tempo real'}
-                  </p>
-                </div>
               </div>
-            )}
-          </div>
+
+              {/* Pagination footer */}
+              <div className="px-5 py-3 flex items-center justify-between"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-[11px] text-white/25">
+                  {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length} lead{filtered.length !== 1 ? 's' : ''}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={safePage === 1}
+                    className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                      .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && (arr[idx - 1] as number) < p - 1) acc.push('…')
+                        acc.push(p)
+                        return acc
+                      }, [])
+                      .map((p, i) =>
+                        p === '…'
+                          ? <span key={`ellipsis-${i}`} className="px-1 text-[11px] text-white/20">…</span>
+                          : <button
+                              key={p}
+                              onClick={() => setPage(p as number)}
+                              className={cn('w-7 h-7 rounded-lg text-[11px] font-medium transition-all')}
+                              style={safePage === p
+                                ? { background: 'rgba(232,82,26,0.2)', color: '#F0643A' }
+                                : { color: 'rgba(255,255,255,0.35)' }}>
+                              {p}
+                            </button>
+                      )
+                    }
+                  </div>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={safePage === totalPages}
+                    className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-[10px] text-white/15">
+                  {isFetching ? 'Atualizando…' : 'Dados em tempo real'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Edit drawer */}
-      {editLead && (
-        <EditLeadDrawer lead={editLead} onClose={() => setEditLead(null)} />
-      )}
-
-      {/* Delete confirm */}
-      {deleteLead && (
-        <DeleteConfirm lead={deleteLead} onClose={() => setDeleteLead(null)} />
-      )}
+      {editLead && <EditLeadDrawer lead={editLead} onClose={() => setEditLead(null)} />}
+      {deleteLead && <DeleteConfirm lead={deleteLead} onClose={() => setDeleteLead(null)} />}
     </>
   )
 }
