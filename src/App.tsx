@@ -12,6 +12,7 @@ const Products        = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
 const SettingsPage      = lazy(() => import('@/pages/admin/SettingsPage'))
+const StudentsPage      = lazy(() => import('@/pages/admin/StudentsPage'))
 
 // ── Auth ──────────────────────────────────────────────────────
 const Login         = lazy(() => import('@/pages/Login'))
@@ -55,6 +56,7 @@ export default function App() {
             <Route index                          element={<AdminHome />} />
             <Route path="leads"                   element={<Leads />} />
             <Route path="leads/:id"               element={<LeadProfile />} />
+            <Route path="alunos"                  element={<StudentsPage />} />
             <Route path="contatos"                element={<Contacts />} />
             <Route path="products"                element={<Products />} />
             <Route path="products/:id"            element={<ProductConfigPage />} />

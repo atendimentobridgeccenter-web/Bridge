@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Users, UserCheck,
-  LogOut, Settings, ChevronLeft, ChevronRight,
+  LogOut, Settings, ChevronLeft, ChevronRight, GraduationCap,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
@@ -24,6 +24,7 @@ function BridgeLogo({ size = 16 }: { size?: number }) {
 
 const NAV_MAIN = [
   { to: '/admin',            icon: LayoutDashboard, label: 'Dashboard', end: true  },
+  { to: '/admin/alunos',     icon: GraduationCap,   label: 'Alunos',    end: false },
   { to: '/admin/contatos',   icon: UserCheck,       label: 'Contatos',  end: false },
   { to: '/admin/leads',      icon: Users,           label: 'Leads CRM', end: false },
   { to: '/admin/products',   icon: Package,         label: 'Produtos',  end: false },
