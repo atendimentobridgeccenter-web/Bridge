@@ -672,10 +672,14 @@ function StatChip({ value, label, color }: { value: number; label: string; color
 
 // ── Page ──────────────────────────────────────────────────────
 
+type QualFilter = 'all' | 'qualified' | 'unqualified'
+
 export default function LeadsPage() {
   const navigate = useNavigate()
   const [productId,    setProductId]    = useState('')
   const [search,       setSearch]       = useState('')
+  const [stageFilter,  setStageFilter]  = useState<string>('all')
+  const [qualFilter,   setQualFilter]   = useState<QualFilter>('all')
   const [editLead,     setEditLead]     = useState<Lead | null>(null)
   const [deleteLead,   setDeleteLead]   = useState<Lead | null>(null)
   const [viewMode,     setViewMode]     = useState<'list' | 'pipeline'>('list')
@@ -685,21 +689,36 @@ export default function LeadsPage() {
   const { data: leads = [], isLoading, isFetching, error } = useLeads(productId || null)
   const { data: products = [] } = useProductsForFilter()
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim()
-    if (!q) return leads
-    return leads.filter(l =>
-      displayName(l).toLowerCase().includes(q) ||
-      displayStudentName(l).toLowerCase().includes(q) ||
-      (l.email ?? '').toLowerCase().includes(q) ||
-      (l.phone ?? '').includes(q) ||
-      (l.city  ?? '').toLowerCase().includes(q),
-    )
-  }, [leads, search])
-
-  // Batch-fetch stages for pipeline view
-  const allKeys = useMemo(() => filtered.map(l => contactKey(l)), [filtered])
+  // Batch-fetch stages for ALL leads (not just filtered) to allow stage filtering
+  const allKeys = useMemo(() => leads.map(l => contactKey(l)), [leads])
   const { data: stagesMap = {} } = useContactStagesBatch(allKeys)
+
+  const filtered = useMemo(() => {
+    let list = leads
+
+    // Stage filter
+    if (stageFilter !== 'all') {
+      list = list.filter(l => (stagesMap[contactKey(l)]?.stage ?? 'novo') === stageFilter)
+    }
+
+    // Qualified filter
+    if (qualFilter === 'qualified')   list = list.filter(l => l.qualified)
+    if (qualFilter === 'unqualified') list = list.filter(l => !l.qualified)
+
+    // Text search
+    const q = search.toLowerCase().trim()
+    if (q) {
+      list = list.filter(l =>
+        displayName(l).toLowerCase().includes(q) ||
+        displayStudentName(l).toLowerCase().includes(q) ||
+        (l.email ?? '').toLowerCase().includes(q) ||
+        (l.phone ?? '').includes(q) ||
+        (l.city  ?? '').toLowerCase().includes(q),
+      )
+    }
+
+    return list
+  }, [leads, search, stageFilter, qualFilter, stagesMap])
 
   // Pagination (list view only)
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -707,7 +726,7 @@ export default function LeadsPage() {
   const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   // Reset to page 1 when filters change
-  useMemo(() => { setPage(1) }, [search, productId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useMemo(() => { setPage(1) }, [search, productId, stageFilter, qualFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const total       = filtered.length
   const qualified   = filtered.filter(l => l.qualified).length
@@ -794,6 +813,25 @@ export default function LeadsPage() {
             <SelectFilter value={productId} onChange={setProductId}
               placeholder="Todos os produtos" options={productOptions} />
 
+            {/* Qualified filter */}
+            <div className="flex items-center rounded-xl overflow-hidden shrink-0"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              {([
+                { value: 'all',          label: 'Todos'           },
+                { value: 'qualified',    label: 'Qualificados'    },
+                { value: 'unqualified',  label: 'Desqualificados' },
+              ] as { value: QualFilter; label: string }[]).map(opt => (
+                <button key={opt.value}
+                  onClick={() => setQualFilter(opt.value)}
+                  className="px-3 py-2 text-[12px] font-medium transition-all"
+                  style={qualFilter === opt.value
+                    ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
+                    : { color: 'rgba(255,255,255,0.35)' }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
             {/* View toggle */}
             <div className="flex items-center rounded-xl overflow-hidden shrink-0"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
@@ -814,6 +852,43 @@ export default function LeadsPage() {
                 <Columns className="w-3.5 h-3.5" /> Pipeline
               </button>
             </div>
+          </div>
+
+          {/* Stage filter tabs */}
+          <div className="flex items-center gap-1 flex-wrap -mt-2">
+            <button
+              onClick={() => setStageFilter('all')}
+              className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all',
+                stageFilter === 'all' ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60')}
+              style={{
+                background: stageFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
+                border: `1px solid ${stageFilter === 'all' ? 'rgba(255,255,255,0.15)' : 'transparent'}`,
+              }}>
+              Todos os estágios
+            </button>
+            {STAGES.map(s => {
+              const active = stageFilter === s.value
+              return (
+                <button key={s.value}
+                  onClick={() => setStageFilter(active ? 'all' : s.value)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                  style={{
+                    background: active ? s.bg : 'transparent',
+                    color:      active ? s.color : 'rgba(255,255,255,0.35)',
+                    border:     `1px solid ${active ? s.border : 'transparent'}`,
+                  }}>
+                  {s.label}
+                </button>
+              )
+            })}
+            {(stageFilter !== 'all' || qualFilter !== 'all' || search || productId) && (
+              <button
+                onClick={() => { setStageFilter('all'); setQualFilter('all'); setSearch(''); setProductId('') }}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-white/25 hover:text-white/60 flex items-center gap-1"
+                style={{ border: '1px solid transparent' }}>
+                <X className="w-3 h-3" /> Limpar filtros
+              </button>
+            )}
           </div>
 
           {/* Content */}

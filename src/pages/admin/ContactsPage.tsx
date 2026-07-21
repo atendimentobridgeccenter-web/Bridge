@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Search, X, ChevronDown, RefreshCw,
   Mail, Phone, Package, Eye,
   CheckCircle2, XCircle, ArrowUpDown,
+  GraduationCap, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { supabase } from '@/lib/supabase'
 import { useLeads, useProductsForFilter } from '@/hooks/useLeads'
 import { useContactStagesBatch } from '@/hooks/useContactStage'
 import type { ContactStageRow } from '@/hooks/useContactStage'
@@ -13,6 +16,8 @@ import { STAGES } from '@/lib/stageConfig'
 import type { Stage } from '@/lib/stageConfig'
 import StageSelector from '@/components/StageSelector'
 import type { Lead } from '@/lib/types'
+
+const CONTACTS_PER_PAGE = 50
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -178,11 +183,12 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
 // ── Contact table row ─────────────────────────────────────────
 
 function ContactRow({
-  contact, onView, currentStage,
+  contact, onView, currentStage, isStudent,
 }: {
   contact:      Contact
   onView:       () => void
   currentStage: ContactStageRow | null | undefined
+  isStudent:    boolean
 }) {
   const initials = contact.name
     ? contact.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
@@ -210,6 +216,12 @@ function ContactRow({
             <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
               {contact.name || <span className="text-white/30 font-normal">—</span>}
             </p>
+            {isStudent && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold mt-0.5"
+                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+                <GraduationCap className="w-2.5 h-2.5" /> Aluno
+              </span>
+            )}
           </div>
         </div>
       </td>
@@ -308,6 +320,26 @@ function ContactRow({
 
 // ── Page ──────────────────────────────────────────────────────
 
+// Student email/phone set for cross-reference
+function useStudentContactSet() {
+  return useQuery({
+    queryKey: ['student-contacts'],
+    staleTime: 120_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('students')
+        .select('email, phone_responsible, phone_student')
+      const set = new Set<string>()
+      for (const s of (data ?? [])) {
+        if (s.email)              set.add(s.email.toLowerCase())
+        if (s.phone_responsible)  set.add(s.phone_responsible)
+        if (s.phone_student)      set.add(s.phone_student)
+      }
+      return set
+    },
+  })
+}
+
 export default function ContactsPage() {
   const navigate = useNavigate()
   const [search,       setSearch]      = useState('')
@@ -315,9 +347,11 @@ export default function ContactsPage() {
   const [sortBy,       setSortBy]      = useState<SortKey>('lastSeen')
   const [onlyQual,     setOnlyQual]    = useState(false)
   const [stageFilter,  setStageFilter] = useState<Stage | 'all'>('all')
+  const [page,         setPage]        = useState(1)
 
   const { data: leads = [], isLoading, isFetching, refetch } = useLeads(productId || null)
   const { data: products = [] } = useProductsForFilter()
+  const { data: studentSet }    = useStudentContactSet()
 
   const contacts = useMemo(() => buildContacts(leads), [leads])
 
@@ -349,6 +383,14 @@ export default function ContactsPage() {
       return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()
     })
   }, [contacts, search, onlyQual, sortBy, stageFilter, stagesMap])
+
+  // Paginate
+  const totalPages = Math.max(1, Math.ceil(filtered.length / CONTACTS_PER_PAGE))
+  const safePage   = Math.min(page, totalPages)
+  const paginated  = filtered.slice((safePage - 1) * CONTACTS_PER_PAGE, safePage * CONTACTS_PER_PAGE)
+
+  // Reset page on filter change
+  useMemo(() => { setPage(1) }, [search, productId, stageFilter, onlyQual]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalInteractions = leads.length
   const qualifiedContacts = contacts.filter(c => c.qualifiedCount > 0).length
@@ -510,28 +552,73 @@ export default function ContactsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(contact => (
-                <ContactRow
-                  key={contact.key}
-                  contact={contact}
-                  currentStage={stagesMap[contact.key] ?? null}
-                  onView={() => navigate(`/admin/leads/${contact.primaryLeadId}`)}
-                />
-              ))}
+              {paginated.map(contact => {
+                const isStud = !!(
+                  (contact.email && studentSet?.has(contact.email.toLowerCase())) ||
+                  (contact.phone && studentSet?.has(contact.phone))
+                )
+                return (
+                  <ContactRow
+                    key={contact.key}
+                    contact={contact}
+                    currentStage={stagesMap[contact.key] ?? null}
+                    isStudent={isStud}
+                    onView={() => navigate(`/admin/leads/${contact.primaryLeadId}`)}
+                  />
+                )
+              })}
             </tbody>
           </table>
         )}
       </div>
 
-      {/* ── Footer ── */}
+      {/* ── Footer / Pagination ── */}
       {filtered.length > 0 && (
-        <div className="shrink-0 px-5 py-2.5 flex items-center justify-between"
+        <div className="shrink-0 px-5 py-2.5 flex items-center justify-between gap-4"
           style={{ borderTop: `1px solid ${BORDER}` }}>
           <p className="text-[11px] text-white/20">
-            {filtered.length} de {contacts.length} contato{contacts.length !== 1 ? 's' : ''}
+            {(safePage - 1) * CONTACTS_PER_PAGE + 1}–{Math.min(safePage * CONTACTS_PER_PAGE, filtered.length)} de {filtered.length} contato{filtered.length !== 1 ? 's' : ''}
           </p>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && (arr[idx - 1] as number) < p - 1) acc.push('…')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((p, i) =>
+                  p === '…'
+                    ? <span key={`e${i}`} className="px-1 text-[11px] text-white/20">…</span>
+                    : <button key={p}
+                        onClick={() => setPage(p as number)}
+                        className="w-7 h-7 rounded-lg text-[11px] font-medium transition-all"
+                        style={safePage === p
+                          ? { background: 'rgba(232,82,26,0.2)', color: '#F0643A' }
+                          : { color: 'rgba(255,255,255,0.35)' }}>
+                        {p}
+                      </button>
+                )
+              }
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           <p className="text-[10px] text-white/15">
-            {isFetching ? 'Atualizando…' : `Dados em tempo real · ${leads.length} entradas`}
+            {isFetching ? 'Atualizando…' : `${leads.length} entradas`}
           </p>
         </div>
       )}
