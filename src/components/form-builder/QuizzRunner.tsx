@@ -1285,6 +1285,7 @@ export default function QuizzRunner({
   const [activePriceInfo, setActivePriceInfo] = useState<OptionPrice | null>(null)
   const [leadSaved,       setLeadSaved]       = useState(false)
   const [otherActive,     setOtherActive]     = useState(false)
+  const [openedPdfs,     setOpenedPdfs]      = useState<Set<string>>(new Set())
   const [otherDraft,      setOtherDraft]      = useState('')
   const finalAnswersRef = useRef<Record<string, string>>({})
   const dirRef          = useRef(1)
@@ -1640,25 +1641,59 @@ export default function QuizzRunner({
 
               {/* Answer area */}
               {isConfirm ? (
-                <button
-                  onClick={() => setDraft(draft === 'true' ? '' : 'true')}
-                  className="flex items-center gap-4 p-5 rounded-2xl w-full text-left transition-all"
-                  style={{
-                    background: draft === 'true' ? 'rgba(232,82,26,0.08)' : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${draft === 'true' ? 'rgba(232,82,26,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                  }}>
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all"
+                <div className="flex flex-col gap-3">
+                  {/* PDF gate: show open-PDF button if a pdfUrl is set */}
+                  {currentNode.pdfUrl && (
+                    <a
+                      href={currentNode.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpenedPdfs(s => new Set([...s, currentNode.id]))}
+                      className="flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl text-[15px] font-medium transition-all"
+                      style={{
+                        background: openedPdfs.has(currentNode.id) ? 'rgba(52,211,153,0.06)' : 'rgba(232,82,26,0.08)',
+                        border: `1px solid ${openedPdfs.has(currentNode.id) ? 'rgba(52,211,153,0.3)' : 'rgba(232,82,26,0.35)'}`,
+                        color: openedPdfs.has(currentNode.id) ? '#34D399' : '#E8521A',
+                      }}>
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      {openedPdfs.has(currentNode.id) ? 'Termos abertos ✓' : 'Abrir Termos e Condições'}
+                    </a>
+                  )}
+
+                  {/* Checkbox — disabled until PDF is opened (when pdfUrl exists) */}
+                  <button
+                    onClick={() => {
+                      if (currentNode.pdfUrl && !openedPdfs.has(currentNode.id)) return
+                      setDraft(draft === 'true' ? '' : 'true')
+                    }}
+                    className="flex items-center gap-4 p-5 rounded-2xl w-full text-left transition-all"
                     style={{
-                      background: draft === 'true' ? '#E8521A' : 'transparent',
-                      border: `2px solid ${draft === 'true' ? '#E8521A' : 'rgba(255,255,255,0.3)'}`,
+                      background: draft === 'true' ? 'rgba(232,82,26,0.08)' : 'rgba(255,255,255,0.03)',
+                      border: `1px solid ${draft === 'true' ? 'rgba(232,82,26,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                      opacity: (currentNode.pdfUrl && !openedPdfs.has(currentNode.id)) ? 0.4 : 1,
+                      cursor: (currentNode.pdfUrl && !openedPdfs.has(currentNode.id)) ? 'not-allowed' : 'pointer',
                     }}>
-                    {draft === 'true' && <Check className="w-4 h-4 text-white" />}
-                  </div>
-                  <span className="text-[16px] leading-snug transition-colors"
-                    style={{ color: draft === 'true' ? '#F1F5F9' : 'rgba(255,255,255,0.55)' }}>
-                    {currentNode.description || currentNode.title || 'Confirmar'}
-                  </span>
-                </button>
+                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all"
+                      style={{
+                        background: draft === 'true' ? '#E8521A' : 'transparent',
+                        border: `2px solid ${draft === 'true' ? '#E8521A' : 'rgba(255,255,255,0.3)'}`,
+                      }}>
+                      {draft === 'true' && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                    <span className="text-[16px] leading-snug transition-colors"
+                      style={{ color: draft === 'true' ? '#F1F5F9' : 'rgba(255,255,255,0.55)' }}>
+                      {currentNode.description || currentNode.title || 'Confirmar'}
+                    </span>
+                  </button>
+
+                  {currentNode.pdfUrl && !openedPdfs.has(currentNode.id) && (
+                    <p className="text-[12px] text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Abra os termos acima para poder confirmar
+                    </p>
+                  )}
+                </div>
               ) : isChoice ? (
                 <div className="flex flex-col gap-3">
                   {currentNode.options.map((opt, i) => {

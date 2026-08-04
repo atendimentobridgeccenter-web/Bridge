@@ -6,8 +6,9 @@ import {
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
   XCircle, FileText, User, ImageIcon, X, SquareCheck,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Landmark, Upload, Banknote,
+  Landmark, Upload, Banknote, LayoutList, Workflow,
 } from 'lucide-react'
+import { FormCanvas, type CanvasPositions } from './FormCanvas'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -79,6 +80,7 @@ export interface FormNode {
   socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
   bankInfo?:              BankInfo  // dados bancários para nó bank-deposit
   stripeCheckoutPriceId?: string    // preço Stripe específico para nó stripe-checkout
+  pdfUrl?:       string       // URL do PDF de termos (nó confirm) — requer abertura antes do aceite
   options:       string[]
   logicJumps:    LogicJump[]
   optionPrices?: Record<string, OptionPrice>
@@ -95,9 +97,9 @@ function blankNode(): FormNode {
 
 // ── Type metadata ─────────────────────────────────────────────
 
-interface TypeMeta { label: string; icon: React.ElementType; color: string }
+export interface TypeMeta { label: string; icon: React.ElementType; color: string }
 
-const TYPE_META: Record<NodeType, TypeMeta> = {
+export const TYPE_META: Record<NodeType, TypeMeta> = {
   welcome:  { label: 'Boas-vindas',     icon: Sparkles,    color: '#E8521A' },
   name:     { label: 'Nome',            icon: User,        color: '#60A5FA' },
   text:     { label: 'Texto Curto',     icon: Type,        color: '#60A5FA' },
@@ -119,7 +121,7 @@ const TYPE_META: Record<NodeType, TypeMeta> = {
   'stripe-checkout':  { label: 'Pag. Cartão',     icon: CreditCard, color: '#A855F7' },
 }
 
-const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done', 'stripe-checkout']
+export const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done', 'stripe-checkout']
 
 // ── QuestionCard (sidebar) ────────────────────────────────────
 
@@ -872,11 +874,12 @@ function ScreenEditor({ node, onUpdate }: { node: FormNode; onUpdate: (n: FormNo
 // ── QuestionEditor (campos de coleta) ─────────────────────────
 
 function QuestionEditor({
-  node, nodes, onUpdate,
+  node, nodes, onUpdate, allowedPriceIds,
 }: {
-  node:     FormNode
-  nodes:    FormNode[]
-  onUpdate: (n: FormNode) => void
+  node:             FormNode
+  nodes:            FormNode[]
+  onUpdate:         (n: FormNode) => void
+  allowedPriceIds?: string[]
 }) {
   const hasOptions = node.type === 'radio' || node.type === 'select'
 
@@ -887,6 +890,30 @@ function QuestionEditor({
   function addJump() {
     const jump: LogicJump = { id: uid(), ifOption: '', jumpToNodeId: '' }
     set('logicJumps', [...node.logicJumps, jump])
+  }
+
+  const [pdfUploading, setPdfUploading] = useState(false)
+  const pdfRef = useRef<HTMLInputElement>(null)
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.includes('pdf')) { toast.error('Apenas arquivos PDF são aceitos.'); return }
+    if (file.size > 10 * 1024 * 1024) { toast.error('PDF muito grande. Máximo 10 MB.'); return }
+    setPdfUploading(true)
+    try {
+      const path = `terms/${node.id}.pdf`
+      const { error } = await supabase.storage.from('form-assets').upload(path, file, { upsert: true, contentType: 'application/pdf' })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('form-assets').getPublicUrl(path)
+      onUpdate({ ...node, pdfUrl: publicUrl })
+      toast.success('PDF enviado com sucesso!')
+    } catch {
+      toast.error('Erro ao enviar o PDF.')
+    } finally {
+      setPdfUploading(false)
+    }
   }
 
   const labelCls = 'text-[11px] font-semibold uppercase tracking-widest text-white/30'
@@ -935,6 +962,55 @@ function QuestionEditor({
           onBlur={e  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
         />
       </div>
+
+      {/* Confirm-only: checkbox label + PDF terms */}
+      {node.type === 'confirm' && (
+        <>
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>Texto do Checkbox</label>
+            <input
+              value={node.description ?? ''}
+              onChange={e => set('description', e.target.value)}
+              placeholder="Ex: Declaro que li e aceito os termos acima."
+              className={inputCls}
+              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,82,26,0.45)' }}
+              onBlur={e  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className={labelCls}>PDF de Termos (opcional)</label>
+            {node.pdfUrl ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                style={{ background: 'rgba(232,82,26,0.06)', border: '1px solid rgba(232,82,26,0.2)' }}>
+                <FileText className="w-3.5 h-3.5 shrink-0" style={{ color: '#e8521a' }} />
+                <span className="text-[12px] text-[#EDEDED] flex-1 truncate">
+                  {node.pdfUrl.split('/').pop()?.replace(`${node.id}.pdf`, 'termos.pdf') ?? 'termos.pdf'}
+                </span>
+                <button
+                  onClick={() => onUpdate({ ...node, pdfUrl: undefined })}
+                  className="text-white/30 hover:text-white/60 transition-colors">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => pdfRef.current?.click()}
+                disabled={pdfUploading}
+                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[12px] text-white/40 hover:text-white/70 transition-all disabled:opacity-50"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)' }}>
+                <Upload className="w-3.5 h-3.5" />
+                {pdfUploading ? 'Enviando…' : 'Enviar PDF de termos'}
+              </button>
+            )}
+            <input ref={pdfRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={handlePdfUpload} />
+            <p className="text-[10px] text-white/25 leading-relaxed">
+              Se enviado, o usuário precisará <strong className="text-white/40">abrir o PDF</strong> antes de poder marcar a confirmação.
+            </p>
+          </div>
+        </>
+      )}
 
       {/* Tipo */}
       <div className="flex flex-col gap-2">
@@ -1013,6 +1089,58 @@ function QuestionEditor({
               />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Preço por opção (radio / select) — vincula Stripe price a cada alternativa */}
+      {hasOptions && node.options.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-3.5 h-3.5 shrink-0" style={{ color: '#A855F7' }} />
+            <label className={labelCls}>Preço por Opção (Stripe)</label>
+          </div>
+          <p className="text-[11px] leading-relaxed -mt-1" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            Opcional. Vincula um Price ID do Stripe a cada alternativa para cobrança dinâmica no checkout.
+          </p>
+          {node.options.map(opt => {
+            const price = node.optionPrices?.[opt]
+            return (
+              <div key={opt} className="flex flex-col gap-1.5">
+                <label className="text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.35)', maxWidth: 200 }}>{opt}</label>
+                <StripePricePicker
+                  value={price?.priceId ?? ''}
+                  onChange={(priceId, fullPrice) => {
+                    set('optionPrices', {
+                      ...node.optionPrices,
+                      [opt]: {
+                        priceId,
+                        label:    fullPrice.nickname ?? fullPrice.productName,
+                        amount:   fullPrice.amount,
+                        currency: fullPrice.currency,
+                      },
+                    })
+                  }}
+                  placeholder="Sem preço vinculado"
+                  allowedPriceIds={allowedPriceIds}
+                />
+                {price && (
+                  <button
+                    onClick={() => {
+                      const next = { ...(node.optionPrices ?? {}) }
+                      delete next[opt]
+                      set('optionPrices', Object.keys(next).length ? next : undefined)
+                    }}
+                    className="text-[10px] text-left transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.2)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#F87171' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}>
+                    × Remover preço desta opção
+                  </button>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -1107,7 +1235,7 @@ function NodeEditor({ node, nodes, onUpdate, allowedPriceIds }: {
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
-  return <QuestionEditor node={node} nodes={nodes} onUpdate={onUpdate} />
+  return <QuestionEditor node={node} nodes={nodes} onUpdate={onUpdate} allowedPriceIds={allowedPriceIds} />
 }
 
 // ── Empty state ───────────────────────────────────────────────
@@ -1136,9 +1264,11 @@ interface FormBuilderProps {
 }
 
 export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBuilderProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(nodes[0]?.id ?? null)
-  const [dragOverId, setDragOverId] = useState<string | null>(null)
-  const dragIdRef                   = useRef<string | null>(null)
+  const [selectedId,      setSelectedId]      = useState<string | null>(nodes[0]?.id ?? null)
+  const [dragOverId,      setDragOverId]      = useState<string | null>(null)
+  const [view,            setView]            = useState<'list' | 'canvas'>('list')
+  const [canvasPositions, setCanvasPositions] = useState<CanvasPositions>({})
+  const dragIdRef                             = useRef<string | null>(null)
 
   const selected    = nodes.find(n => n.id === selectedId) ?? null
   const hasWelcome  = nodes.some(n => n.type === 'welcome')
@@ -1247,18 +1377,99 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBu
     <div className="flex overflow-hidden rounded-2xl"
       style={{ border: '1px solid rgba(255,255,255,0.07)', minHeight: 560, height: '100%' }}>
 
-      {/* ── Left: question list ── */}
+      {/* ── Canvas view ── */}
+      {view === 'canvas' && (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Canvas takes the space minus optional editor panel */}
+          <div className="flex-1 relative overflow-hidden">
+            {/* View toggle inside canvas */}
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1 p-1 rounded-lg"
+              style={{ background: 'rgba(22,24,31,0.95)', border: '1px solid rgba(255,255,255,0.09)', backdropFilter: 'blur(8px)' }}>
+              <button
+                onClick={() => setView('list')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                style={{ color: 'rgba(255,255,255,0.45)', background: 'transparent' }}>
+                <LayoutList className="w-3.5 h-3.5" /> Lista
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                style={{ color: '#E8521A', background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.25)' }}>
+                <Workflow className="w-3.5 h-3.5" /> Canvas
+              </button>
+            </div>
+            <FormCanvas
+              nodes={nodes}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              positions={canvasPositions}
+              onPositionsChange={setCanvasPositions}
+              onAddNode={addNode}
+              onAddWelcome={addWelcome}
+              onAddThankyou={addThankyou}
+              onAddBankDeposit={addBankDeposit}
+              onAddReceiptUpload={addReceiptUpload}
+              onAddPaymentDone={addPaymentDone}
+              onAddStripeCheckout={addStripeCheckout}
+              hasWelcome={hasWelcome}
+              hasThankyou={hasThankyou}
+            />
+          </div>
+
+          {/* Editor panel when a node is selected in canvas mode */}
+          {selectedId && nodes.find(n => n.id === selectedId) && (
+            <div className="w-80 shrink-0 overflow-hidden flex flex-col"
+              style={{ background: '#13151A', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-center justify-between px-4 py-2.5 shrink-0"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-[11px] font-semibold text-white/40">Editar nó</p>
+                <button onClick={() => setSelectedId(null)} className="text-white/25 hover:text-white/50 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <NodeEditor
+                  node={nodes.find(n => n.id === selectedId)!}
+                  nodes={nodes}
+                  onUpdate={updateNode}
+                  allowedPriceIds={allowedPriceIds}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Left: question list (list mode only) ── */}
+      {view === 'list' && (
+      <>
       <div className="w-72 shrink-0 flex flex-col"
         style={{ background: '#16181F', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 shrink-0"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-[12px] font-semibold text-[#EDEDED]">Perguntas</p>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(232,82,26,0.12)', color: '#F0643A' }}>
-            {questionCount}
-          </span>
+          <div className="flex items-center gap-2">
+            <p className="text-[12px] font-semibold text-[#EDEDED]">Perguntas</p>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+              style={{ background: 'rgba(232,82,26,0.12)', color: '#F0643A' }}>
+              {questionCount}
+            </span>
+          </div>
+          {/* View toggle */}
+          <div className="flex items-center gap-0.5 p-0.5 rounded-md"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <button
+              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all"
+              style={{ color: '#E8521A', background: 'rgba(232,82,26,0.1)' }}>
+              <LayoutList className="w-3 h-3" /> Lista
+            </button>
+            <button
+              onClick={() => setView('canvas')}
+              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold transition-all"
+              style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <Workflow className="w-3 h-3" /> Canvas
+            </button>
+          </div>
         </div>
 
         {/* List */}
@@ -1359,6 +1570,9 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBu
           ? <NodeEditor node={selected} nodes={nodes} onUpdate={updateNode} allowedPriceIds={allowedPriceIds} />
           : <EmptyEditor />}
       </div>
+    </>
+    )}
+
     </div>
   )
 }
