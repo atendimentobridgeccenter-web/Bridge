@@ -89,7 +89,7 @@ export interface FormNode {
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function uid(): string { return Math.random().toString(36).slice(2, 9) }
+export function uid(): string { return Math.random().toString(36).slice(2, 9) }
 
 function blankNode(): FormNode {
   return { id: uid(), title: '', type: 'text', required: true, options: [], logicJumps: [] }
@@ -1403,6 +1403,7 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBu
               onSelect={setSelectedId}
               positions={canvasPositions}
               onPositionsChange={setCanvasPositions}
+              onChange={onChange}
               onAddNode={addNode}
               onAddWelcome={addWelcome}
               onAddThankyou={addThankyou}
