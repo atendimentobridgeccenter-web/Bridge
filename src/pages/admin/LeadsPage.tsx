@@ -69,6 +69,15 @@ function displayStudentName(lead: Lead): string {
   return node ? (answers[node.id] ?? '') : ''
 }
 
+function displaySchoolYear(lead: Lead): string {
+  const nodes   = (lead.product_form_nodes ?? []) as FormNode[]
+  const answers = lead.answers ?? {}
+  const node = nodes.find(n =>
+    /ano.escolar|série|serie|turma|grade|school.year|ano.letivo|nivel|nível/i.test(n.title ?? '')
+  )
+  return node ? (answers[node.id] ?? '') : ''
+}
+
 function contactKey(lead: Lead) {
   return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
 }
@@ -469,6 +478,11 @@ function LeadRow({
         </div>
       </td>
 
+      {/* Ano Escolar */}
+      <td className="px-5 py-3.5">
+        <span className="text-[12px] text-white/45">{displaySchoolYear(lead) || '—'}</span>
+      </td>
+
       {/* Email */}
       <td className="px-5 py-3.5">
         <span className="text-[12px] text-white/45 truncate block max-w-[180px]">{lead.email ?? '—'}</span>
@@ -761,7 +775,7 @@ export default function LeadsPage() {
   return (
     <>
       <div className="flex flex-col min-h-full" style={{ background: BG_PAGE }}>
-        <div className="max-w-7xl w-full mx-auto px-8 py-8 flex flex-col gap-6">
+        <div className="w-full px-4 py-6 flex flex-col gap-6">
 
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
@@ -941,7 +955,7 @@ export default function LeadsPage() {
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      {['Nome / Aluno', 'E-mail', 'Telefone', 'Produto', 'Status', 'Data', ''].map((h, i) => (
+                      {['Nome / Aluno', 'Ano Escolar', 'E-mail', 'Telefone', 'Produto', 'Status', 'Data', ''].map((h, i) => (
                         <th key={i} className="text-left px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider"
                           style={{ color: 'rgba(255,255,255,0.28)' }}>{h}</th>
                       ))}

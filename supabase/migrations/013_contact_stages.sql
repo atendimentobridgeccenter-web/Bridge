@@ -24,15 +24,27 @@ create table if not exists public.contact_stage_history (
 alter table public.contact_stages         enable row level security;
 alter table public.contact_stage_history  enable row level security;
 
-create policy "admin_contact_stages" on public.contact_stages
-  for all to authenticated
-  using    ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
-  with check ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role');
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename = 'contact_stages' and policyname = 'admin_contact_stages') then
+    execute $p$
+      create policy "admin_contact_stages" on public.contact_stages
+        for all to authenticated
+        using    ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
+        with check ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
+    $p$;
+  end if;
+end $$;
 
-create policy "admin_contact_stage_history" on public.contact_stage_history
-  for all to authenticated
-  using    ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
-  with check ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role');
+do $$ begin
+  if not exists (select 1 from pg_policies where tablename = 'contact_stage_history' and policyname = 'admin_contact_stage_history') then
+    execute $p$
+      create policy "admin_contact_stage_history" on public.contact_stage_history
+        for all to authenticated
+        using    ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
+        with check ((auth.jwt()->'app_metadata'->>'role')='admin' or auth.role()='service_role')
+    $p$;
+  end if;
+end $$;
 
 create index if not exists contact_stages_key_idx          on public.contact_stages (contact_key);
 create index if not exists contact_stage_history_key_idx   on public.contact_stage_history (contact_key);
