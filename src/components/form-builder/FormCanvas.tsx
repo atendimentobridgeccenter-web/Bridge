@@ -103,8 +103,8 @@ function buildRFEdges(nodes: FormNode[]): Edge[] {
         sourceHandle: 'seq',
         target:       nextId,
         type:         'smoothstep',
-        style:        { stroke: 'rgba(255,255,255,0.13)', strokeDasharray: '5 4', strokeWidth: 1.5 },
-        markerEnd:    { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.2)', width: 14, height: 14 },
+        style:        { stroke: 'rgba(255,255,255,0.18)', strokeWidth: 1.5 },
+        markerEnd:    { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.25)', width: 14, height: 14 },
         label:        jumpDests.size > 0 ? 'padrão' : undefined,
         labelStyle:   { fill: 'rgba(255,255,255,0.28)', fontSize: 10 },
         labelBgStyle: { fill: '#0D0E12', fillOpacity: 0.9 },
@@ -412,12 +412,22 @@ export function FormCanvas({
   const [rfNodes, setRfNodes, onRFNodesChange] = useNodesState(initNodes)
   const [rfEdges, setRfEdges, onRFEdgesChange] = useEdgesState(initEdges)
 
+  // Persist initial positions immediately (even before any drag).
+  // Without this, auto-layout positions are never saved and nodes
+  // reset to a vertical column every time FormCanvas remounts.
+  useEffect(() => {
+    const initialPos: CanvasPositions = {}
+    initNodes.forEach(n => { initialPos[n.id] = n.position })
+    onPositionsChange(initialPos)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Sync when form nodes or selection change
   useEffect(() => {
-    const currentPositions: CanvasPositions = {}
     setRfNodes(prev => {
-      prev.forEach(n => { currentPositions[n.id] = n.position })
-      const merged = { ...positions, ...currentPositions }
+      const currentPos: CanvasPositions = {}
+      prev.forEach(n => { currentPos[n.id] = n.position })
+      const merged = { ...positions, ...currentPos }
       return buildRFNodes(nodes, selectedId, merged)
     })
     setRfEdges(buildRFEdges(nodes))
@@ -598,7 +608,7 @@ export function FormCanvas({
             color:        'rgba(255,255,255,0.3)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
-              <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeDasharray="5 4"/></svg>
+              <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/></svg>
               Fluxo padrão
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>

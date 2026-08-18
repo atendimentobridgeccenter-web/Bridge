@@ -1261,14 +1261,37 @@ interface FormBuilderProps {
   nodes:            FormNode[]
   onChange:         (nodes: FormNode[]) => void
   allowedPriceIds?: string[]
+  productId?:       string
 }
 
-export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBuilderProps) {
+export default function FormBuilder({ nodes, onChange, allowedPriceIds, productId }: FormBuilderProps) {
   const [selectedId,      setSelectedId]      = useState<string | null>(nodes[0]?.id ?? null)
   const [dragOverId,      setDragOverId]      = useState<string | null>(null)
-  const [view,            setView]            = useState<'list' | 'canvas'>('list')
-  const [canvasPositions, setCanvasPositions] = useState<CanvasPositions>({})
-  const dragIdRef                             = useRef<string | null>(null)
+
+  const posKey  = productId ? `canvas-pos-${productId}`  : null
+  const viewKey = productId ? `canvas-view-${productId}` : null
+
+  const [canvasPositions, setCanvasPositions] = useState<CanvasPositions>(() => {
+    if (!posKey) return {}
+    try { return JSON.parse(localStorage.getItem(posKey) ?? '{}') } catch { return {} }
+  })
+
+  const [view, setViewState] = useState<'list' | 'canvas'>(() => {
+    if (!viewKey) return 'list'
+    return (localStorage.getItem(viewKey) as 'list' | 'canvas') ?? 'list'
+  })
+
+  const setView = useCallback((v: 'list' | 'canvas') => {
+    setViewState(v)
+    if (viewKey) localStorage.setItem(viewKey, v)
+  }, [viewKey])
+
+  const saveCanvasPositions = useCallback((p: CanvasPositions) => {
+    setCanvasPositions(p)
+    if (posKey) localStorage.setItem(posKey, JSON.stringify(p))
+  }, [posKey])
+
+  const dragIdRef = useRef<string | null>(null)
 
   const selected    = nodes.find(n => n.id === selectedId) ?? null
   const hasWelcome  = nodes.some(n => n.type === 'welcome')
@@ -1402,7 +1425,7 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds }: FormBu
               selectedId={selectedId}
               onSelect={setSelectedId}
               positions={canvasPositions}
-              onPositionsChange={setCanvasPositions}
+              onPositionsChange={saveCanvasPositions}
               onChange={onChange}
               onAddNode={addNode}
               onAddWelcome={addWelcome}

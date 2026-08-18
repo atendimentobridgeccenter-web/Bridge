@@ -81,6 +81,14 @@ export default function ProductBuilder() {
     }
   }, [savedAt])
 
+  // Auto-save 1.5 s after the last edit
+  const isDirty = useBuilderStore(s => s.isDirty)
+  useEffect(() => {
+    if (!isDirty) return
+    const t = setTimeout(saveNow, 1500)
+    return () => clearTimeout(t)
+  }, [isDirty, saveNow])
+
   async function handlePublish() {
     if (!product) return
     const errs = validate(product)
@@ -192,7 +200,7 @@ export default function ProductBuilder() {
           />
         )}
         {tab === 'form' && (
-          <FormBuilder nodes={formNodes} onChange={setFormNodes} />
+          <FormBuilder nodes={formNodes} onChange={setFormNodes} productId={id} />
         )}
         {tab === 'structure' && (
           <StructureTab productId={product.id} />
