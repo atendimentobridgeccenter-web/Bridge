@@ -68,8 +68,18 @@ export default function ProductBuilder() {
     if (serverProduct) initFromServer(serverProduct)
   }, [serverProduct, initFromServer])
 
-  // Reset store on unmount
-  useEffect(() => () => reset(), [reset])
+  // Keep a stable ref to saveNow so effects don't re-run when the function identity changes
+  const saveNowRef = useRef(saveNow)
+  useEffect(() => { saveNowRef.current = saveNow })
+
+  // Save on unmount if there are unsaved changes, THEN reset the store
+  useEffect(() => {
+    return () => {
+      const { isDirty: dirty } = useBuilderStore.getState()
+      if (dirty) saveNowRef.current()
+      reset()
+    }
+  }, [reset])
 
   // Flash "Salvo" whenever a save completes
   useEffect(() => {
@@ -81,13 +91,13 @@ export default function ProductBuilder() {
     }
   }, [savedAt])
 
-  // Auto-save 1.5 s after the last edit
+  // Auto-save 1.5 s after isDirty flips true (saveNow kept in ref — not a dep)
   const isDirty = useBuilderStore(s => s.isDirty)
   useEffect(() => {
     if (!isDirty) return
-    const t = setTimeout(saveNow, 1500)
+    const t = setTimeout(() => saveNowRef.current(), 1500)
     return () => clearTimeout(t)
-  }, [isDirty, saveNow])
+  }, [isDirty])
 
   async function handlePublish() {
     if (!product) return
