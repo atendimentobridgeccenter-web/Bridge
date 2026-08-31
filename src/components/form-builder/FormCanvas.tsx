@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect, memo } from 'react'
+import { useMemo, useCallback, useEffect, useRef, memo } from 'react'
 import {
   ReactFlow, Background, BackgroundVariant,
   Controls, MiniMap,
@@ -412,16 +412,23 @@ export function FormCanvas({
   const [rfNodes, setRfNodes, onRFNodesChange] = useNodesState(initNodes)
   const [rfEdges, setRfEdges, onRFEdgesChange] = useEdgesState(initEdges)
 
-  // Persist initial positions once real nodes are ready.
-  // Guard: if nodes is empty (server data not loaded yet), skip — otherwise we
-  // overwrite localStorage with {} and lose the saved layout when data arrives.
+  // Stable ref so handleNodeDragStop always reads the latest rfNodes without
+  // needing rfNodes in its dependency array (which would cause a new handler
+  // on every position update and break React Flow's drag tracking).
+  const rfNodesRef = useRef(rfNodes)
+  useEffect(() => { rfNodesRef.current = rfNodes }, [rfNodes])
+
+  // Once nodes are populated, save ALL current positions so auto-layout
+  // positions survive navigation even if the user never explicitly drags.
+  const savedInitialRef = useRef(false)
   useEffect(() => {
-    if (nodes.length === 0) return
-    const initialPos: CanvasPositions = {}
-    initNodes.forEach(n => { initialPos[n.id] = n.position })
-    onPositionsChange(initialPos)
+    if (rfNodes.length === 0 || savedInitialRef.current) return
+    savedInitialRef.current = true
+    const pos: CanvasPositions = {}
+    rfNodes.forEach(n => { pos[n.id] = n.position })
+    onPositionsChange(pos)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [rfNodes])
 
   // Sync when form nodes or selection change
   useEffect(() => {
@@ -435,9 +442,14 @@ export function FormCanvas({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, selectedId])
 
-  const handleNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
-    onPositionsChange({ ...positions, [node.id]: node.position })
-  }, [positions, onPositionsChange])
+  // Save ALL node positions on drag stop — not just the dragged node merged
+  // with `positions`. That old pattern only saved previously-dragged nodes:
+  // on the very first drag positions={}, so all other nodes lost their places.
+  const handleNodeDragStop = useCallback((_: React.MouseEvent, _node: Node) => {
+    const pos: CanvasPositions = {}
+    rfNodesRef.current.forEach(n => { pos[n.id] = n.position })
+    onPositionsChange(pos)
+  }, [onPositionsChange])
 
   const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     if (node.type === 'terminalNode') return
