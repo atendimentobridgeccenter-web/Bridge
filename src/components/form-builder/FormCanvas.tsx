@@ -412,10 +412,11 @@ export function FormCanvas({
   const [rfNodes, setRfNodes, onRFNodesChange] = useNodesState(initNodes)
   const [rfEdges, setRfEdges, onRFEdgesChange] = useEdgesState(initEdges)
 
-  // Persist initial positions immediately (even before any drag).
-  // Without this, auto-layout positions are never saved and nodes
-  // reset to a vertical column every time FormCanvas remounts.
+  // Persist initial positions once real nodes are ready.
+  // Guard: if nodes is empty (server data not loaded yet), skip — otherwise we
+  // overwrite localStorage with {} and lose the saved layout when data arrives.
   useEffect(() => {
+    if (nodes.length === 0) return
     const initialPos: CanvasPositions = {}
     initNodes.forEach(n => { initialPos[n.id] = n.position })
     onPositionsChange(initialPos)

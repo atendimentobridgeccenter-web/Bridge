@@ -54,6 +54,13 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
 
   const selected = prices.find(p => p.priceId === value)
 
+  // If a price is already selected, fetch the list on mount so the trigger can
+  // display the selected price's name and amount instead of the placeholder.
+  useEffect(() => {
+    if (value) fetchPrices()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Close on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {

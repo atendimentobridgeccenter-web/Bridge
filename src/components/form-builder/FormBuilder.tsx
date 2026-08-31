@@ -273,8 +273,8 @@ function LogicJumpRow({
 }) {
   const targets    = nodes.filter(n => n.id !== nodeId)
   const hasOptions = options.length > 0
-  const selCls     = 'px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer'
-  const selSty     = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
+  const selCls     = 'px-2.5 py-1.5 rounded-md text-[12px] outline-none appearance-none cursor-pointer'
+  const selSty     = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDED' }
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -380,8 +380,8 @@ function BankDepositEditor({ node, nodes, onUpdate }: { node: FormNode; nodes: F
           <select
             value={bi.currency ?? 'BRL'}
             onChange={e => setInfo({ currency: e.target.value })}
-            className="px-2.5 py-1.5 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none"
-            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}
+            className="px-2.5 py-1.5 rounded-lg text-[12px] outline-none appearance-none"
+            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDED' }}
           >
             <option value="BRL">BRL — Real</option>
             <option value="JPY">JPY — Yen</option>
@@ -446,8 +446,8 @@ function BankDepositEditor({ node, nodes, onUpdate }: { node: FormNode; nodes: F
           <div className="flex flex-col gap-1.5" style={{ width: 120 }}>
             <label className="text-[10px] text-white/25 uppercase tracking-wider">Tipo</label>
             <select value={bi.accountType ?? ''} onChange={e => setInfo({ accountType: e.target.value })}
-              className="px-2.5 py-2 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none w-full"
-              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}>
+              className="px-2.5 py-2 rounded-lg text-[12px] outline-none appearance-none w-full"
+              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDED' }}>
               <option value="">Tipo…</option>
               <option value="Corrente">Corrente</option>
               <option value="Poupança">Poupança</option>
@@ -580,8 +580,8 @@ function ScreenLogicSection({ node, nodes, onUpdate, actionLabel }: {
 }) {
   const targets = nodes.filter(n => n.id !== node.id)
   const jump    = node.logicJumps[0]
-  const selSty  = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }
-  const selCls  = 'px-2.5 py-1.5 rounded-md text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer flex-1'
+  const selSty  = { background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDED' }
+  const selCls  = 'px-2.5 py-1.5 rounded-md text-[12px] outline-none appearance-none cursor-pointer flex-1'
 
   function setDest(dest: string) {
     const updated: LogicJump = { id: jump?.id ?? uid(), ifOption: '', jumpToNodeId: dest }
