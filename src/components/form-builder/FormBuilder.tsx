@@ -67,6 +67,7 @@ export interface BankInfo {
   agency?:            string
   account?:           string
   accountType?:       string
+  imageUrl?:          string   // imagem ilustrativa (ex: QR code, comprovante bancário)
 }
 
 export interface FormNode {
@@ -338,8 +339,32 @@ function BankDepositEditor({ node, nodes, onUpdate }: { node: FormNode; nodes: F
   const focusSty = 'rgba(59,130,246,0.45)'
   const blurSty  = 'rgba(255,255,255,0.08)'
 
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const imgFileRef = useRef<HTMLInputElement>(null)
+
   function setInfo(patch: Partial<BankInfo>) {
     onUpdate({ ...node, bankInfo: { ...node.bankInfo, ...patch } })
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 5 MB.'); return }
+    setUploadingImg(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `bank-images/${node.id}.${ext}`
+      const { error } = await supabase.storage.from('form-assets').upload(path, file, { upsert: true, contentType: file.type })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('form-assets').getPublicUrl(path)
+      setInfo({ imageUrl: publicUrl })
+      toast.success('Imagem enviada!')
+    } catch {
+      toast.error('Erro ao enviar imagem.')
+    } finally {
+      setUploadingImg(false)
+    }
   }
 
   const bi = node.bankInfo ?? {}
@@ -454,6 +479,52 @@ function BankDepositEditor({ node, nodes, onUpdate }: { node: FormNode; nodes: F
             </select>
           </div>
         </div>
+      </div>
+
+      {/* Imagem ilustrativa (ex: QR code, dados do banco) */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+      <div className="flex flex-col gap-3">
+        <label className={labelCls}>Imagem dos Dados Bancários</label>
+        <p className="text-[11px] -mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          Opcional. Use para mostrar um QR code ou print com os dados da conta.
+        </p>
+        {bi.imageUrl ? (
+          <div className="relative rounded-xl overflow-hidden"
+            style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <img src={bi.imageUrl} alt="Dados bancários" className="w-full object-contain max-h-48" />
+            <div className="absolute top-2 right-2 flex gap-1.5">
+              <button
+                onClick={() => imgFileRef.current?.click()}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}>
+                Trocar
+              </button>
+              <button
+                onClick={() => setInfo({ imageUrl: undefined })}
+                className="p-1.5 rounded-lg transition-all"
+                style={{ background: 'rgba(239,68,68,0.1)', color: '#F87171' }}>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => imgFileRef.current?.click()}
+            disabled={uploadingImg}
+            className="w-full flex flex-col items-center justify-center gap-2 rounded-xl py-6 transition-all"
+            style={{ background: '#0D0E12', border: '1px dashed rgba(255,255,255,0.12)',
+              color: uploadingImg ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.3)' }}>
+            <ImageIcon className="w-5 h-5" />
+            <span className="text-[12px]">
+              {uploadingImg ? 'Enviando…' : 'Clique para enviar imagem'}
+            </span>
+            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.15)' }}>
+              PNG, JPG, WebP · máx. 5 MB
+            </span>
+          </button>
+        )}
+        <input ref={imgFileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
+          className="hidden" onChange={handleImageUpload} />
       </div>
 
       <ScreenLogicSection node={node} nodes={nodes} onUpdate={onUpdate} actionLabel="após avançar" />

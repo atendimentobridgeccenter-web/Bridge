@@ -965,6 +965,24 @@ function BankDepositScreen({ node, pct, onAdvance }: {
           </div>
         )}
 
+        {/* Imagem ilustrativa dos dados bancários (ex: QR code) */}
+        {bi.imageUrl && (
+          <div className="rounded-xl overflow-hidden"
+            style={{ background: '#1E202A', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="px-5 py-3" style={{ borderBottom: '1px solid rgba(59,130,246,0.15)', background: 'rgba(59,130,246,0.05)' }}>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400">Dados da Conta</p>
+            </div>
+            <div className="p-4 flex justify-center">
+              <img
+                src={bi.imageUrl}
+                alt="Dados bancários"
+                className="max-w-full rounded-lg object-contain"
+                style={{ maxHeight: 320 }}
+              />
+            </div>
+          </div>
+        )}
+
         <button
           onClick={onAdvance}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-[15px] font-bold text-white transition-all"
