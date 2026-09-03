@@ -1025,8 +1025,9 @@ function ReceiptUploadScreen({ node, pct, productId, onAdvance }: {
       if (uploadErr) throw uploadErr
       const { data: { publicUrl } } = supabase.storage.from('form-assets').getPublicUrl(path)
       onAdvance(publicUrl)
-    } catch {
-      setErrMsg('Erro ao enviar o comprovante. Tente novamente.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setErrMsg(`Erro ao enviar o comprovante: ${msg}`)
       setUploading(false)
     }
   }
