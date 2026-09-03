@@ -122,12 +122,13 @@ Deno.serve(async (req: Request) => {
     // ── 1. Parse payload ────────────────────────────────────────
     // priceIds[] comes from FormRunner (multi-item pricing engine)
     // priceId (single) comes from QuizzRunner (single option selection)
-    const { productId, priceId, priceIds: priceIdsArr, email, name } = await req.json() as {
-      productId:  string
-      priceId?:   string
-      priceIds?:  string[]
-      email?:     string
-      name?:      string
+    const { productId, priceId, priceIds: priceIdsArr, email, name, successPath } = await req.json() as {
+      productId:    string
+      priceId?:     string
+      priceIds?:    string[]
+      email?:       string
+      name?:        string
+      successPath?: string
     }
 
     const resolvedPriceIds: string[] = priceIdsArr?.length
@@ -178,6 +179,19 @@ Deno.serve(async (req: Request) => {
     // ── 5. Create Stripe Checkout Session ───────────────────────
     const siteUrl = Deno.env.get('SITE_URL') ?? req.headers.get('origin') ?? 'http://localhost:5173'
 
+    // Use caller-supplied successPath (relative, e.g. /apply?product=slug&payment_done=1)
+    // so the form can resume after the user returns from Stripe.
+    const validSuccessPath =
+      typeof successPath === 'string' &&
+      successPath.startsWith('/') &&
+      !successPath.includes('://') &&
+      successPath.length < 1000
+        ? successPath
+        : null
+    const successUrl = validSuccessPath
+      ? `${siteUrl}${validSuccessPath}`
+      : `${siteUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}`
+
     const session = await stripe.checkout.sessions.create({
       mode,
       line_items: resolvedPriceIds.map(price => ({ price, quantity: 1 })),
@@ -190,7 +204,7 @@ Deno.serve(async (req: Request) => {
         lead_email: email ?? '',
       },
 
-      success_url: `${siteUrl}/obrigado?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: successUrl,
       cancel_url:  `${siteUrl}/`,
 
       allow_promotion_codes: true,

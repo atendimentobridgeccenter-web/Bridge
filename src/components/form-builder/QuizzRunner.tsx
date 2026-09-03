@@ -1153,7 +1153,7 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
 
 // ── StripeCheckoutScreen ──────────────────────────────────────
 
-function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes }: {
+function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes, history }: {
   node:        FormNode
   pct:         number
   priceId:     string | null
@@ -1161,6 +1161,7 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
   productName: string | undefined
   answers:     Record<string, string>
   nodes:       FormNode[]
+  history:     string[]
 }) {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -1182,8 +1183,21 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
     setLoading(true)
     setError(null)
     try {
+      // Persist form state so we can resume after Stripe redirect
+      localStorage.setItem(
+        `payment-resume-${productId}`,
+        JSON.stringify({ history, answers }),
+      )
+      // Build success path pointing back to this form
+      const search = window.location.search || ''
+      const successPath =
+        window.location.pathname +
+        search +
+        (search ? '&' : '?') +
+        'payment_done=1'
+
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
-        body: { productId, priceIds: [resolvedPriceId], email, name },
+        body: { productId, priceIds: [resolvedPriceId], email, name, successPath },
       })
       if (fnErr) {
         // Try to parse the actual error body from the Edge Function response
@@ -1281,6 +1295,37 @@ const variants = {
 }
 const transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] as const }
 
+// ── Payment-resume helper ─────────────────────────────────────
+
+function restoreFromPayment(
+  productId: string,
+  nodes: FormNode[],
+): { history: string[]; answers: Record<string, string>; complete: boolean } | null {
+  try {
+    if (!new URLSearchParams(window.location.search).has('payment_done')) return null
+    const raw = localStorage.getItem(`payment-resume-${productId}`)
+    if (!raw) return null
+    const { history, answers } = JSON.parse(raw) as {
+      history: string[]
+      answers: Record<string, string>
+    }
+    if (!Array.isArray(history)) return null
+
+    // Find the stripe-checkout node at the end of the saved history
+    const lastId = history[history.length - 1]
+    const stripeNode = nodes.find(n => n.id === lastId && n.type === 'stripe-checkout')
+    if (!stripeNode) return { history, answers, complete: false }
+
+    const nextNode = nodes[nodes.indexOf(stripeNode) + 1]
+    if (!nextNode || nextNode.type === 'thankyou') {
+      return { history, answers, complete: true }
+    }
+    return { history: [...history, nextNode.id], answers, complete: false }
+  } catch {
+    return null
+  }
+}
+
 // ── Main component ────────────────────────────────────────────
 
 export default function QuizzRunner({
@@ -1294,8 +1339,15 @@ export default function QuizzRunner({
   utmParams,
   onComplete,
 }: QuizzRunnerProps) {
-  const [history,         setHistory]         = useState<string[]>(nodes[0] ? [nodes[0].id] : [])
-  const [answers,         setAnswers]         = useState<Record<string, string>>({})
+  // Restore state if user is returning from Stripe payment
+  const [paymentResume] = useState<ReturnType<typeof restoreFromPayment>>(() =>
+    productId ? restoreFromPayment(productId, nodes) : null,
+  )
+
+  const [history,         setHistory]         = useState<string[]>(() =>
+    paymentResume ? paymentResume.history : (nodes[0] ? [nodes[0].id] : []))
+  const [answers,         setAnswers]         = useState<Record<string, string>>(() =>
+    paymentResume ? paymentResume.answers : {})
   const [draft,           setDraft]           = useState('')
   const [done,            setDone]            = useState(false)
   const [disqualified,    setDisqualified]    = useState(false)
@@ -1306,7 +1358,7 @@ export default function QuizzRunner({
   const [otherActive,     setOtherActive]     = useState(false)
   const [openedPdfs,     setOpenedPdfs]      = useState<Set<string>>(new Set())
   const [otherDraft,      setOtherDraft]      = useState('')
-  const finalAnswersRef = useRef<Record<string, string>>({})
+  const finalAnswersRef = useRef<Record<string, string>>(paymentResume?.answers ?? {})
   const dirRef          = useRef(1)
 
   // enableCheckout defaults to true when productId is set
@@ -1319,6 +1371,23 @@ export default function QuizzRunner({
     if (tracking.gtmContainerId)    injectGTM(tracking.gtmContainerId)
     if (tracking.gaMeasurementId)   injectGA4(tracking.gaMeasurementId)
     if (tracking.metaPixelId)       injectMetaPixel(tracking.metaPixelId)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Post-payment resume cleanup ───────────────────────────────
+
+  useEffect(() => {
+    if (!paymentResume || !productId) return
+    // Remove localStorage entry so it won't be replayed on next visit
+    localStorage.removeItem(`payment-resume-${productId}`)
+    // Clean ?payment_done=1 from URL without reloading
+    const url = new URL(window.location.href)
+    url.searchParams.delete('payment_done')
+    window.history.replaceState({}, '', url.toString())
+    // If stripe-checkout was the last node, mark form as complete
+    if (paymentResume.complete) {
+      finalAnswersRef.current = paymentResume.answers
+      setDone(true)
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Save lead + fire tracking events when done ────────────────
@@ -1590,6 +1659,7 @@ export default function QuizzRunner({
         productName={productName}
         answers={answers}
         nodes={nodes}
+        history={history}
       />
     )
   }
