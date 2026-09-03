@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   TrendingUp, Users, GraduationCap, ArrowUpRight,
   CheckCircle2, ChevronRight, RefreshCw, DollarSign,
-  Activity,
+  Activity, Clock, Zap, CreditCard,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -351,6 +351,59 @@ export default function AdminHome() {
             Atualizar
           </button>
         </div>
+
+        {/* ── Hoje — fila de ação ── */}
+        {!isLoading && (todayLeads > 0 || leads.filter(l => !l.qualified && isWithinDays(l.created_at, 1)).length > 0) && (
+          <div
+            className="rounded-2xl p-4 flex flex-col gap-3"
+            style={{ background: 'rgba(96,165,250,0.04)', border: '1px solid rgba(96,165,250,0.12)' }}
+          >
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
+              <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#60A5FA' }}>
+                Hoje
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {todayLeads > 0 && (
+                <Link to="/admin/pessoas" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                  style={{ border: '1px solid rgba(96,165,250,0.12)' }}>
+                  <Users className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
+                  <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                    <strong className="tabular-nums" style={{ color: '#60A5FA' }}>{todayLeads}</strong> lead{todayLeads !== 1 ? 's' : ''} hoje
+                  </span>
+                  <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                </Link>
+              )}
+              {(() => {
+                const pending = leads.filter(l => l.payment_status === 'pending').length
+                return pending > 0 ? (
+                  <Link to="/admin/financeiro" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                    style={{ border: '1px solid rgba(251,191,36,0.15)' }}>
+                    <Clock className="w-3.5 h-3.5" style={{ color: '#FCD34D' }} />
+                    <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                      <strong className="tabular-nums" style={{ color: '#FCD34D' }}>{pending}</strong> pagamento{pending !== 1 ? 's' : ''} pendente{pending !== 1 ? 's' : ''}
+                    </span>
+                    <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                  </Link>
+                ) : null
+              })()}
+              {(() => {
+                const stale = leads.filter(l => !l.qualified && !isWithinDays(l.created_at, 3)).length
+                return stale > 0 ? (
+                  <Link to="/admin/pessoas?journey=lead" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                    style={{ border: '1px solid rgba(239,68,68,0.15)' }}>
+                    <Activity className="w-3.5 h-3.5" style={{ color: '#F87171' }} />
+                    <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                      <strong className="tabular-nums" style={{ color: '#F87171' }}>{stale}</strong> lead{stale !== 1 ? 's' : ''} sem contato há +3 dias
+                    </span>
+                    <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                  </Link>
+                ) : null
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* ── KPI cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

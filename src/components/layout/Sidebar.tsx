@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Package, Users, UserCheck,
-  LogOut, Settings, ChevronLeft, ChevronRight, GraduationCap,
+  LayoutDashboard, Package, Users, LogOut, Settings,
+  ChevronLeft, ChevronRight, GraduationCap, CreditCard,
+  ReceiptText, Ticket, KeyRound,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 
-// ── Bridge logo (shape from favicon, orange) ──────────────────
+// ── Bridge logo ───────────────────────────────────────────────
 
 function BridgeLogo({ size = 16 }: { size?: number }) {
   return (
@@ -20,24 +21,51 @@ function BridgeLogo({ size = 16 }: { size?: number }) {
   )
 }
 
-// ── Nav items ─────────────────────────────────────────────────
+// ── Nav structure ─────────────────────────────────────────────
 
-const NAV_MAIN = [
-  { to: '/admin',            icon: LayoutDashboard, label: 'Dashboard', end: true  },
-  { to: '/admin/alunos',     icon: GraduationCap,   label: 'Alunos',    end: false },
-  { to: '/admin/contatos',   icon: UserCheck,       label: 'Contatos',  end: false },
-  { to: '/admin/leads',      icon: Users,           label: 'Leads CRM', end: false },
-  { to: '/admin/products',   icon: Package,         label: 'Produtos',  end: false },
+const NAV_GROUPS = [
+  {
+    label: null,
+    items: [
+      { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    ],
+  },
+  {
+    label: 'Pessoas',
+    items: [
+      { to: '/admin/pessoas',  icon: Users,         label: 'Central de Pessoas', end: false },
+      { to: '/admin/alunos',   icon: GraduationCap, label: 'Alunos',             end: false },
+    ],
+  },
+  {
+    label: 'Produtos',
+    items: [
+      { to: '/admin/products', icon: Package,  label: 'Biblioteca',  end: false },
+      { to: '/admin/acessos',  icon: KeyRound, label: 'Acessos',     end: false, badge: 'Novo' },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { to: '/admin/financeiro', icon: ReceiptText, label: 'Receita',  end: false, badge: 'Novo' },
+      { to: '/admin/cupons',     icon: Ticket,      label: 'Cupons',   end: false },
+    ],
+  },
+  {
+    label: 'Sistema',
+    items: [
+      { to: '/admin/settings', icon: Settings, label: 'Configurações', end: false },
+    ],
+  },
 ]
 
-const NAV_BOTTOM = [
-  { to: '/admin/settings', icon: Settings, label: 'Configurações', end: false },
-]
+// ── NavItem ───────────────────────────────────────────────────
 
 function NavItem({
-  to, icon: Icon, label, end, collapsed,
+  to, icon: Icon, label, end, collapsed, badge,
 }: {
-  to: string; icon: React.ElementType; label: string; end: boolean; collapsed: boolean
+  to: string; icon: React.ElementType; label: string
+  end: boolean; collapsed: boolean; badge?: string
 }) {
   return (
     <NavLink
@@ -45,23 +73,43 @@ function NavItem({
       end={end}
       title={collapsed ? label : undefined}
       className={({ isActive }) => cn(
-        'group flex items-center gap-3 rounded-lg text-[13px] font-medium transition-all duration-150',
-        collapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2',
+        'group relative flex items-center gap-2.5 rounded-lg text-[12.5px] font-medium',
+        'transition-all duration-150 cursor-pointer',
+        collapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-[7px]',
         isActive
-          ? 'bg-white/8 text-white'
-          : 'text-[#71717A] hover:text-[#EDEDED] hover:bg-white/4',
+          ? 'bg-white/8 text-[#EDEDED]'
+          : 'text-[#5A5C6A] hover:text-[#C4C6D0] hover:bg-white/[0.035]',
       )}
     >
       {({ isActive }) => (
         <>
+          {/* Active left bar */}
+          {isActive && !collapsed && (
+            <span
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full"
+              style={{ background: '#E8521A' }}
+            />
+          )}
+
           <Icon className={cn(
-            'w-[15px] h-[15px] shrink-0 transition-colors',
-            isActive ? 'text-white' : 'text-[#52525B] group-hover:text-[#A1A1AA]',
+            'w-[14px] h-[14px] shrink-0 transition-colors',
+            isActive
+              ? 'text-[#E8521A]'
+              : 'text-[#404252] group-hover:text-[#7B7E92]',
           )} />
-          {!collapsed && <span className="truncate flex-1">{label}</span>}
-          {!collapsed && isActive && (
-            <span className="ml-auto w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: '#E8521A' }} />
+
+          {!collapsed && (
+            <>
+              <span className="truncate flex-1">{label}</span>
+              {badge && (
+                <span
+                  className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(109,74,255,0.18)', color: '#9474FF' }}
+                >
+                  {badge}
+                </span>
+              )}
+            </>
           )}
         </>
       )}
@@ -89,112 +137,118 @@ export default function Sidebar() {
     navigate('/login')
   }
 
+  const px = collapsed ? 8 : 10
+
   return (
     <aside
-      className="shrink-0 flex flex-col h-full select-none transition-all duration-200"
+      className="shrink-0 flex flex-col h-full select-none"
       style={{
-        width:       collapsed ? 64 : 220,
-        background:  '#111111',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        width:       collapsed ? 60 : 216,
+        background:  '#0E0F13',
+        borderRight: '1px solid rgba(255,255,255,0.055)',
+        transition:  'width 200ms cubic-bezier(.4,0,.2,1)',
       }}
     >
-      {/* Logo + name + toggle */}
+      {/* ── Logo bar ── */}
       <div
-        className="flex items-center gap-2.5 px-3 py-4 relative"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', minHeight: 56 }}
+        className="flex items-center gap-2.5 relative"
+        style={{
+          borderBottom: '1px solid rgba(255,255,255,0.055)',
+          minHeight: 52,
+          paddingLeft:  px,
+          paddingRight: px,
+        }}
       >
-        {/* Logo badge */}
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: '#E8521A', boxShadow: '0 4px 12px rgba(232,82,26,0.35)' }}
+          className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+          style={{ background: '#E8521A', boxShadow: '0 2px 8px rgba(232,82,26,0.4)' }}
         >
-          <BridgeLogo size={15} />
+          <BridgeLogo size={13} />
         </div>
 
-        {/* Name (hidden when collapsed) */}
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-[#EDEDED] leading-none truncate">
-              Bridge HUB
-            </p>
-            <p className="text-[10px] mt-0.5 leading-none truncate" style={{ color: '#52525B' }}>
+            <p className="text-[12.5px] font-semibold text-[#DADCE6] leading-none truncate">Bridge HUB</p>
+            <p className="text-[9.5px] mt-0.5 leading-none truncate" style={{ color: '#404252' }}>
               Motor de Lançamentos
             </p>
           </div>
         )}
 
-        {/* Collapse / expand toggle */}
         <button
           onClick={toggle}
           className="flex items-center justify-center rounded-md transition-all duration-150 shrink-0"
           style={{
-            width: 22, height: 22,
-            background: 'rgba(255,255,255,0.04)',
-            border:     '1px solid rgba(255,255,255,0.07)',
-            color:      '#52525B',
+            width: 20, height: 20,
+            background: 'rgba(255,255,255,0.03)',
+            border:     '1px solid rgba(255,255,255,0.06)',
+            color:      '#404252',
             marginLeft: collapsed ? 'auto' : undefined,
           }}
           title={collapsed ? 'Expandir' : 'Recolher'}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA'
+            (e.currentTarget as HTMLButtonElement).style.color = '#9194A8'
+            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#52525B'
+            (e.currentTarget as HTMLButtonElement).style.color = '#404252'
+            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'
           }}
         >
           {collapsed
-            ? <ChevronRight className="w-3 h-3" />
-            : <ChevronLeft  className="w-3 h-3" />}
+            ? <ChevronRight className="w-2.5 h-2.5" />
+            : <ChevronLeft  className="w-2.5 h-2.5" />}
         </button>
       </div>
 
-      {/* Nav */}
-      <div className="flex-1 overflow-y-auto py-3 flex flex-col gap-4"
-        style={{ paddingLeft: collapsed ? 8 : 10, paddingRight: collapsed ? 8 : 10 }}>
-        <div className="flex flex-col gap-0.5">
-          {!collapsed && (
-            <p className="text-[10px] font-semibold text-[#3F3F46] uppercase tracking-widest px-3 mb-1">
-              Principal
-            </p>
-          )}
-          {NAV_MAIN.map(item => (
-            <NavItem key={item.to} {...item} collapsed={collapsed} />
-          ))}
-        </div>
+      {/* ── Nav groups ── */}
+      <div
+        className="flex-1 overflow-y-auto py-2.5 flex flex-col gap-0.5"
+        style={{ paddingLeft: px, paddingRight: px }}
+      >
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? 'mt-1' : ''}>
+            {/* Group label */}
+            {group.label && !collapsed && (
+              <p
+                className="text-[9.5px] font-semibold uppercase tracking-[0.1em] px-3 mb-0.5"
+                style={{ color: '#2E3042', marginTop: gi > 0 ? 8 : 0 }}
+              >
+                {group.label}
+              </p>
+            )}
+            {group.label && collapsed && gi > 0 && (
+              <div className="my-1.5 mx-1.5 h-px" style={{ background: 'rgba(255,255,255,0.04)' }} />
+            )}
 
-        <div className="flex flex-col gap-0.5">
-          {!collapsed && (
-            <p className="text-[10px] font-semibold text-[#3F3F46] uppercase tracking-widest px-3 mb-1">
-              Sistema
-            </p>
-          )}
-          {NAV_BOTTOM.map(item => (
-            <NavItem key={item.to} {...item} collapsed={collapsed} />
-          ))}
-        </div>
+            <div className="flex flex-col gap-0.5">
+              {group.items.map(item => (
+                <NavItem key={item.to} {...item} collapsed={collapsed} />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Sign out */}
+      {/* ── Sign out ── */}
       <div
-        className="py-3"
+        className="py-2.5"
         style={{
-          borderTop:    '1px solid rgba(255,255,255,0.06)',
-          paddingLeft:  collapsed ? 8 : 10,
-          paddingRight: collapsed ? 8 : 10,
+          borderTop:    '1px solid rgba(255,255,255,0.055)',
+          paddingLeft:  px,
+          paddingRight: px,
         }}
       >
         <button
           onClick={signOut}
           title={collapsed ? 'Sair da conta' : undefined}
           className={cn(
-            'group flex items-center gap-3 w-full rounded-lg text-[13px] font-medium',
-            'text-[#52525B] hover:text-red-400 hover:bg-red-500/8 transition-all duration-100',
-            collapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2',
+            'group flex items-center gap-2.5 w-full rounded-lg text-[12.5px] font-medium cursor-pointer',
+            'text-[#3E404F] hover:text-red-400 hover:bg-red-500/[0.07] transition-all duration-150',
+            collapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-[7px]',
           )}
         >
-          <LogOut className="w-[15px] h-[15px] shrink-0" />
+          <LogOut className="w-[14px] h-[14px] shrink-0" />
           {!collapsed && <span>Sair da conta</span>}
         </button>
       </div>

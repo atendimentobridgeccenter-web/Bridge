@@ -4,15 +4,19 @@ import { Toaster } from 'sonner'
 import AdminLayout from '@/components/layout/AdminLayout'
 
 // ── Admin (within AdminLayout sidebar shell) ──────────────────
-const AdminHome      = lazy(() => import('@/pages/admin/AdminHome'))
-const Leads           = lazy(() => import('@/pages/admin/LeadsPage'))
-const LeadProfile     = lazy(() => import('@/pages/admin/LeadProfilePage'))
-const Contacts        = lazy(() => import('@/pages/admin/ContactsPage'))
-const Products        = lazy(() => import('@/pages/admin/Products'))
+const AdminHome         = lazy(() => import('@/pages/admin/AdminHome'))
+const Leads             = lazy(() => import('@/pages/admin/LeadsPage'))
+const LeadProfile       = lazy(() => import('@/pages/admin/LeadProfilePage'))
+const Contacts          = lazy(() => import('@/pages/admin/ContactsPage'))
+const Products          = lazy(() => import('@/pages/admin/Products'))
 const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
 const SettingsPage      = lazy(() => import('@/pages/admin/SettingsPage'))
 const StudentsPage      = lazy(() => import('@/pages/admin/StudentsPage'))
+const PessoasPage       = lazy(() => import('@/pages/admin/PessoasPage'))
+const FinanceiroPage    = lazy(() => import('@/pages/admin/FinanceiroPage'))
+const AcessosPage       = lazy(() => import('@/pages/admin/AcessosPage'))
+const CuponsPage        = lazy(() => import('@/pages/admin/CuponsPage'))
 
 // ── Auth ──────────────────────────────────────────────────────
 const Login         = lazy(() => import('@/pages/Login'))
@@ -58,6 +62,10 @@ export default function App() {
             <Route path="leads/:id"               element={<LeadProfile />} />
             <Route path="alunos"                  element={<StudentsPage />} />
             <Route path="contatos"                element={<Contacts />} />
+            <Route path="pessoas"                 element={<PessoasPage />} />
+            <Route path="financeiro"              element={<FinanceiroPage />} />
+            <Route path="acessos"                 element={<AcessosPage />} />
+            <Route path="cupons"                  element={<CuponsPage />} />
             <Route path="products"                element={<Products />} />
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />

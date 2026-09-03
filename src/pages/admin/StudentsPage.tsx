@@ -5,6 +5,7 @@ import {
   Edit2, Trash2, ChevronDown, AlertTriangle, Loader2,
   Save, FileText, Link, MapPin, Clock, ArrowUpDown,
   CheckCircle2, PauseCircle, XCircle, Download,
+  LayoutGrid, List, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import {
@@ -764,17 +765,127 @@ function StudentRow({ student, onEdit, onDelete }: {
   )
 }
 
+// ── Turmas view ───────────────────────────────────────────────
+
+function TurmasView({
+  students,
+  onEdit,
+}: {
+  students: Student[]
+  onEdit: (s: Student) => void
+}) {
+  type ClassGroup = {
+    key: string
+    schedule: string
+    teacher: string
+    subject: string
+    students: Student[]
+  }
+
+  const groups = useMemo<ClassGroup[]>(() => {
+    const map = new Map<string, ClassGroup>()
+    for (const s of students) {
+      const key = `${s.class_schedule ?? ''}|${s.teacher ?? ''}|${s.subject ?? ''}`
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          schedule: s.class_schedule ?? 'Sem horário',
+          teacher:  s.teacher        ?? 'Sem professor',
+          subject:  s.subject        ?? '',
+          students: [],
+        })
+      }
+      map.get(key)!.students.push(s)
+    }
+    return Array.from(map.values()).sort((a, b) => b.students.length - a.students.length)
+  }, [students])
+
+  if (groups.length === 0) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <GraduationCap className="w-10 h-10 text-white/8" />
+      <p className="text-[13px]" style={{ color: '#2E3042' }}>Nenhuma turma encontrada</p>
+    </div>
+  )
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {groups.map(group => (
+        <div
+          key={group.key}
+          className="rounded-2xl overflow-hidden"
+          style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
+        >
+          {/* Group header */}
+          <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${BORDER2}` }}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
+                  {group.schedule}
+                </p>
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: '#404252' }}>
+                  {group.teacher}
+                  {group.subject && ` · ${SUBJECT_LABEL[group.subject as keyof typeof SUBJECT_LABEL] ?? group.subject}`}
+                </p>
+              </div>
+              <div
+                className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 text-[13px] font-bold"
+                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399' }}
+              >
+                {group.students.length}
+              </div>
+            </div>
+          </div>
+
+          {/* Students */}
+          <div className="flex flex-col">
+            {group.students.map((s, i) => {
+              const cfg = STATUS_CONFIG[s.status]
+              return (
+                <div
+                  key={s.id}
+                  className="group flex items-center gap-3 px-4 py-2.5 transition-all hover:bg-white/[0.02] cursor-pointer"
+                  style={{ borderBottom: i < group.students.length - 1 ? `1px solid ${BORDER2}` : 'none' }}
+                  onClick={() => onEdit(s)}
+                >
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
+                    style={{ background: `${cfg.color}18`, color: cfg.color }}
+                  >
+                    {initials(s.student_name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12.5px] font-medium text-[#DADCE6] truncate">{s.student_name}</p>
+                    {s.jlpt_level && (
+                      <p className="text-[10.5px]" style={{ color: '#404252' }}>{s.jlpt_level}</p>
+                    )}
+                  </div>
+                  {s.monthly_fee != null && (
+                    <p className="text-[11px] tabular-nums shrink-0" style={{ color: '#5A5C6A' }}>
+                      {new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(s.monthly_fee)}
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────
 
 type SortKey = 'nome' | 'inicio'
 
 export default function StudentsPage() {
-  const [statusTab,   setStatusTab]   = useState<StudentStatus>('ativo')
-  const [search,      setSearch]      = useState('')
-  const [sortBy,      setSortBy]      = useState<SortKey>('nome')
-  const [showDrawer,  setShowDrawer]  = useState(false)
-  const [editStudent, setEditStudent] = useState<Student | null>(null)
+  const [statusTab,     setStatusTab]     = useState<StudentStatus>('ativo')
+  const [search,        setSearch]        = useState('')
+  const [sortBy,        setSortBy]        = useState<SortKey>('nome')
+  const [showDrawer,    setShowDrawer]    = useState(false)
+  const [editStudent,   setEditStudent]   = useState<Student | null>(null)
   const [deleteStudent, setDeleteStudent] = useState<Student | null>(null)
+  const [view,          setView]          = useState<'lista' | 'turmas'>('lista')
 
   const { data: allStudents = [], isLoading, isFetching, refetch } = useStudents()
 
@@ -854,14 +965,36 @@ export default function StudentsPage() {
               <p className="text-[13px] text-white/30 mt-0.5">Cadastro e controle de alunos</p>
             </div>
             <div className="flex items-center gap-2">
+              {/* View toggle */}
+              <div className="flex items-center rounded-xl overflow-hidden"
+                style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+                <button
+                  onClick={() => setView('lista')}
+                  title="Vista em lista"
+                  className="flex items-center justify-center px-2.5 py-2 transition-all cursor-pointer"
+                  style={view === 'lista'
+                    ? { background: 'rgba(255,255,255,0.07)', color: '#EDEDED' }
+                    : { color: 'rgba(255,255,255,0.3)' }}>
+                  <List className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setView('turmas')}
+                  title="Vista por turmas"
+                  className="flex items-center justify-center px-2.5 py-2 transition-all cursor-pointer"
+                  style={view === 'turmas'
+                    ? { background: 'rgba(255,255,255,0.07)', color: '#34D399' }
+                    : { color: 'rgba(255,255,255,0.3)' }}>
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <button onClick={exportCSV}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all cursor-pointer"
                 style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.45)' }}>
                 <Download className="w-3.5 h-3.5" /> Exportar CSV
               </button>
               <button
                 onClick={() => { setEditStudent(null); setShowDrawer(true) }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all cursor-pointer"
                 style={{ background: '#E8521A' }}>
                 <Plus className="w-4 h-4" /> Novo Aluno
               </button>
@@ -954,7 +1087,16 @@ export default function StudentsPage() {
             </div>
           </div>
 
-          {/* Table */}
+          {/* View: Turmas */}
+          {view === 'turmas' && !isLoading && (
+            <TurmasView
+              students={filtered}
+              onEdit={s => { setEditStudent(s); setShowDrawer(true) }}
+            />
+          )}
+
+          {/* View: Lista (Table) */}
+          {(view === 'lista' || isLoading) && (
           <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
@@ -1014,6 +1156,8 @@ export default function StudentsPage() {
               </div>
             )}
           </div>
+          )}
+
         </div>
       </div>
 
