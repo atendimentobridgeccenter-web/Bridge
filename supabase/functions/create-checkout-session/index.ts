@@ -122,13 +122,14 @@ Deno.serve(async (req: Request) => {
     // ── 1. Parse payload ────────────────────────────────────────
     // priceIds[] comes from FormRunner (multi-item pricing engine)
     // priceId (single) comes from QuizzRunner (single option selection)
-    const { productId, priceId, priceIds: priceIdsArr, email, name, successPath } = await req.json() as {
+    const { productId, priceId, priceIds: priceIdsArr, email, name, successPath, leadId } = await req.json() as {
       productId:    string
       priceId?:     string
       priceIds?:    string[]
       email?:       string
       name?:        string
       successPath?: string
+      leadId?:      string
     }
 
     const resolvedPriceIds: string[] = priceIdsArr?.length
@@ -200,8 +201,9 @@ Deno.serve(async (req: Request) => {
 
       metadata: {
         product_id: productId,
-        lead_name:  name  ?? '',
-        lead_email: email ?? '',
+        lead_name:  name   ?? '',
+        lead_email: email  ?? '',
+        lead_id:    leadId ?? '',
       },
 
       success_url: successUrl,
@@ -214,8 +216,8 @@ Deno.serve(async (req: Request) => {
       throw new Error('Stripe did not return a checkout URL.')
     }
 
-    // ── 6. Return URL ────────────────────────────────────────────
-    return json({ url: session.url })
+    // ── 6. Return URL + session ID ───────────────────────────────
+    return json({ url: session.url, sessionId: session.id })
 
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error.'

@@ -1153,7 +1153,7 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
 
 // ── StripeCheckoutScreen ──────────────────────────────────────
 
-function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes, history }: {
+function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes, history, utmParams }: {
   node:        FormNode
   pct:         number
   priceId:     string | null
@@ -1162,6 +1162,7 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
   answers:     Record<string, string>
   nodes:       FormNode[]
   history:     string[]
+  utmParams?:  Record<string, string>
 }) {
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
@@ -1183,12 +1184,34 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
     setLoading(true)
     setError(null)
     try {
-      // Persist form state so we can resume after Stripe redirect
+      // 1. Salva o lead no banco antes do redirect (payment_status: pending)
+      //    Garante que o lead aparece no CRM mesmo se não voltar ao formulário
+      let leadId: string | null = null
+      try {
+        const { data: leadData } = await supabase.from('leads').insert({
+          product_id:   productId,
+          email:        email  || null,
+          name:         name   || null,
+          payment_status: 'pending',
+          answers,
+          qualified:    true,
+          utm_source:   utmParams?.utm_source   || null,
+          utm_medium:   utmParams?.utm_medium   || null,
+          utm_campaign: utmParams?.utm_campaign || null,
+          utm_term:     utmParams?.utm_term     || null,
+          utm_content:  utmParams?.utm_content  || null,
+          referrer:     utmParams?.referrer     || null,
+        }).select('id').single()
+        leadId = leadData?.id ?? null
+      } catch { /* continua mesmo sem salvar o lead */ }
+
+      // 2. Persiste estado do formulário + leadId para retomar após o redirect
       localStorage.setItem(
         `payment-resume-${productId}`,
-        JSON.stringify({ history, answers }),
+        JSON.stringify({ history, answers, leadId }),
       )
-      // Build success path pointing back to this form
+
+      // 3. Monta success_url apontando de volta para este formulário
       const search = window.location.search || ''
       const successPath =
         window.location.pathname +
@@ -1197,7 +1220,7 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
         'payment_done=1'
 
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
-        body: { productId, priceIds: [resolvedPriceId], email, name, successPath },
+        body: { productId, priceIds: [resolvedPriceId], email, name, successPath, leadId },
       })
       if (fnErr) {
         // Try to parse the actual error body from the Edge Function response
@@ -1300,14 +1323,15 @@ const transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] as const }
 function restoreFromPayment(
   productId: string,
   nodes: FormNode[],
-): { history: string[]; answers: Record<string, string>; complete: boolean } | null {
+): { history: string[]; answers: Record<string, string>; complete: boolean; leadId: string | null } | null {
   try {
     if (!new URLSearchParams(window.location.search).has('payment_done')) return null
     const raw = localStorage.getItem(`payment-resume-${productId}`)
     if (!raw) return null
-    const { history, answers } = JSON.parse(raw) as {
+    const { history, answers, leadId = null } = JSON.parse(raw) as {
       history: string[]
       answers: Record<string, string>
+      leadId?: string | null
     }
     if (!Array.isArray(history)) return null
 
@@ -1318,9 +1342,9 @@ function restoreFromPayment(
 
     const nextNode = nodes[nodes.indexOf(stripeNode) + 1]
     if (!nextNode || nextNode.type === 'thankyou') {
-      return { history, answers, complete: true }
+      return { history, answers, complete: true, leadId }
     }
-    return { history: [...history, nextNode.id], answers, complete: false }
+    return { history: [...history, nextNode.id], answers, complete: false, leadId }
   } catch {
     return null
   }
@@ -1406,23 +1430,37 @@ export default function QuizzRunner({
 
     // Save to leads table (fire and forget)
     if (productId) {
-      supabase.from('leads').insert({
-        product_id:   productId,
-        email:        email || null,
-        phone:        phone || null,
-        name:         name  || null,
-        cpf:          cpf   || null,
-        city:         city  || null,
-        state:        state || null,
-        answers:      ans,
-        qualified:    !disqualified,
-        utm_source:   utmParams?.utm_source   || null,
-        utm_medium:   utmParams?.utm_medium   || null,
-        utm_campaign: utmParams?.utm_campaign || null,
-        utm_term:     utmParams?.utm_term     || null,
-        utm_content:  utmParams?.utm_content  || null,
-        referrer:     utmParams?.referrer     || null,
-      }).then(() => {}, () => {})
+      const existingLeadId = paymentResume?.leadId ?? null
+      if (existingLeadId) {
+        // Lead já foi salvo antes do redirect para o Stripe — apenas atualiza
+        // campos coletados depois do pagamento e marca como qualificado/desqualificado
+        supabase.from('leads').update({
+          phone:     phone || null,
+          cpf:       cpf   || null,
+          city:      city  || null,
+          state:     state || null,
+          answers:   ans,
+          qualified: !disqualified,
+        }).eq('id', existingLeadId).then(() => {}, () => {})
+      } else {
+        supabase.from('leads').insert({
+          product_id:   productId,
+          email:        email || null,
+          phone:        phone || null,
+          name:         name  || null,
+          cpf:          cpf   || null,
+          city:         city  || null,
+          state:        state || null,
+          answers:      ans,
+          qualified:    !disqualified,
+          utm_source:   utmParams?.utm_source   || null,
+          utm_medium:   utmParams?.utm_medium   || null,
+          utm_campaign: utmParams?.utm_campaign || null,
+          utm_term:     utmParams?.utm_term     || null,
+          utm_content:  utmParams?.utm_content  || null,
+          referrer:     utmParams?.referrer     || null,
+        }).then(() => {}, () => {})
+      }
     }
 
     // Fire tracking events only when qualified
@@ -1660,6 +1698,7 @@ export default function QuizzRunner({
         answers={answers}
         nodes={nodes}
         history={history}
+        utmParams={utmParams}
       />
     )
   }

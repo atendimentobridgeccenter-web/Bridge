@@ -306,9 +306,13 @@ export interface Lead {
   utm_term?:     string | null
   utm_content?:  string | null
   referrer?:     string | null
+  // pagamento
+  payment_status?:    'none' | 'pending' | 'confirmed'
+  stripe_session_id?: string | null
+  paid_at?:           string | null
   // joined
   product_name?:        string | null
-  product_form_nodes?:  unknown  // form_logic_config.nodes para resolver títulos
+  product_form_nodes?:  unknown
 }
 
 // ── product_structure: one row = one Module ───────────────────

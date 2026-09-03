@@ -32,6 +32,9 @@ interface LeadRow {
   utm_term?:     string | null
   utm_content?:  string | null
   referrer?:     string | null
+  payment_status?:    'none' | 'pending' | 'confirmed'
+  stripe_session_id?: string | null
+  paid_at?:           string | null
   products:    { name: string; form_logic_config: unknown } | null
 }
 
@@ -57,6 +60,7 @@ export function useLeads(productId?: string | null) {
           id, product_id, email, phone, name, cpf, city, state,
           answers, qualified, created_at,
           utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer,
+          payment_status, stripe_session_id, paid_at,
           products ( name, form_logic_config )
         `)
         .order('created_at', { ascending: false })

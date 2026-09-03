@@ -7,7 +7,7 @@ import {
   XCircle, Calendar, Package, FileText,
   Download, Edit2, Trash2, Loader2, AlertTriangle,
   Save, ExternalLink, List, Columns, ChevronLeft, ChevronRight,
-  GraduationCap,
+  GraduationCap, CreditCard, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLeads, useProductsForFilter, useUpdateLead, useDeleteLead } from '@/hooks/useLeads'
@@ -80,6 +80,39 @@ function displaySchoolYear(lead: Lead): string {
 
 function contactKey(lead: Lead) {
   return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
+}
+
+// ── Payment badge ─────────────────────────────────────────────
+
+function PaymentBadge({ status, paidAt, size = 'md' }: {
+  status?:  'none' | 'pending' | 'confirmed'
+  paidAt?:  string | null
+  size?:    'sm' | 'md'
+}) {
+  if (!status || status === 'none') return null
+
+  const sm = size === 'sm'
+
+  if (status === 'confirmed') {
+    return (
+      <span
+        title={paidAt ? `Pago em ${fmtDateShort(paidAt)}` : 'Pagamento confirmado'}
+        className={`inline-flex items-center gap-1 font-semibold rounded-md ${sm ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'}`}
+        style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }}>
+        <CreditCard className={sm ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+        Pago
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-semibold rounded-md ${sm ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'}`}
+      style={{ background: 'rgba(251,191,36,0.08)', color: '#FBBF24', border: '1px solid rgba(251,191,36,0.2)' }}>
+      <Clock className={sm ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+      Pend. pagamento
+    </span>
+  )
 }
 
 const PRODUCT_COLORS = [
@@ -359,6 +392,7 @@ function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void
                 : { background: 'rgba(239,68,68,0.08)', color: '#F87171', border: '1px solid rgba(239,68,68,0.15)' }}>
               {lead.qualified ? <><CheckCircle2 className="w-3 h-3" /> Qualificado</> : <><XCircle className="w-3 h-3" /> Desqualificado</>}
             </span>
+            <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} />
             {lead.product_name && (
               <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold"
                 style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}>
@@ -505,14 +539,17 @@ function LeadRow({
 
       {/* Status */}
       <td className="px-5 py-3.5">
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium"
-          style={lead.qualified
-            ? { background: 'rgba(52,211,153,0.08)', color: '#34D399', border: '1px solid rgba(52,211,153,0.15)' }
-            : { background: 'rgba(239,68,68,0.06)',  color: '#F87171', border: '1px solid rgba(239,68,68,0.12)'  }}>
-          {lead.qualified
-            ? <><CheckCircle2 className="w-2.5 h-2.5" />Qualificado</>
-            : <><XCircle      className="w-2.5 h-2.5" />Desqualificado</>}
-        </span>
+        <div className="flex flex-col gap-1.5">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium"
+            style={lead.qualified
+              ? { background: 'rgba(52,211,153,0.08)', color: '#34D399', border: '1px solid rgba(52,211,153,0.15)' }
+              : { background: 'rgba(239,68,68,0.06)',  color: '#F87171', border: '1px solid rgba(239,68,68,0.12)'  }}>
+            {lead.qualified
+              ? <><CheckCircle2 className="w-2.5 h-2.5" />Qualificado</>
+              : <><XCircle      className="w-2.5 h-2.5" />Desqualificado</>}
+          </span>
+          <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} size="sm" />
+        </div>
       </td>
 
       {/* Data */}
@@ -612,6 +649,7 @@ function PipelineCard({ lead, onView, onEdit, onDelete }: {
         </span>
         <span className="text-[10px] text-white/20">{timeAgo(lead.created_at)}</span>
       </div>
+      <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} size="sm" />
 
       {lead.email && (
         <p className="text-[10px] text-white/25 truncate">{lead.email}</p>
@@ -686,14 +724,16 @@ function StatChip({ value, label, color }: { value: number; label: string; color
 
 // ── Page ──────────────────────────────────────────────────────
 
-type QualFilter = 'all' | 'qualified' | 'unqualified'
+type QualFilter     = 'all' | 'qualified' | 'unqualified'
+type PaymentFilter  = 'all' | 'confirmed' | 'pending' | 'none'
 
 export default function LeadsPage() {
   const navigate = useNavigate()
-  const [productId,    setProductId]    = useState('')
-  const [search,       setSearch]       = useState('')
-  const [stageFilter,  setStageFilter]  = useState<string>('all')
-  const [qualFilter,   setQualFilter]   = useState<QualFilter>('all')
+  const [productId,      setProductId]      = useState('')
+  const [search,         setSearch]         = useState('')
+  const [stageFilter,    setStageFilter]    = useState<string>('all')
+  const [qualFilter,     setQualFilter]     = useState<QualFilter>('all')
+  const [paymentFilter,  setPaymentFilter]  = useState<PaymentFilter>('all')
   const [editLead,     setEditLead]     = useState<Lead | null>(null)
   const [deleteLead,   setDeleteLead]   = useState<Lead | null>(null)
   const [viewMode,     setViewMode]     = useState<'list' | 'pipeline'>('list')
@@ -719,6 +759,11 @@ export default function LeadsPage() {
     if (qualFilter === 'qualified')   list = list.filter(l => l.qualified)
     if (qualFilter === 'unqualified') list = list.filter(l => !l.qualified)
 
+    // Payment filter
+    if (paymentFilter !== 'all') {
+      list = list.filter(l => (l.payment_status ?? 'none') === paymentFilter)
+    }
+
     // Text search
     const q = search.toLowerCase().trim()
     if (q) {
@@ -732,7 +777,7 @@ export default function LeadsPage() {
     }
 
     return list
-  }, [leads, search, stageFilter, qualFilter, stagesMap])
+  }, [leads, search, stageFilter, qualFilter, paymentFilter, stagesMap])
 
   // Pagination (list view only)
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -740,11 +785,12 @@ export default function LeadsPage() {
   const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   // Reset to page 1 when filters change
-  useMemo(() => { setPage(1) }, [search, productId, stageFilter, qualFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  useMemo(() => { setPage(1) }, [search, productId, stageFilter, qualFilter, paymentFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const total       = filtered.length
   const qualified   = filtered.filter(l => l.qualified).length
   const unqualified = filtered.filter(l => !l.qualified).length
+  const paidCount   = filtered.filter(l => l.payment_status === 'confirmed').length
   const todayCount  = filtered.filter(l => {
     const d = new Date(l.created_at), n = new Date()
     return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear()
@@ -757,10 +803,12 @@ export default function LeadsPage() {
   }
 
   function exportCSV() {
-    const header = ['Nome', 'Aluno', 'Email', 'Telefone', 'Produto', 'Status', 'Cidade', 'Estado', 'Fonte (UTM)', 'Mídia', 'Campanha', 'Referrer', 'Data']
+    const header = ['Nome', 'Aluno', 'Email', 'Telefone', 'Produto', 'Status', 'Pagamento', 'Data Pagamento', 'Cidade', 'Estado', 'Fonte (UTM)', 'Mídia', 'Campanha', 'Referrer', 'Data']
     const rows   = filtered.map(l => [
       displayName(l), displayStudentName(l), l.email ?? '', l.phone ?? '', l.product_name ?? '',
       l.qualified ? 'Qualificado' : 'Desqualificado',
+      l.payment_status === 'confirmed' ? 'Pago' : l.payment_status === 'pending' ? 'Pendente' : '',
+      l.paid_at ? fmtDateShort(l.paid_at) : '',
       l.city ?? '', l.state ?? '',
       l.utm_source ?? '', l.utm_medium ?? '', l.utm_campaign ?? '', l.referrer ?? '',
       fmtDateShort(l.created_at),
@@ -807,6 +855,7 @@ export default function LeadsPage() {
             <StatChip value={total}       label="total"           color="#EDEDED" />
             <StatChip value={qualified}   label="qualificados"    color="#34D399" />
             <StatChip value={unqualified} label="desqualificados" color="#F87171" />
+            <StatChip value={paidCount}   label="pagamentos confirmados" color="#34D399" />
             <StatChip value={todayCount}  label="hoje"            color="#E8521A" />
           </div>
 
@@ -840,6 +889,26 @@ export default function LeadsPage() {
                   className="px-3 py-2 text-[12px] font-medium transition-all"
                   style={qualFilter === opt.value
                     ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
+                    : { color: 'rgba(255,255,255,0.35)' }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Payment filter */}
+            <div className="flex items-center rounded-xl overflow-hidden shrink-0"
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+              {([
+                { value: 'all',       label: 'Pagamento'  },
+                { value: 'confirmed', label: 'Pago'       },
+                { value: 'pending',   label: 'Pendente'   },
+                { value: 'none',      label: 'Sem pagam.' },
+              ] as { value: PaymentFilter; label: string }[]).map(opt => (
+                <button key={opt.value}
+                  onClick={() => setPaymentFilter(opt.value)}
+                  className="px-3 py-2 text-[12px] font-medium transition-all"
+                  style={paymentFilter === opt.value
+                    ? { background: opt.value === 'confirmed' ? 'rgba(52,211,153,0.15)' : opt.value === 'pending' ? 'rgba(251,191,36,0.12)' : 'rgba(232,82,26,0.15)', color: opt.value === 'confirmed' ? '#34D399' : opt.value === 'pending' ? '#FBBF24' : '#F0643A' }
                     : { color: 'rgba(255,255,255,0.35)' }}>
                   {opt.label}
                 </button>
@@ -895,9 +964,9 @@ export default function LeadsPage() {
                 </button>
               )
             })}
-            {(stageFilter !== 'all' || qualFilter !== 'all' || search || productId) && (
+            {(stageFilter !== 'all' || qualFilter !== 'all' || paymentFilter !== 'all' || search || productId) && (
               <button
-                onClick={() => { setStageFilter('all'); setQualFilter('all'); setSearch(''); setProductId('') }}
+                onClick={() => { setStageFilter('all'); setQualFilter('all'); setPaymentFilter('all'); setSearch(''); setProductId('') }}
                 className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-white/25 hover:text-white/60 flex items-center gap-1"
                 style={{ border: '1px solid transparent' }}>
                 <X className="w-3 h-3" /> Limpar filtros
