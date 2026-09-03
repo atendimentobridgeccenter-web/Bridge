@@ -17,6 +17,7 @@ const PessoasPage       = lazy(() => import('@/pages/admin/PessoasPage'))
 const FinanceiroPage    = lazy(() => import('@/pages/admin/FinanceiroPage'))
 const AcessosPage       = lazy(() => import('@/pages/admin/AcessosPage'))
 const CuponsPage        = lazy(() => import('@/pages/admin/CuponsPage'))
+const PipelinePage      = lazy(() => import('@/pages/admin/PipelinePage'))
 
 // ── Auth ──────────────────────────────────────────────────────
 const Login         = lazy(() => import('@/pages/Login'))
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="financeiro"              element={<FinanceiroPage />} />
             <Route path="acessos"                 element={<AcessosPage />} />
             <Route path="cupons"                  element={<CuponsPage />} />
+            <Route path="pipeline"               element={<PipelinePage />} />
             <Route path="products"                element={<Products />} />
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />

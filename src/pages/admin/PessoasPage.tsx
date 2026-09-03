@@ -275,7 +275,7 @@ export default function PessoasPage() {
         {/* ── Header ── */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Central de Pessoas</h1>
+            <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Central de Clientes</h1>
             <p className="text-[12px] mt-0.5" style={{ color: '#404252' }}>
               Leads, contatos e alunos em um único lugar
             </p>

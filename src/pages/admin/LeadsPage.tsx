@@ -6,7 +6,7 @@ import {
   Mail, Phone, MapPin, User, CheckCircle2,
   XCircle, Calendar, Package, FileText,
   Download, Edit2, Trash2, Loader2, AlertTriangle,
-  Save, ExternalLink, List, Columns, ChevronLeft, ChevronRight,
+  Save, ExternalLink, ChevronLeft, ChevronRight,
   GraduationCap, CreditCard, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -582,134 +582,6 @@ function LeadRow({
   )
 }
 
-// ── Pipeline card ─────────────────────────────────────────────
-
-function PipelineCard({ lead, onView, onEdit, onDelete }: {
-  lead: Lead; onView: () => void; onEdit: () => void; onDelete: () => void
-}) {
-  const name        = displayName(lead)
-  const studentName = displayStudentName(lead)
-  const color       = productColor(lead.product_name)
-
-  return (
-    <div
-      className="rounded-xl p-3.5 flex flex-col gap-2.5 cursor-pointer group transition-all"
-      style={{ background: '#13151A', border: `1px solid ${BORDER}` }}
-      onClick={onView}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER }}
-    >
-      {/* Name row */}
-      <div className="flex items-start gap-2.5">
-        <div className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5"
-          style={{ background: 'rgba(232,82,26,0.1)', color: '#E8521A' }}>
-          {(name || lead.email || '?')[0]?.toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold text-[#EDEDED] truncate leading-tight">
-            {name || <span className="text-white/30 font-normal">Sem nome</span>}
-          </p>
-          {studentName && (
-            <p className="flex items-center gap-1 text-[10px] text-white/35 truncate mt-0.5">
-              <GraduationCap className="w-2.5 h-2.5 shrink-0" />
-              {studentName}
-            </p>
-          )}
-        </div>
-        {/* Hover actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-          <button onClick={e => { e.stopPropagation(); onEdit() }}
-            className="p-1 rounded text-white/25 hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors">
-            <Edit2 className="w-3 h-3" />
-          </button>
-          <button onClick={e => { e.stopPropagation(); onDelete() }}
-            className="p-1 rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors">
-            <Trash2 className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
-
-      {/* Product badge */}
-      {lead.product_name && (
-        <span className="inline-flex items-center self-start px-2 py-0.5 rounded text-[10px] font-semibold"
-          style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}>
-          {lead.product_name}
-        </span>
-      )}
-
-      {/* Footer row */}
-      <div className="flex items-center justify-between mt-0.5">
-        <span className="inline-flex items-center gap-1 text-[10px] font-medium"
-          style={lead.qualified
-            ? { color: '#34D399' }
-            : { color: '#F87171' }}>
-          {lead.qualified
-            ? <><CheckCircle2 className="w-2.5 h-2.5" />Qualificado</>
-            : <><XCircle      className="w-2.5 h-2.5" />Desqualificado</>}
-        </span>
-        <span className="text-[10px] text-white/20">{timeAgo(lead.created_at)}</span>
-      </div>
-      <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} size="sm" />
-
-      {lead.email && (
-        <p className="text-[10px] text-white/25 truncate">{lead.email}</p>
-      )}
-    </div>
-  )
-}
-
-// ── Pipeline view ─────────────────────────────────────────────
-
-function PipelineView({ leads, stagesMap, onView, onEdit, onDelete }: {
-  leads:      Lead[]
-  stagesMap:  Record<string, { stage: string } | undefined>
-  onView:     (lead: Lead) => void
-  onEdit:     (lead: Lead) => void
-  onDelete:   (lead: Lead) => void
-}) {
-  // Group leads by contact_key's stage (default: 'novo')
-  const columns = useMemo(() => {
-    return STAGES.map(s => ({
-      stage: s,
-      leads: leads.filter(l => (stagesMap[contactKey(l)]?.stage ?? 'novo') === s.value),
-    }))
-  }, [leads, stagesMap])
-
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 400 }}>
-      {columns.map(({ stage, leads: colLeads }) => (
-        <div key={stage.value} className="flex flex-col gap-3 shrink-0" style={{ width: 280 }}>
-          {/* Column header */}
-          <div className="flex items-center gap-2 px-1">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: stage.color }} />
-            <span className="text-[12px] font-semibold" style={{ color: stage.color }}>{stage.label}</span>
-            <span className="ml-auto text-[11px] text-white/25 tabular-nums">{colLeads.length}</span>
-          </div>
-          {/* Cards */}
-          <div className="flex flex-col gap-2.5">
-            {colLeads.length === 0 ? (
-              <div className="rounded-xl py-8 flex items-center justify-center"
-                style={{ border: `1px dashed rgba(255,255,255,0.06)` }}>
-                <p className="text-[11px] text-white/20">Nenhum lead</p>
-              </div>
-            ) : (
-              colLeads.map(lead => (
-                <PipelineCard
-                  key={lead.id}
-                  lead={lead}
-                  onView={() => onView(lead)}
-                  onEdit={() => onEdit(lead)}
-                  onDelete={() => onDelete(lead)}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ── Stat chip ─────────────────────────────────────────────────
 
 function StatChip({ value, label, color }: { value: number; label: string; color: string }) {
@@ -734,9 +606,8 @@ export default function LeadsPage() {
   const [stageFilter,    setStageFilter]    = useState<string>('all')
   const [qualFilter,     setQualFilter]     = useState<QualFilter>('all')
   const [paymentFilter,  setPaymentFilter]  = useState<PaymentFilter>('all')
-  const [editLead,     setEditLead]     = useState<Lead | null>(null)
-  const [deleteLead,   setDeleteLead]   = useState<Lead | null>(null)
-  const [viewMode,     setViewMode]     = useState<'list' | 'pipeline'>('list')
+  const [editLead,   setEditLead]   = useState<Lead | null>(null)
+  const [deleteLead, setDeleteLead] = useState<Lead | null>(null)
   const [page,         setPage]         = useState(1)
   const qc = useQueryClient()
 
@@ -915,26 +786,6 @@ export default function LeadsPage() {
               ))}
             </div>
 
-            {/* View toggle */}
-            <div className="flex items-center rounded-xl overflow-hidden shrink-0"
-              style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <button
-                onClick={() => setViewMode('list')}
-                className={cn('flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all')}
-                style={viewMode === 'list'
-                  ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
-                  : { color: 'rgba(255,255,255,0.35)' }}>
-                <List className="w-3.5 h-3.5" /> Lista
-              </button>
-              <button
-                onClick={() => setViewMode('pipeline')}
-                className={cn('flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all')}
-                style={viewMode === 'pipeline'
-                  ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
-                  : { color: 'rgba(255,255,255,0.35)' }}>
-                <Columns className="w-3.5 h-3.5" /> Pipeline
-              </button>
-            </div>
           </div>
 
           {/* Stage filter tabs */}
@@ -1009,14 +860,6 @@ export default function LeadsPage() {
                 )}
               </div>
             </div>
-          ) : viewMode === 'pipeline' ? (
-            <PipelineView
-              leads={filtered}
-              stagesMap={stagesMap}
-              onView={lead => navigate(`/admin/leads/${lead.id}`)}
-              onEdit={lead => setEditLead(lead)}
-              onDelete={lead => setDeleteLead(lead)}
-            />
           ) : (
             /* ── List view ── */
             <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
