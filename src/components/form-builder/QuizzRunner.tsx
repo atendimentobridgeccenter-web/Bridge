@@ -1339,7 +1339,9 @@ function restoreFromPayment(
     if (!stripeNode) return { history, answers, complete: false }
 
     const nextNode = nodes[nodes.indexOf(stripeNode) + 1]
-    if (!nextNode || nextNode.type === 'thankyou') {
+    // Marcar como completo se não há próximo nó, é thankyou, ou é outro stripe-checkout
+    // (evita avançar da conexão padrão para um segundo link de pagamento)
+    if (!nextNode || nextNode.type === 'thankyou' || nextNode.type === 'stripe-checkout') {
       return { history, answers, complete: true, leadId }
     }
     return { history: [...history, nextNode.id], answers, complete: false, leadId }
