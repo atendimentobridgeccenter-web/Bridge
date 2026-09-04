@@ -65,14 +65,21 @@ export default function Apply() {
 
   // ── New format: FormNode[] produced by FormBuilder ────────────
   if (Array.isArray(cfg?.nodes) && (cfg.nodes as FormNode[]).length > 0) {
+    const nodes = cfg.nodes as FormNode[]
+
+    // Se o formulário já tem um nó stripe-checkout inline, desliga o CheckoutSummary
+    // automático do final — as duas estratégias de checkout são mutuamente exclusivas.
+    const hasInlineStripeNode = nodes.some(n => n.type === 'stripe-checkout')
+    const useCheckout = checkoutActive && !hasInlineStripeNode
+
     return (
       <QuizzRunner
-        nodes={cfg.nodes as FormNode[]}
+        nodes={nodes}
         productId={product.id}
-        enableCheckout={checkoutActive}
+        enableCheckout={useCheckout}
         productName={product.name}
-        defaultPriceId={checkoutActive ? (product.price_id_stripe ?? undefined) : undefined}
-        extraPriceIds={checkoutActive ? ((checkoutCfg.extra_price_ids ?? []) as string[]) : undefined}
+        defaultPriceId={useCheckout ? (product.price_id_stripe ?? undefined) : undefined}
+        extraPriceIds={useCheckout ? ((checkoutCfg.extra_price_ids ?? []) as string[]) : undefined}
         tracking={hasTracking ? trackingCfg : undefined}
         utmParams={utmParams}
       />
