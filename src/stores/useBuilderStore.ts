@@ -87,7 +87,9 @@ export const useBuilderStore = create<BuilderStore>((set) => ({
 
   setFormNodes: (formNodes) => set({ formNodes, isDirty: true }),
 
-  setCanvasPositions: (canvasPositions) => set({ canvasPositions, isDirty: true }),
+  // Posições do canvas não marcam isDirty — são incluídas no próximo save manual,
+  // mas não disparam auto-save por conta própria.
+  setCanvasPositions: (canvasPositions) => set({ canvasPositions }),
 
   markAsSaved: () => set({ isDirty: false, savedAt: new Date() }),
 
