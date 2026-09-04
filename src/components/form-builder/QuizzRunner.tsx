@@ -1211,13 +1211,11 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
         JSON.stringify({ history, answers, leadId }),
       )
 
-      // 3. Monta success_url apontando de volta para este formulário
-      const search = window.location.search || ''
-      const successPath =
-        window.location.pathname +
-        search +
-        (search ? '&' : '?') +
-        'payment_done=1'
+      // 3. Monta success_url apontando de volta para este formulário (sem duplicar payment_done)
+      const currentParams = new URLSearchParams(window.location.search)
+      currentParams.delete('payment_done')
+      const cleanSearch = currentParams.toString() ? '?' + currentParams.toString() : ''
+      const successPath = window.location.pathname + cleanSearch + (cleanSearch ? '&' : '?') + 'payment_done=1'
 
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
         body: { productId, priceIds: [resolvedPriceId], email, name, successPath, leadId },
@@ -1379,6 +1377,7 @@ export default function QuizzRunner({
   const [activePriceId,   setActivePriceId]   = useState<string | null>(defaultPriceId ?? null)
   const [activePriceInfo, setActivePriceInfo] = useState<OptionPrice | null>(null)
   const [leadSaved,       setLeadSaved]       = useState(false)
+  const [paidViaStripe,   setPaidViaStripe]   = useState(false)
   const [otherActive,     setOtherActive]     = useState(false)
   const [openedPdfs,     setOpenedPdfs]      = useState<Set<string>>(new Set())
   const [otherDraft,      setOtherDraft]      = useState('')
@@ -1410,6 +1409,7 @@ export default function QuizzRunner({
     // If stripe-checkout was the last node, mark form as complete
     if (paymentResume.complete) {
       finalAnswersRef.current = paymentResume.answers
+      setPaidViaStripe(true)
       setDone(true)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1637,7 +1637,7 @@ export default function QuizzRunner({
 
   if (done) {
     if (thankyouContent) return <ThankyouScreen title={thankyouContent.title} description={thankyouContent.description} socialLinks={thankyouContent.socialLinks} />
-    if (checkoutEnabled && productId && !hasManualPayment) {
+    if (checkoutEnabled && productId && !hasManualPayment && !paidViaStripe) {
       return (
         <CheckoutSummary
           productId={productId}
