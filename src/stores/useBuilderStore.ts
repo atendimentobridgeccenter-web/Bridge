@@ -23,11 +23,14 @@ import type { FormNode } from '@/components/form-builder/FormBuilder'
 
 // ── State ─────────────────────────────────────────────────────
 
+export type CanvasPositions = Record<string, { x: number; y: number }>
+
 interface BuilderState {
-  product:   Product | null
-  formNodes: FormNode[]
-  isDirty:   boolean
-  savedAt:   Date | null
+  product:         Product | null
+  formNodes:       FormNode[]
+  canvasPositions: CanvasPositions
+  isDirty:         boolean
+  savedAt:         Date | null
 }
 
 // ── Actions ───────────────────────────────────────────────────
@@ -42,6 +45,9 @@ interface BuilderActions {
   // Atualiza os nodes do formulário — marca dirty
   setFormNodes: (nodes: FormNode[]) => void
 
+  // Atualiza posições do canvas — marca dirty para persistir no Supabase
+  setCanvasPositions: (positions: CanvasPositions) => void
+
   // Chamado pela mutation após salvar com sucesso
   markAsSaved: () => void
 
@@ -54,10 +60,11 @@ type BuilderStore = BuilderState & BuilderActions
 // ── Initial state ─────────────────────────────────────────────
 
 const INITIAL: BuilderState = {
-  product:   null,
-  formNodes: [],
-  isDirty:   false,
-  savedAt:   null,
+  product:         null,
+  formNodes:       [],
+  canvasPositions: {},
+  isDirty:         false,
+  savedAt:         null,
 }
 
 // ── Store ─────────────────────────────────────────────────────
@@ -66,9 +73,10 @@ export const useBuilderStore = create<BuilderStore>((set) => ({
   ...INITIAL,
 
   initFromServer: (product) => {
-    const cfg   = product.form_logic_config as Record<string, unknown>
-    const nodes = Array.isArray(cfg?.nodes) ? (cfg.nodes as FormNode[]) : []
-    set({ product, formNodes: nodes, isDirty: false, savedAt: null })
+    const cfg             = product.form_logic_config as Record<string, unknown>
+    const nodes           = Array.isArray(cfg?.nodes) ? (cfg.nodes as FormNode[]) : []
+    const canvasPositions = (cfg?.canvasPositions ?? {}) as CanvasPositions
+    set({ product, formNodes: nodes, canvasPositions, isDirty: false, savedAt: null })
   },
 
   patchProduct: (fields) =>
@@ -78,6 +86,8 @@ export const useBuilderStore = create<BuilderStore>((set) => ({
     })),
 
   setFormNodes: (formNodes) => set({ formNodes, isDirty: true }),
+
+  setCanvasPositions: (canvasPositions) => set({ canvasPositions, isDirty: true }),
 
   markAsSaved: () => set({ isDirty: false, savedAt: new Date() }),
 

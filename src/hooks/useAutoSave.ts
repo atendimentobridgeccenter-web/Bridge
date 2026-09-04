@@ -4,7 +4,7 @@ import { useUpdateProduct } from './useProduct'
 import type { Product } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
 
-function buildFields(product: Product, formNodes: FormNode[]): Partial<Product> {
+function buildFields(product: Product, formNodes: FormNode[], canvasPositions: Record<string, { x: number; y: number }>): Partial<Product> {
   return {
     name:                product.name,
     slug:                product.slug,
@@ -14,7 +14,7 @@ function buildFields(product: Product, formNodes: FormNode[]): Partial<Product> 
     price_id_stripe:     product.price_id_stripe ?? null,
     landing_page_config: product.landing_page_config,
     checkout_config:     product.checkout_config,
-    form_logic_config:   { nodes: formNodes },
+    form_logic_config:   { nodes: formNodes, canvasPositions },
   }
 }
 
@@ -28,10 +28,10 @@ export function useAutoSave(id: string | undefined) {
 
   function saveNow() {
     if (!id || id === 'new') return
-    const { product, formNodes, markAsSaved } = useBuilderStore.getState()
+    const { product, formNodes, canvasPositions, markAsSaved } = useBuilderStore.getState()
     if (!product) return
     updateProduct(
-      { id, fields: buildFields(product, formNodes) },
+      { id, fields: buildFields(product, formNodes, canvasPositions) },
       { onSuccess: markAsSaved, onError: onSaveError },
     )
   }

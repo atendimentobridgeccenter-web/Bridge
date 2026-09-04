@@ -12,6 +12,7 @@ import { FormCanvas, type CanvasPositions } from './FormCanvas'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useBuilderStore } from '@/stores/useBuilderStore'
 import StripePricePicker from '@/components/StripePricePicker'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -1342,7 +1343,13 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
   const posKey  = productId ? `canvas-pos-${productId}`  : null
   const viewKey = productId ? `canvas-view-${productId}` : null
 
+  const storePositions     = useBuilderStore(s => s.canvasPositions)
+  const storeSetPositions  = useBuilderStore(s => s.setCanvasPositions)
+
+  // Fonte de verdade: store (carregado do Supabase via initFromServer).
+  // Fallback para localStorage para retrocompatibilidade com posições antigas.
   const [canvasPositions, setCanvasPositions] = useState<CanvasPositions>(() => {
+    if (Object.keys(storePositions).length > 0) return storePositions
     if (!posKey) return {}
     try { return JSON.parse(localStorage.getItem(posKey) ?? '{}') } catch { return {} }
   })
@@ -1359,8 +1366,9 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
 
   const saveCanvasPositions = useCallback((p: CanvasPositions) => {
     setCanvasPositions(p)
-    if (posKey) localStorage.setItem(posKey, JSON.stringify(p))
-  }, [posKey])
+    storeSetPositions(p)                                  // persiste no Supabase via auto-save
+    if (posKey) localStorage.setItem(posKey, JSON.stringify(p)) // cache local para sessão
+  }, [posKey, storeSetPositions])
 
   const dragIdRef = useRef<string | null>(null)
 
