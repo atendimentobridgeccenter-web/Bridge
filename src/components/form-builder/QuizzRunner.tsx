@@ -1413,9 +1413,11 @@ export default function QuizzRunner({
         payment_status: 'paid',
       }).eq('id', paymentResume.leadId).then(() => {}, () => {})
     }
-    // Se stripe-checkout era o último nó, encerra o formulário
+    // Se stripe-checkout era o último nó, encerra o formulário e exibe o card de obrigado
     if (paymentResume.complete) {
       finalAnswersRef.current = paymentResume.answers
+      const thankyouNode = nodes.find(n => n.type === 'thankyou')
+      if (thankyouNode) setThankyouContent({ title: thankyouNode.title, description: thankyouNode.description, socialLinks: thankyouNode.socialLinks })
       setDone(true)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
