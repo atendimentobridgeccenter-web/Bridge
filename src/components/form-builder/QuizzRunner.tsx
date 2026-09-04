@@ -1338,13 +1338,9 @@ function restoreFromPayment(
     const stripeNode = nodes.find(n => n.id === lastId && n.type === 'stripe-checkout')
     if (!stripeNode) return { history, answers, complete: false }
 
-    const nextNode = nodes[nodes.indexOf(stripeNode) + 1]
-    // Marcar como completo se não há próximo nó, é thankyou, ou é outro stripe-checkout
-    // (evita avançar da conexão padrão para um segundo link de pagamento)
-    if (!nextNode || nextNode.type === 'thankyou' || nextNode.type === 'stripe-checkout') {
-      return { history, answers, complete: true, leadId }
-    }
-    return { history: [...history, nextNode.id], answers, complete: false, leadId }
+    // Pagamento concluído — sempre encerra o formulário.
+    // A conexão padrão do nó stripe-checkout nunca deve ser seguida após pagamento bem-sucedido.
+    return { history, answers, complete: true, leadId }
   } catch {
     return null
   }
