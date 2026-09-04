@@ -1406,10 +1406,11 @@ export default function QuizzRunner({
     const url = new URL(window.location.href)
     url.searchParams.delete('payment_done')
     window.history.replaceState({}, '', url.toString())
-    // If stripe-checkout was the last node, mark form as complete
+    // Usuário retornou do Stripe — nunca mostrar CheckoutSummary de novo
+    setPaidViaStripe(true)
+    // Se stripe-checkout era o último nó, encerra o formulário
     if (paymentResume.complete) {
       finalAnswersRef.current = paymentResume.answers
-      setPaidViaStripe(true)
       setDone(true)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
