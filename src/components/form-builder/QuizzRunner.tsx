@@ -1406,6 +1406,13 @@ export default function QuizzRunner({
     window.history.replaceState({}, '', url.toString())
     // Usuário retornou do Stripe — nunca mostrar CheckoutSummary de novo
     setPaidViaStripe(true)
+    // Marca o lead como pago imediatamente na volta do Stripe
+    if (paymentResume.leadId) {
+      supabase.from('leads').update({
+        completed:      true,
+        payment_status: 'paid',
+      }).eq('id', paymentResume.leadId).then(() => {}, () => {})
+    }
     // Se stripe-checkout era o último nó, encerra o formulário
     if (paymentResume.complete) {
       finalAnswersRef.current = paymentResume.answers
