@@ -601,7 +601,7 @@ export function FormCanvas({
           }}>
             {toolBtn(onAddNode,          '+ Pergunta',    '#E8521A')}
             {toolBtn(onAddWelcome,       '+ Intro',       '#E8521A', hasWelcome)}
-            {toolBtn(onAddThankyou,      '+ Final',       '#34D399', hasThankyou)}
+            {toolBtn(onAddThankyou,      '+ Final',       '#34D399')}
             <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 2px' }} />
             {toolBtn(onAddBankDeposit,   '+ Depósito',    '#3B82F6')}
             {toolBtn(onAddReceiptUpload, '+ Comprovante', '#8B5CF6')}

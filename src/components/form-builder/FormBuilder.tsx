@@ -6,7 +6,7 @@ import {
   MapPin, Map, Sparkles, CheckCircle, CreditCard,
   XCircle, FileText, User, ImageIcon, X, SquareCheck,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Landmark, Upload, Banknote, LayoutList, Workflow,
+  Landmark, Upload, Banknote, LayoutList, Workflow, Clock,
 } from 'lucide-react'
 import { FormCanvas, type CanvasPositions } from './FormCanvas'
 import { cn } from '@/lib/cn'
@@ -81,6 +81,7 @@ export interface FormNode {
   logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
   socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
   bankInfo?:              BankInfo  // dados bancários para nó bank-deposit
+  payLaterLabel?:         string    // quando preenchido, exibe botão "pagar depois" no bank-deposit
   stripeCheckoutPriceId?: string    // preço Stripe específico para nó stripe-checkout
   pdfUrl?:       string       // URL do PDF de termos (nó confirm) — requer abertura antes do aceite
   options:       string[]
@@ -528,7 +529,51 @@ function BankDepositEditor({ node, nodes, onUpdate }: { node: FormNode; nodes: F
           className="hidden" onChange={handleImageUpload} />
       </div>
 
-      <ScreenLogicSection node={node} nodes={nodes} onUpdate={onUpdate} actionLabel="após avançar" />
+      {/* Botão "Pagar depois" */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <Clock className="w-3.5 h-3.5 text-white/30" />
+          <span className={labelCls}>Opção "Pagar Depois"</span>
+        </div>
+        <p className="text-[11px] -mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          Quando preenchido, exibe um segundo botão que permite prosseguir sem pagar agora.
+        </p>
+        <input
+          value={node.payLaterLabel ?? ''}
+          onChange={e => onUpdate({ ...node, payLaterLabel: e.target.value || undefined })}
+          placeholder="Ex: Prefiro pagar depois"
+          className={inputCls} style={inputSty}
+          onFocus={e => { e.currentTarget.style.borderColor = focusSty }}
+          onBlur={e  => { e.currentTarget.style.borderColor = blurSty }}
+        />
+        {node.payLaterLabel && (
+          <div className="flex flex-col gap-2">
+            <span className="text-[11px] font-semibold text-white/30">→ Se clicar em &quot;{node.payLaterLabel}&quot;, ir para</span>
+            <select
+              value={node.logicJumps.find(j => j.ifOption === 'pay-later')?.jumpToNodeId ?? ''}
+              onChange={e => {
+                const dest = e.target.value
+                const others = node.logicJumps.filter(j => j.ifOption !== 'pay-later')
+                const payLaterJumps = dest ? [{ id: uid(), ifOption: 'pay-later', jumpToNodeId: dest }] : []
+                onUpdate({ ...node, logicJumps: [...others, ...payLaterJumps] })
+              }}
+              className="px-2.5 py-1.5 rounded-md text-[12px] outline-none appearance-none cursor-pointer w-full"
+              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.08)', color: '#EDEDED' }}
+            >
+              <option value="">Próxima tela (padrão)</option>
+              {nodes.filter(n => n.id !== node.id).map(n => (
+                <option key={n.id} value={n.id}>
+                  {String(nodes.indexOf(n) + 1).padStart(2, '0')} — {n.title || 'Sem título'}
+                </option>
+              ))}
+              <option value="__end__">⏹ Finalizar formulário</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      <ScreenLogicSection node={node} nodes={nodes} onUpdate={onUpdate} actionLabel='após "Já realizei o pagamento"' />
     </div>
   )
 }
@@ -1394,7 +1439,6 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
   }, [nodes, onChange, hasWelcome])
 
   const addThankyou = useCallback(() => {
-    if (hasThankyou) return
     const n: FormNode = {
       id: uid(), type: 'thankyou',
       title: 'Tudo certo!', description: 'Suas respostas foram registradas. Nossa equipe entrará em contato em breve.',
@@ -1402,7 +1446,7 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
     }
     onChange([...nodes, n])
     setSelectedId(n.id)
-  }, [nodes, onChange, hasThankyou])
+  }, [nodes, onChange])
 
   const addBankDeposit = useCallback(() => {
     const n: FormNode = {
@@ -1625,9 +1669,8 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
             </button>
             <button
               onClick={addThankyou}
-              disabled={hasThankyou}
-              title={hasThankyou ? 'Já existe uma tela de encerramento' : 'Adicionar tela final'}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Adicionar tela final"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
               style={{ background: 'rgba(52,211,153,0.05)', border: '1px dashed rgba(52,211,153,0.2)', color: '#34D399' }}>
               <CheckCircle className="w-3 h-3" /> Final
             </button>

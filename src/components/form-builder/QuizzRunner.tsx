@@ -775,7 +775,7 @@ function calcDiscount(amount: number, coupon: CouponRecord): number {
 }
 
 function BankDepositScreen({ node, pct, onAdvance }: {
-  node: FormNode; pct: number; onAdvance: () => void
+  node: FormNode; pct: number; onAdvance: (value: string) => void
 }) {
   const [copied, setCopied] = useState<string | null>(null)
   const [couponCode,  setCouponCode]  = useState('')
@@ -984,13 +984,24 @@ function BankDepositScreen({ node, pct, onAdvance }: {
         )}
 
         <button
-          onClick={onAdvance}
+          onClick={() => onAdvance('paid')}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-xl text-[15px] font-bold text-white transition-all"
           style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.3)' }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#E8521A' }}>
           Já realizei o pagamento <ArrowRight className="w-4 h-4" />
         </button>
+
+        {node.payLaterLabel && (
+          <button
+            onClick={() => onAdvance('pay-later')}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)' }}>
+            {node.payLaterLabel}
+          </button>
+        )}
 
         <p className="text-center text-[11px]" style={{ color: 'rgba(255,255,255,0.1)' }}>
           POWERED BY BRIDGE
@@ -1406,11 +1417,11 @@ export default function QuizzRunner({
     window.history.replaceState({}, '', url.toString())
     // Usuário retornou do Stripe — nunca mostrar CheckoutSummary de novo
     setPaidViaStripe(true)
-    // Marca o lead como pago imediatamente na volta do Stripe
+    // Marca o lead como confirmado imediatamente na volta do Stripe
     if (paymentResume.leadId) {
       supabase.from('leads').update({
-        completed:      true,
-        payment_status: 'paid',
+        payment_status: 'confirmed',
+        paid_at:        new Date().toISOString(),
       }).eq('id', paymentResume.leadId).then(() => {}, () => {})
     }
     // Se stripe-checkout era o último nó, encerra o formulário e exibe o card de obrigado
@@ -1530,13 +1541,14 @@ export default function QuizzRunner({
     const optPrice = currentNode.optionPrices?.[answer]
     if (optPrice) { setActivePriceId(optPrice.priceId); setActivePriceInfo(optPrice) }
 
-    // Resolve next via logic jumps first
-    // For screen-type nodes (receipt-upload, payment-done etc.) empty ifOption = unconditional
+    // Resolve next via logic jumps first.
+    // For screen nodes: specific match (j.ifOption === answer) wins over unconditional (j.ifOption === '').
+    // This allows bank-deposit to route 'pay-later' separately from the default 'paid' path.
     const isScreenNode = ['receipt-upload', 'bank-deposit', 'payment-done', 'stripe-checkout'].includes(currentNode.type)
-    const jump = currentNode.logicJumps.find(j =>
-      !!j.jumpToNodeId &&
-      (isScreenNode ? (j.ifOption === '' || j.ifOption === answer) : j.ifOption === answer)
-    )
+    const jump = isScreenNode
+      ? (currentNode.logicJumps.find(j => !!j.jumpToNodeId && j.ifOption === answer)
+         ?? currentNode.logicJumps.find(j => !!j.jumpToNodeId && j.ifOption === ''))
+      : currentNode.logicJumps.find(j => !!j.jumpToNodeId && j.ifOption === answer)
 
     if (jump) {
       if (jump.jumpToNodeId === '__disqualify__') {
