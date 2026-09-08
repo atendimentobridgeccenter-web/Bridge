@@ -1332,7 +1332,7 @@ const transition = { duration: 0.28, ease: [0.25, 0.46, 0.45, 0.94] as const }
 function restoreFromPayment(
   productId: string,
   nodes: FormNode[],
-): { history: string[]; answers: Record<string, string>; complete: boolean; leadId: string | null } | null {
+): { history: string[]; answers: Record<string, string>; complete: boolean; leadId: string | null; thankyouNodeId: string | null } | null {
   try {
     if (!new URLSearchParams(window.location.search).has('payment_done')) return null
     const raw = localStorage.getItem(`payment-resume-${productId}`)
@@ -1347,11 +1347,25 @@ function restoreFromPayment(
     // Find the stripe-checkout node at the end of the saved history
     const lastId = history[history.length - 1]
     const stripeNode = nodes.find(n => n.id === lastId && n.type === 'stripe-checkout')
-    if (!stripeNode) return { history, answers, complete: false }
+    if (!stripeNode) return { history, answers, complete: false, leadId: null, thankyouNodeId: null }
+
+    // Resolve which thankyou to show: prefer the one this specific stripe-checkout
+    // points to via logic jump or linear next — supports multiple end cards.
+    let thankyouNodeId: string | null = null
+    const unconditionalJump = stripeNode.logicJumps.find(j =>
+      !!j.jumpToNodeId && (j.ifOption === '' || j.ifOption === 'paid')
+    )
+    if (unconditionalJump) {
+      const target = nodes.find(n => n.id === unconditionalJump.jumpToNodeId)
+      if (target?.type === 'thankyou') thankyouNodeId = target.id
+    }
+    if (!thankyouNodeId) {
+      const nextLinear = nodes[nodes.indexOf(stripeNode) + 1]
+      if (nextLinear?.type === 'thankyou') thankyouNodeId = nextLinear.id
+    }
 
     // Pagamento concluído — sempre encerra o formulário.
-    // A conexão padrão do nó stripe-checkout nunca deve ser seguida após pagamento bem-sucedido.
-    return { history, answers, complete: true, leadId }
+    return { history, answers, complete: true, leadId, thankyouNodeId }
   } catch {
     return null
   }
@@ -1424,10 +1438,13 @@ export default function QuizzRunner({
         paid_at:        new Date().toISOString(),
       }).eq('id', paymentResume.leadId).then(() => {}, () => {})
     }
-    // Se stripe-checkout era o último nó, encerra o formulário e exibe o card de obrigado
+    // Se stripe-checkout era o último nó, encerra o formulário e exibe o card de obrigado correto.
+    // Usa o thankyouNodeId resolvido em restoreFromPayment (suporta múltiplos cards de fim).
     if (paymentResume.complete) {
       finalAnswersRef.current = paymentResume.answers
-      const thankyouNode = nodes.find(n => n.type === 'thankyou')
+      const thankyouNode = paymentResume.thankyouNodeId
+        ? nodes.find(n => n.id === paymentResume.thankyouNodeId)
+        : nodes.find(n => n.type === 'thankyou')
       if (thankyouNode) setThankyouContent({ title: thankyouNode.title, description: thankyouNode.description, socialLinks: thankyouNode.socialLinks })
       setDone(true)
     }
