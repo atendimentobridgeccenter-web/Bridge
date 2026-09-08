@@ -1705,7 +1705,7 @@ export default function QuizzRunner({
       <BankDepositScreen
         node={currentNode}
         pct={pct}
-        onAdvance={() => advance('')}
+        onAdvance={advance}
       />
     )
   }
