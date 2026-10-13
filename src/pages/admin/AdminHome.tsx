@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   TrendingUp, Users, GraduationCap, ArrowUpRight,
-  CheckCircle2, ChevronRight, RefreshCw, DollarSign,
-  Activity, Clock, Zap, CreditCard,
-} from 'lucide-react'
+  ChevronRight, RefreshCw, DollarSign,
+  Activity, Clock, Zap, } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/cn'
@@ -28,6 +27,7 @@ interface DashLead {
   phone:        string | null
   utm_source:   string | null
   utm_campaign: string | null
+  payment_status: 'none' | 'pending' | 'confirmed'
   products:     { name: string } | null
 }
 
@@ -113,7 +113,7 @@ function useDash() {
     queryFn: async () => {
       const [lr, sr, stR, hr, pr] = await Promise.all([
         supabase.from('leads')
-          .select('id, qualified, created_at, name, email, phone, utm_source, utm_campaign, products(name)')
+          .select('id, qualified, created_at, name, email, phone, utm_source, utm_campaign, payment_status, products(name)')
           .order('created_at', { ascending: false }).limit(500),
         supabase.from('contact_stages').select('stage, contact_key'),
         supabase.from('students').select('status, monthly_fee'),

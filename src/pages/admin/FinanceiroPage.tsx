@@ -1,11 +1,8 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  TrendingUp, CreditCard, AlertCircle, DollarSign,
-  ChevronRight, ArrowUpRight, Clock, CheckCircle2, Users,
+  TrendingUp, CreditCard, ChevronRight, ArrowUpRight, Clock, CheckCircle2, Users,
 } from 'lucide-react'
-import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
 
 // ── Tokens ────────────────────────────────────────────────────
@@ -16,11 +13,6 @@ const BORDER  = 'rgba(255,255,255,0.07)'
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function fmtBRL(v: number) {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency', currency: 'BRL', maximumFractionDigits: 0,
-  }).format(v)
-}
 
 function fmtJPY(v: number) {
   return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(v)

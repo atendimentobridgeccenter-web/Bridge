@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Search, X, RefreshCw, Users, GraduationCap, ChevronRight,
-  Mail, Phone, CreditCard, Clock, CircleDot, Filter,
-  ArrowUpRight, UserPlus, Sparkles,
+  Mail, Phone, CreditCard, Clock, CircleDot,
+  ArrowUpRight, Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
@@ -428,7 +428,7 @@ export default function PessoasPage() {
               </div>
               {filtered.map(lead => {
                 const key = lead.email ?? lead.phone ?? lead.id
-                const stage = key ? stagesData[key] ?? null : null
+                const stage = key ? stagesData[key]?.stage ?? null : null
                 const isAluno = lead.email ? studentEmails.has(lead.email.toLowerCase()) : false
                 return (
                   <PersonRow

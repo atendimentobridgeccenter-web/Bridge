@@ -264,10 +264,35 @@ export interface CheckoutResponse {
 
 export type ProductStatus = 'draft' | 'published' | 'archived'
 
+export interface CheckoutTracking {
+  metaPixelId?:              string
+  gaMeasurementId?:          string
+  gtmContainerId?:           string
+  googleAdsConversionId?:    string
+  googleAdsConversionLabel?: string
+  leadEventName?:            string
+  purchaseEventName?:        string
+}
+
+/**
+ * Conteúdo de products.checkout_config.
+ *
+ * Todo campo é opcional porque a coluna nasce como `{}` e cada tela grava só o
+ * seu pedaço. Antes o tipo exigia price_id e currency e era unido com
+ * `Record<string, never>` para permitir o objeto vazio — o que impedia atribuir
+ * qualquer objeto parcial e produzia 6 erros de tipo.
+ *
+ * `type`, `extra_price_ids` e `tracking` são os campos que realmente existem no
+ * banco hoje; os quatro de preço ficam declarados porque o CheckoutTab os grava,
+ * ainda que nenhum produto os tenha.
+ */
 export interface CheckoutConfig {
-  price_id: string
-  currency: string
-  trial_days?: number
+  type?:            string
+  extra_price_ids?: string[]
+  tracking?:        CheckoutTracking
+  price_id?:        string
+  currency?:        string
+  trial_days?:      number
   upsell_price_id?: string
 }
 
@@ -281,7 +306,7 @@ export interface Product {
   thumbnail_url: string | null
   landing_page_config: BlocksConfig
   form_logic_config: Record<string, unknown>
-  checkout_config: CheckoutConfig | Record<string, never>
+  checkout_config: CheckoutConfig
   created_at: string
   updated_at: string
 }

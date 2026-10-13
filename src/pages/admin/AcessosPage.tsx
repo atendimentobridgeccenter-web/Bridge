@@ -2,9 +2,8 @@ import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   KeyRound, Search, X, RefreshCw, Package, Shield,
-  CheckCircle2, AlertCircle, ChevronRight, Trash2,
-  Plus, Users, Lock,
-} from 'lucide-react'
+  CheckCircle2, Trash2,
+  Users, } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'

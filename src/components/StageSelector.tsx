@@ -84,7 +84,9 @@ export default function StageSelector({ contactKey, currentStage, compact = fals
                   pending === s.value ? 'ring-1' : 'hover:bg-white/5',
                 )}
                 style={pending === s.value
-                  ? { background: s.bg, color: s.color, ringColor: s.border }
+                  // ring-1 do Tailwind le a cor de --tw-ring-color; `ringColor`
+                  // nao existe em CSS, então a borda saía sempre na cor padrão.
+                  ? ({ background: s.bg, color: s.color, ['--tw-ring-color']: s.border } as React.CSSProperties)
                   : s.value === stage
                     ? { background: s.bg, color: s.color }
                     : { color: 'rgba(255,255,255,0.55)' }

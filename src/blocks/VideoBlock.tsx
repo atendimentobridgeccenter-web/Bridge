@@ -2,17 +2,24 @@ import type { VideoBlockProps } from '@/lib/types'
 
 function getEmbedUrl(url: string, autoplay: boolean, muted: boolean): { type: 'iframe' | 'video'; src: string } {
   // YouTube
+  // Autoplay sempre força mudo: navegador bloqueia vídeo que inicia com som.
+  // Fora do autoplay, respeita a opção escolhida — antes ela era ignorada nos
+  // embeds e valia só para arquivo de vídeo direto.
+  const silent = muted || autoplay
+
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
   if (ytMatch) {
     const params = new URLSearchParams({ rel: '0', modestbranding: '1' })
-    if (autoplay) { params.set('autoplay', '1'); params.set('mute', '1') }
+    if (autoplay) params.set('autoplay', '1')
+    if (silent)   params.set('mute', '1')
     return { type: 'iframe', src: `https://www.youtube.com/embed/${ytMatch[1]}?${params}` }
   }
   // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/)
   if (vimeoMatch) {
     const params = new URLSearchParams()
-    if (autoplay) { params.set('autoplay', '1'); params.set('muted', '1') }
+    if (autoplay) params.set('autoplay', '1')
+    if (silent)   params.set('muted', '1')
     return { type: 'iframe', src: `https://player.vimeo.com/video/${vimeoMatch[1]}?${params}` }
   }
   // Direct video file

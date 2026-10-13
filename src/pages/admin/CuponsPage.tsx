@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Tag, Plus, Trash2, X, Check, Loader2, Ticket,
+  Plus, Trash2, X, Check, Loader2, Ticket,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'

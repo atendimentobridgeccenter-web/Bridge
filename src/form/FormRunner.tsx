@@ -16,7 +16,9 @@ interface Props {
 const CHECKOUT_SENTINEL = '__checkout__'
 
 export default function FormRunner({ product, fromSlug }: Props) {
-  const schema = product.form_logic_config as FormSchema
+  // form_logic_config é JSONB sem tipo no banco: a conversão passa por
+  // unknown porque Record<string, unknown> não sobrepõe FormSchema.
+  const schema = product.form_logic_config as unknown as FormSchema
   const steps  = schema?.steps ?? []
 
   const [stepId,      setStepId]      = useState<string>(steps[0]?.id ?? '')
