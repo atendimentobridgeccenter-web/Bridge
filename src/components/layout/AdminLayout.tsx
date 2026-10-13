@@ -486,15 +486,21 @@ export default function AdminLayout() {
   const [user,  setUser]  = useState<SupabaseUser | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Só desvia quem é explicitamente professor. Conta sem papel definido segue
+    // para o admin como sempre — a RLS é que limita o que ela alcança, e mandá-la
+    // para um portal que também não funcionaria só trancaria o acesso.
+    function route(session: { user: SupabaseUser } | null) {
       if (!session) { navigate('/login', { replace: true }); return }
+      if (session.user.app_metadata?.role === 'professor') {
+        navigate('/professor', { replace: true })
+        return
+      }
       setUser(session.user)
       setReady(true)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      if (!session) { navigate('/login', { replace: true }); return }
-      setUser(session.user)
-    })
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => route(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => route(session))
     return () => subscription.unsubscribe()
   }, [navigate])
 

@@ -17,9 +17,15 @@ export default function Login() {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
 
+  // Professor vai direto ao portal. Sem isso ele cairia em /admin e só depois
+  // seria rebatido pelo AdminLayout, piscando a interface errada no caminho.
+  function homeFor(user: { app_metadata?: Record<string, unknown> } | null | undefined): string {
+    return user?.app_metadata?.role === 'professor' ? '/professor' : '/admin'
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/admin', { replace: true })
+      if (session) navigate(homeFor(session.user), { replace: true })
     })
   }, [navigate])
 
@@ -39,9 +45,9 @@ export default function Login() {
     e.preventDefault()
     setLoading(true); setError(null)
     try {
-      const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password })
       if (authErr) { setError(networkError(authErr)); setLoading(false); return }
-      navigate('/admin', { replace: true })
+      navigate(homeFor(data.user), { replace: true })
     } catch (err) { setError(networkError(err)); setLoading(false) }
   }
 
