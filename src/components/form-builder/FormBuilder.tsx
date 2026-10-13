@@ -80,6 +80,11 @@ export interface FormNode {
   allowOther?:   boolean      // habilita opção "Outra" em radio/select
   logoUrl?:      string       // URL da imagem/logo na tela de boas-vindas
   socialLinks?:  SocialLink[] // links de redes sociais na tela de encerramento
+  // Coluna da ficha do aluno que esta resposta preenche quando o pagamento é
+  // confirmado. Lida pelo gatilho create_student_draft_from_lead, que só aceita
+  // os destinos da sua lista branca — pôr aqui 'status' ou 'class_id' não tem
+  // efeito, de propósito.
+  mapsTo?:       string
   bankInfo?:              BankInfo  // dados bancários para nó bank-deposit
   payLaterLabel?:         string    // quando preenchido, exibe botão "pagar depois" no bank-deposit
   stripeCheckoutPriceId?: string    // preço Stripe específico para nó stripe-checkout
@@ -89,6 +94,31 @@ export interface FormNode {
   optionPrices?: Record<string, OptionPrice>
   buttonLabel?:  string       // texto do botão CTA na tela welcome
 }
+
+/**
+ * Campos da ficha do aluno que uma resposta pode preencher.
+ *
+ * Esta lista espelha a lista branca do gatilho
+ * create_student_draft_from_lead (migration 029). Ausentes de propósito:
+ * turma, mensalidade, forma de pagamento e status — decisões da equipe na
+ * revisão da matrícula, não do formulário. Mudar aqui sem mudar lá não libera
+ * nada: quem decide é o banco.
+ */
+export const STUDENT_FIELD_TARGETS = [
+  { value: 'student_name',      label: 'Nome do aluno' },
+  { value: 'responsible_name',  label: 'Nome do responsável' },
+  { value: 'birth_date',        label: 'Data de nascimento' },
+  { value: 'phone_responsible', label: 'Telefone do responsável' },
+  { value: 'phone_student',     label: 'Telefone do aluno' },
+  { value: 'email',             label: 'E-mail' },
+  { value: 'address',           label: 'Endereço' },
+  { value: 'deposit_name',      label: 'Nome exibido no depósito' },
+  { value: 'school_year',       label: 'Ano letivo' },
+  { value: 'pocket_id',         label: 'Pocket ID' },
+  { value: 'subject',           label: 'Matéria (jlpt / refesco / ingles)' },
+  { value: 'jlpt_level',        label: 'Nível JLPT (N5–N1)' },
+  { value: 'notes',             label: 'Observações' },
+] as const
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -1066,6 +1096,26 @@ function QuestionEditor({
         )
       })()}
 
+      {/* Destino na ficha do aluno */}
+      <div className="flex flex-col gap-2">
+        <label className={labelCls}>Preenche na ficha do aluno</label>
+        <select
+          value={node.mapsTo ?? ''}
+          onChange={e => set('mapsTo', e.target.value || undefined)}
+          className={inputCls + ' appearance-none cursor-pointer'}
+        >
+          <option value="">Não transferir</option>
+          {STUDENT_FIELD_TARGETS.map(f => (
+            <option key={f.value} value={f.value}>{f.label}</option>
+          ))}
+        </select>
+        <p className="text-[11px] text-white/30 leading-relaxed">
+          Quando o pagamento é confirmado, a resposta desta pergunta vai para o
+          campo escolhido na ficha criada automaticamente. Turma, mensalidade e
+          status ficam de fora: são decisão da equipe na revisão da matrícula.
+        </p>
+      </div>
+
       {/* Título */}
       <div className="flex flex-col gap-2">
         <label className={labelCls}>{node.type === 'confirm' ? 'Instrução / Título' : 'Título da Pergunta'}</label>
@@ -1419,7 +1469,6 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
 
   const selected    = nodes.find(n => n.id === selectedId) ?? null
   const hasWelcome  = nodes.some(n => n.type === 'welcome')
-  const hasThankyou = nodes.some(n => n.type === 'thankyou')
 
   const addNode = useCallback(() => {
     const n = blankNode()
@@ -1558,7 +1607,6 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
               onAddPaymentDone={addPaymentDone}
               onAddStripeCheckout={addStripeCheckout}
               hasWelcome={hasWelcome}
-              hasThankyou={hasThankyou}
             />
           </div>
 

@@ -396,14 +396,13 @@ interface FormCanvasProps {
   onAddPaymentDone:   () => void
   onAddStripeCheckout:() => void
   hasWelcome:         boolean
-  hasThankyou:        boolean
 }
 
 export function FormCanvas({
   nodes, selectedId, onSelect, positions, onPositionsChange, onChange,
   onAddNode, onAddWelcome, onAddThankyou,
   onAddBankDeposit, onAddReceiptUpload, onAddPaymentDone, onAddStripeCheckout,
-  hasWelcome, hasThankyou,
+  hasWelcome,
 }: FormCanvasProps) {
 
   const initNodes = useMemo(() => buildRFNodes(nodes, selectedId, positions), [])
@@ -445,7 +444,9 @@ export function FormCanvas({
   // Save ALL node positions on drag stop — not just the dragged node merged
   // with `positions`. That old pattern only saved previously-dragged nodes:
   // on the very first drag positions={}, so all other nodes lost their places.
-  const handleNodeDragStop = useCallback((_: React.MouseEvent, _node: Node) => {
+  // O React Flow entrega o evento DOM nativo aqui (MouseEvent | TouchEvent), não
+  // o evento sintético do React — por isso a assinatura difere de onNodeClick.
+  const handleNodeDragStop = useCallback((_: MouseEvent | TouchEvent, _node: Node) => {
     const pos: CanvasPositions = {}
     rfNodesRef.current.forEach(n => { pos[n.id] = n.position })
     onPositionsChange(pos)
