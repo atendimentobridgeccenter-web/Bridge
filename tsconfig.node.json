@@ -17,7 +17,10 @@
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    // "erasableSyntaxOnly": true,
+    //   Só existe a partir do TypeScript 5.8; o projeto está no 5.7.3, onde a
+    //   opção é recusada com TS5023 e o typecheck falha. Reative ao subir o
+    //   TypeScript — a opção é desejável, só não é suportada ainda.
     "noFallthroughCasesInSwitch": true
   },
   "include": ["vite.config.ts"]

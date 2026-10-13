@@ -25,3 +25,12 @@ dist-ssr
 .env
 .env.local
 .mcp.json
+
+# Configuração local do Claude Code. Fica fora do versionamento porque as regras
+# de permissão guardam o comando literal que foi aprovado — e isso já incluiu um
+# SUPABASE_ACCESS_TOKEN em texto puro. Nunca comitar.
+.claude/
+
+# Estado local do Supabase CLI (ref do projeto, URL do pooler, versões).
+# É por máquina e se regenera com `supabase link`.
+supabase/.temp/
