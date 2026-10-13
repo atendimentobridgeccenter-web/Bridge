@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Search, X, Plus, RefreshCw, User, GraduationCap,
-  Phone, Mail, Calendar, BookOpen, DollarSign,
-  Edit2, Trash2, ChevronDown, AlertTriangle, Loader2,
+  Phone, Calendar, BookOpen, Edit2, Trash2, AlertTriangle, Loader2,
   Save, FileText, Link, MapPin, Clock, ArrowUpDown,
   CheckCircle2, PauseCircle, XCircle, Download,
-  LayoutGrid, List, Users,
+  LayoutGrid, List, UserPlus, Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import {
@@ -13,8 +13,9 @@ import {
 } from '@/hooks/useStudents'
 import type {
   Student, StudentPatch, StudentStatus, StudentSubject,
-  JlptLevel, PaymentMethod, CancelReason, Modality,
+  JlptLevel, PaymentMethod, CancelReason,
 } from '@/hooks/useStudents'
+import { useClasses, formatSchedule } from '@/hooks/useClasses'
 
 // ── Tokens ────────────────────────────────────────────────────
 
@@ -28,6 +29,7 @@ const BORDER2  = 'rgba(255,255,255,0.05)'
 // ── Config ────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
+  rascunho:  { label: 'Rascunho',  color: '#FDBA74', bg: 'rgba(253,186,116,0.08)', border: 'rgba(253,186,116,0.2)',  icon: UserPlus     },
   ativo:     { label: 'Ativo',     color: '#34D399', bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.18)',  icon: CheckCircle2 },
   trancado:  { label: 'Trancado',  color: '#FCD34D', bg: 'rgba(251,191,36,0.08)',  border: 'rgba(251,191,36,0.2)',   icon: PauseCircle  },
   cancelado: { label: 'Cancelado', color: '#F87171', bg: 'rgba(239,68,68,0.07)',   border: 'rgba(239,68,68,0.18)',   icon: XCircle      },
@@ -150,6 +152,24 @@ function DrawerSection({ title, children }: { title: string; children: React.Rea
 
 // ── Field row ─────────────────────────────────────────────────
 
+function InheritedRow({ icon: Icon, value, href }: {
+  icon: React.ElementType; value: string; href?: string
+}) {
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <Icon className="w-3 h-3 text-white/25 shrink-0" />
+      {href ? (
+        <a href={href} target="_blank" rel="noreferrer"
+          className="text-[12px] text-white/45 hover:text-white/75 transition-colors truncate">
+          {value}
+        </a>
+      ) : (
+        <p className="text-[12px] text-white/45 truncate">{value}</p>
+      )}
+    </div>
+  )
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
@@ -185,14 +205,10 @@ const EMPTY: StudentPatch & { student_name: string } = {
   jlpt_level: null,
   school_year: '',
   pocket_id: '',
-  class_schedule: '',
-  teacher: '',
-  modality: null,
-  unit: '',
-  meet_link: '',
-  classroom_link: '',
+  class_id: null,
   monthly_fee: null,
   payment_method: null,
+  deposit_name: '',
   discount_notes: '',
   notes: '',
   status: 'ativo',
@@ -207,6 +223,10 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
   const isEdit = !!student
   const createMutation = useCreateStudent()
   const updateMutation = useUpdateStudent()
+  // Carrega todas as turmas, não só as ativas: um aluno vinculado a turma
+  // encerrada precisa continuar aparecendo no select, senão salvar a ficha
+  // apagaria o vínculo sem avisar.
+  const { data: allClasses = [] } = useClasses()
 
   const [form, setForm] = useState<StudentPatch & { student_name: string }>(
     student
@@ -223,14 +243,10 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
           jlpt_level:        student.jlpt_level,
           school_year:       student.school_year        ?? '',
           pocket_id:         student.pocket_id          ?? '',
-          class_schedule:    student.class_schedule     ?? '',
-          teacher:           student.teacher            ?? '',
-          modality:          student.modality,
-          unit:              student.unit               ?? '',
-          meet_link:         student.meet_link          ?? '',
-          classroom_link:    student.classroom_link     ?? '',
+          class_id:          student.class_id,
           monthly_fee:       student.monthly_fee,
           payment_method:    student.payment_method,
+          deposit_name:      student.deposit_name       ?? '',
           discount_notes:    student.discount_notes     ?? '',
           notes:             student.notes              ?? '',
           status:            student.status,
@@ -252,6 +268,9 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm(f => ({ ...f, [k]: v }))
   }
+
+  const selectedClass = allClasses.find(c => c.id === form.class_id) ?? null
+  const classOptions  = allClasses.filter(c => c.status === 'ativa' || c.id === form.class_id)
 
   async function save() {
     if (!form.student_name.trim()) return
@@ -415,63 +434,55 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Data / Horário da aula">
-                <input className={inputCls} style={inputStyle}
-                  value={form.class_schedule ?? ''}
-                  onChange={e => set('class_schedule', e.target.value)}
-                  onFocus={focusBorder} onBlur={blurBorder}
-                  placeholder="Ex: Quarta 19h" />
-              </Field>
-              <Field label="Professor">
-                <input className={inputCls} style={inputStyle}
-                  value={form.teacher ?? ''}
-                  onChange={e => set('teacher', e.target.value)}
-                  onFocus={focusBorder} onBlur={blurBorder}
-                  placeholder="Nome do professor" />
-              </Field>
-            </div>
-
-            <Field label="Modalidade">
-              <div className="flex gap-2">
-                {(['presencial', 'online'] as Modality[]).map(m => (
-                  <button key={m} onClick={() => set('modality', m === form.modality ? null : m)}
-                    className="flex-1 py-2 rounded-xl text-[12px] font-semibold capitalize transition-all"
-                    style={form.modality === m
-                      ? { background: 'rgba(96,165,250,0.12)', color: '#93C5FD', border: '1px solid rgba(96,165,250,0.3)' }
-                      : { background: BG_INPUT, color: 'rgba(255,255,255,0.35)', border: `1px solid ${BORDER}` }}>
-                    {m === 'presencial' ? 'Presencial' : 'Online'}
-                  </button>
+            <Field label="Turma">
+              <select className={selectCls} style={inputStyle}
+                value={form.class_id ?? ''}
+                onChange={e => set('class_id', e.target.value || null)}
+                onFocus={focusBorder} onBlur={blurBorder}>
+                <option value="">Sem turma definida</option>
+                {classOptions.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.status === 'encerrada' ? ' (encerrada)' : ''}
+                  </option>
                 ))}
+              </select>
+              {classOptions.length === 0 && (
+                <p className="text-[11px] text-white/30">
+                  Nenhuma turma ativa cadastrada — crie em Turmas.
+                </p>
+              )}
+            </Field>
+
+            {selectedClass && (
+              <div className="rounded-xl px-3.5 py-3 flex flex-col gap-2"
+                style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
+                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/25">
+                  Herdado da turma
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  <InheritedRow icon={Clock} value={formatSchedule(selectedClass.sessions)} />
+                  <InheritedRow icon={User}  value={selectedClass.teacher?.name ?? 'Sem professor'} />
+                  {(selectedClass.modality || selectedClass.unit) && (
+                    <InheritedRow icon={MapPin} value={[
+                      selectedClass.modality === 'online' ? 'Online'
+                        : selectedClass.modality === 'presencial' ? 'Presencial' : null,
+                      selectedClass.unit,
+                    ].filter(Boolean).join(' · ')} />
+                  )}
+                  {selectedClass.meet_link && (
+                    <InheritedRow icon={Link} value={selectedClass.meet_link} href={selectedClass.meet_link} />
+                  )}
+                  {selectedClass.classroom_link && (
+                    <InheritedRow icon={BookOpen} value={selectedClass.classroom_link} href={selectedClass.classroom_link} />
+                  )}
+                </div>
+                <p className="text-[11px] text-white/25 leading-relaxed">
+                  Para mudar horário, professor ou links, edite a turma — a alteração
+                  vale para todos os alunos dela.
+                </p>
               </div>
-            </Field>
-
-            {form.modality === 'presencial' && (
-              <Field label="Unidade">
-                <input className={inputCls} style={inputStyle}
-                  value={form.unit ?? ''}
-                  onChange={e => set('unit', e.target.value)}
-                  onFocus={focusBorder} onBlur={blurBorder}
-                  placeholder="Nome ou endereço da unidade" />
-              </Field>
             )}
-            {form.modality === 'online' && (
-              <Field label="Link Google Meet">
-                <input className={inputCls} style={inputStyle}
-                  value={form.meet_link ?? ''}
-                  onChange={e => set('meet_link', e.target.value)}
-                  onFocus={focusBorder} onBlur={blurBorder}
-                  placeholder="https://meet.google.com/…" />
-              </Field>
-            )}
-
-            <Field label="Link Google Classroom">
-              <input className={inputCls} style={inputStyle}
-                value={form.classroom_link ?? ''}
-                onChange={e => set('classroom_link', e.target.value)}
-                onFocus={focusBorder} onBlur={blurBorder}
-                placeholder="https://classroom.google.com/c/…" />
-            </Field>
           </DrawerSection>
 
           {/* ── Financeiro ── */}
@@ -496,6 +507,13 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
                 </select>
               </Field>
             </div>
+            <Field label="Nome exibido no depósito">
+              <input className={inputCls} style={inputStyle}
+                value={form.deposit_name ?? ''}
+                onChange={e => set('deposit_name', e.target.value)}
+                onFocus={focusBorder} onBlur={blurBorder}
+                placeholder={form.responsible_name?.trim() || 'Nome que aparece no extrato'} />
+            </Field>
             <Field label="Descontos aplicados">
               <input className={inputCls} style={inputStyle}
                 value={form.discount_notes ?? ''}
@@ -516,7 +534,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
           {/* ── Status ── */}
           <DrawerSection title="Status">
             <div className="flex gap-2">
-              {(['ativo', 'trancado', 'cancelado'] as StudentStatus[]).map(s => {
+              {(['rascunho', 'ativo', 'trancado', 'cancelado'] as StudentStatus[]).map(s => {
                 const cfg = STATUS_CONFIG[s]
                 const Icon = cfg.icon
                 return (
@@ -649,8 +667,8 @@ function DeleteConfirm({ student, onClose }: { student: Student; onClose: () => 
 
 // ── Student row ───────────────────────────────────────────────
 
-function StudentRow({ student, onEdit, onDelete }: {
-  student: Student; onEdit: () => void; onDelete: () => void
+function StudentRow({ student, onOpen, onEdit, onDelete }: {
+  student: Student; onOpen: () => void; onEdit: () => void; onDelete: () => void
 }) {
   const cfg = STATUS_CONFIG[student.status]
   const Icon = cfg.icon
@@ -676,12 +694,19 @@ function StudentRow({ student, onEdit, onDelete }: {
             {initials(student.student_name)}
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[#EDEDED] truncate leading-tight">
+            <button onClick={onOpen}
+              className="text-[13px] font-semibold text-[#EDEDED] truncate leading-tight text-left hover:underline decoration-white/30 underline-offset-2 max-w-full">
               {student.student_name}
-            </p>
+            </button>
             {student.responsible_name && (
               <p className="text-[11px] text-white/35 truncate mt-0.5 flex items-center gap-1">
                 <User className="w-2.5 h-2.5 shrink-0" /> {student.responsible_name}
+              </p>
+            )}
+            {(student.phone_responsible ?? student.phone_student) && (
+              <p className="text-[11px] text-white/30 truncate mt-0.5 flex items-center gap-1 tabular-nums">
+                <Phone className="w-2.5 h-2.5 shrink-0" />
+                {student.phone_responsible ?? student.phone_student}
               </p>
             )}
           </div>
@@ -700,20 +725,35 @@ function StudentRow({ student, onEdit, onDelete }: {
 
       {/* Professor */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/45 truncate max-w-[130px]">{student.teacher ?? '—'}</p>
+        <p className="text-[12px] text-white/45 truncate max-w-[130px]">
+          {student.class?.teacher?.name ?? '—'}
+        </p>
       </td>
 
       {/* Horário */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/45">{student.class_schedule ?? '—'}</p>
+        <p className="text-[12px] text-white/45 tabular-nums">
+          {student.class ? formatSchedule(student.class.sessions) : '—'}
+        </p>
+        {student.class && (
+          <p className="text-[10px] text-white/25 truncate max-w-[130px] mt-0.5">
+            {student.class.name}
+          </p>
+        )}
       </td>
 
       {/* Mensalidade */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] font-semibold text-[#EDEDED]">{fmtCurrency(student.monthly_fee)}</p>
+        <p className="text-[12px] font-semibold text-[#EDEDED] tabular-nums">{fmtCurrency(student.monthly_fee)}</p>
         {student.payment_method && (
           <p className="text-[10px] text-white/25 mt-0.5 capitalize">
             {student.payment_method === 'deposito' ? 'Depósito' : student.payment_method === 'dinheiro' ? 'Dinheiro' : 'Stripe'}
+          </p>
+        )}
+        {student.lead && student.lead.payment_status !== 'none' && (
+          <p className="text-[10px] font-semibold mt-0.5"
+            style={{ color: student.lead.payment_status === 'confirmed' ? '#34D399' : '#FCD34D' }}>
+            {student.lead.payment_status === 'confirmed' ? 'Pago' : 'Em aberto'}
           </p>
         )}
       </td>
@@ -742,6 +782,11 @@ function StudentRow({ student, onEdit, onDelete }: {
       {/* Actions */}
       <td className="px-4 py-3.5" style={{ width: 88 }}>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all justify-end">
+          <button onClick={onOpen}
+            className="p-1.5 rounded-lg text-white/30 hover:text-[#E8521A] hover:bg-orange-500/10 transition-colors"
+            title="Ver histórico">
+            <Eye className="w-3.5 h-3.5" />
+          </button>
           <button onClick={onEdit}
             className="p-1.5 rounded-lg text-white/30 hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors"
             title="Editar">
@@ -769,35 +814,44 @@ function StudentRow({ student, onEdit, onDelete }: {
 
 function TurmasView({
   students,
-  onEdit,
+  onOpen,
 }: {
   students: Student[]
-  onEdit: (s: Student) => void
+  onOpen: (s: Student) => void
 }) {
   type ClassGroup = {
     key: string
+    name: string
     schedule: string
     teacher: string
-    subject: string
+    capacity: number | null
     students: Student[]
   }
 
+  // Agrupa pela turma vinculada, não por semelhança de texto: dois alunos na
+  // mesma turma caem no mesmo grupo mesmo que algo tenha sido digitado diferente,
+  // e alunos sem turma aparecem juntos para realocação em vez de desaparecerem.
   const groups = useMemo<ClassGroup[]>(() => {
     const map = new Map<string, ClassGroup>()
     for (const s of students) {
-      const key = `${s.class_schedule ?? ''}|${s.teacher ?? ''}|${s.subject ?? ''}`
+      const key = s.class_id ?? '__sem_turma__'
       if (!map.has(key)) {
         map.set(key, {
           key,
-          schedule: s.class_schedule ?? 'Sem horário',
-          teacher:  s.teacher        ?? 'Sem professor',
-          subject:  s.subject        ?? '',
+          name:     s.class?.name ?? 'Sem turma',
+          schedule: s.class ? formatSchedule(s.class.sessions) : '—',
+          teacher:  s.class?.teacher?.name ?? 'Sem professor',
+          capacity: s.class?.capacity ?? null,
           students: [],
         })
       }
       map.get(key)!.students.push(s)
     }
-    return Array.from(map.values()).sort((a, b) => b.students.length - a.students.length)
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.key === '__sem_turma__') return 1
+      if (b.key === '__sem_turma__') return -1
+      return b.students.length - a.students.length
+    })
   }, [students])
 
   if (groups.length === 0) return (
@@ -820,18 +874,24 @@ function TurmasView({
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
-                  {group.schedule}
+                  {group.name}
                 </p>
-                <p className="text-[11px] mt-0.5 truncate" style={{ color: '#404252' }}>
-                  {group.teacher}
-                  {group.subject && ` · ${SUBJECT_LABEL[group.subject as keyof typeof SUBJECT_LABEL] ?? group.subject}`}
+                <p className="text-[11px] mt-0.5 truncate tabular-nums" style={{ color: '#404252' }}>
+                  {group.schedule} · {group.teacher}
                 </p>
               </div>
               <div
-                className="flex items-center justify-center w-8 h-8 rounded-xl shrink-0 text-[13px] font-bold"
-                style={{ background: 'rgba(52,211,153,0.1)', color: '#34D399' }}
+                className="flex items-center justify-center min-w-8 h-8 px-2 rounded-xl shrink-0 text-[13px] font-bold tabular-nums"
+                style={
+                  group.capacity != null && group.students.length >= group.capacity
+                    ? { background: 'rgba(239,68,68,0.1)',  color: '#F87171' }
+                    : { background: 'rgba(52,211,153,0.1)', color: '#34D399' }
+                }
               >
                 {group.students.length}
+                {group.capacity != null && (
+                  <span className="text-white/25 font-medium">/{group.capacity}</span>
+                )}
               </div>
             </div>
           </div>
@@ -845,7 +905,7 @@ function TurmasView({
                   key={s.id}
                   className="group flex items-center gap-3 px-4 py-2.5 transition-all hover:bg-white/[0.02] cursor-pointer"
                   style={{ borderBottom: i < group.students.length - 1 ? `1px solid ${BORDER2}` : 'none' }}
-                  onClick={() => onEdit(s)}
+                  onClick={() => onOpen(s)}
                 >
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
@@ -879,6 +939,7 @@ function TurmasView({
 type SortKey = 'nome' | 'inicio'
 
 export default function StudentsPage() {
+  const navigate = useNavigate()
   const [statusTab,     setStatusTab]     = useState<StudentStatus>('ativo')
   const [search,        setSearch]        = useState('')
   const [sortBy,        setSortBy]        = useState<SortKey>('nome')
@@ -904,7 +965,10 @@ export default function StudentsPage() {
         s.student_name.toLowerCase().includes(q) ||
         (s.responsible_name ?? '').toLowerCase().includes(q) ||
         (s.email ?? '').toLowerCase().includes(q) ||
-        (s.phone_responsible ?? '').includes(q)
+        (s.phone_responsible ?? '').includes(q) ||
+        (s.phone_student ?? '').includes(q) ||
+        (s.class?.name ?? '').toLowerCase().includes(q) ||
+        (s.class?.teacher?.name ?? '').toLowerCase().includes(q)
       )
     }
 
@@ -935,13 +999,16 @@ export default function StudentsPage() {
 
   function exportCSV() {
     const header = ['Aluno','Responsável','Nascimento','Tel Responsável','Tel Aluno','Email','Endereço',
-      'Início','Matéria','Nível/Ano','Professor','Horário','Modalidade','Mensalidade','Pagamento','Status','Motivo cancelamento']
+      'Início','Matéria','Nível/Ano','Turma','Professor','Horário','Modalidade',
+      'Nome no depósito','Mensalidade','Pagamento','Status','Motivo cancelamento']
     const rows = filtered.map(s => [
       s.student_name, s.responsible_name ?? '', s.birth_date ?? '',
       s.phone_responsible ?? '', s.phone_student ?? '', s.email ?? '', s.address ?? '',
       s.start_date ?? '', s.subject ? SUBJECT_LABEL[s.subject] : '',
       s.jlpt_level ?? s.school_year ?? '',
-      s.teacher ?? '', s.class_schedule ?? '', s.modality ?? '',
+      s.class?.name ?? '', s.class?.teacher?.name ?? '',
+      s.class ? formatSchedule(s.class.sessions) : '', s.class?.modality ?? '',
+      s.deposit_name ?? '',
       s.monthly_fee?.toString() ?? '', s.payment_method ?? '',
       STATUS_CONFIG[s.status].label,
       s.cancel_reason ? CANCEL_REASON_LABEL[s.cancel_reason] : '',
@@ -1003,7 +1070,7 @@ export default function StudentsPage() {
 
           {/* Status tabs */}
           <div className="flex items-center gap-2 flex-wrap">
-            {(['ativo', 'trancado', 'cancelado'] as StudentStatus[]).map(s => {
+            {(['rascunho', 'ativo', 'trancado', 'cancelado'] as StudentStatus[]).map(s => {
               const cfg  = STATUS_CONFIG[s]
               const Icon = cfg.icon
               const active = statusTab === s
@@ -1091,7 +1158,7 @@ export default function StudentsPage() {
           {view === 'turmas' && !isLoading && (
             <TurmasView
               students={filtered}
-              onEdit={s => { setEditStudent(s); setShowDrawer(true) }}
+              onOpen={s => navigate(`/admin/alunos/${s.id}`)}
             />
           )}
 
@@ -1137,6 +1204,7 @@ export default function StudentsPage() {
                       <StudentRow
                         key={student.id}
                         student={student}
+                        onOpen={() => navigate(`/admin/alunos/${student.id}`)}
                         onEdit={() => { setEditStudent(student); setShowDrawer(true) }}
                         onDelete={() => setDeleteStudent(student)}
                       />
