@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Users, LogOut, Settings,
-  ChevronLeft, ChevronRight, GraduationCap, CreditCard,
-  ReceiptText, Ticket, KeyRound, Columns, ClipboardList,
+  ChevronLeft, ChevronRight, GraduationCap, ReceiptText, Ticket, KeyRound, Columns, ClipboardList,
+  CalendarDays, ClipboardCheck,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
@@ -37,6 +37,8 @@ const NAV_GROUPS = [
       { to: '/admin/leads',     icon: ClipboardList,  label: 'Leads CRM',           end: false },
       { to: '/admin/pipeline',  icon: Columns,        label: 'Pipeline',            end: false },
       { to: '/admin/alunos',    icon: GraduationCap,  label: 'Alunos',              end: false },
+      { to: '/admin/turmas',    icon: CalendarDays,   label: 'Turmas',              end: false, badge: 'Novo' },
+      { to: '/admin/matriculas',icon: ClipboardCheck, label: 'Matrículas',          end: false, badge: 'Novo' },
     ],
   },
   {

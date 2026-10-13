@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import AdminLayout from '@/components/layout/AdminLayout'
+import ProfessorLayout from '@/components/layout/ProfessorLayout'
 
 // ── Admin (within AdminLayout sidebar shell) ──────────────────
 const AdminHome         = lazy(() => import('@/pages/admin/AdminHome'))
@@ -13,6 +14,14 @@ const ProductBuilder    = lazy(() => import('@/pages/admin/ProductBuilder'))
 const ProductConfigPage = lazy(() => import('@/pages/admin/ProductConfigPage'))
 const SettingsPage      = lazy(() => import('@/pages/admin/SettingsPage'))
 const StudentsPage      = lazy(() => import('@/pages/admin/StudentsPage'))
+const TurmasPage        = lazy(() => import('@/pages/admin/TurmasPage'))
+const MatriculasPage    = lazy(() => import('@/pages/admin/MatriculasPage'))
+const StudentProfile    = lazy(() => import('@/pages/admin/StudentProfilePage'))
+
+// ── Portal do professor ───────────────────────────────────────
+const ProfessorHome     = lazy(() => import('@/pages/professor/ProfessorHome'))
+const ProfessorClass    = lazy(() => import('@/pages/professor/ProfessorClassPage'))
+const ProfessorStudents = lazy(() => import('@/pages/professor/ProfessorStudentsPage'))
 const PessoasPage       = lazy(() => import('@/pages/admin/PessoasPage'))
 const FinanceiroPage    = lazy(() => import('@/pages/admin/FinanceiroPage'))
 const AcessosPage       = lazy(() => import('@/pages/admin/AcessosPage'))
@@ -62,6 +71,9 @@ export default function App() {
             <Route path="leads"                   element={<Leads />} />
             <Route path="leads/:id"               element={<LeadProfile />} />
             <Route path="alunos"                  element={<StudentsPage />} />
+            <Route path="alunos/:id"              element={<StudentProfile />} />
+            <Route path="turmas"                  element={<TurmasPage />} />
+            <Route path="matriculas"              element={<MatriculasPage />} />
             <Route path="contatos"                element={<Contacts />} />
             <Route path="pessoas"                 element={<PessoasPage />} />
             <Route path="financeiro"              element={<FinanceiroPage />} />
@@ -72,6 +84,13 @@ export default function App() {
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />
             <Route path="settings"                element={<SettingsPage />} />
+          </Route>
+
+          {/* ── Portal do professor ── */}
+          <Route path="/professor" element={<ProfessorLayout />}>
+            <Route index              element={<ProfessorHome />} />
+            <Route path="turmas/:id"  element={<ProfessorClass />} />
+            <Route path="alunos"      element={<ProfessorStudents />} />
           </Route>
 
           {/* ── Public form ── */}
