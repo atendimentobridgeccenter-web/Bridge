@@ -7,6 +7,7 @@ import {
   Edit2, Trash2, AlertTriangle, Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { contactKey } from '@/lib/contactKey'
 import { useLeads, useProductsForFilter, useDeleteLead } from '@/hooks/useLeads'
 import { useContactStagesBatch } from '@/hooks/useContactStage'
 import { STAGES } from '@/lib/stageConfig'
@@ -35,10 +36,6 @@ function timeAgo(iso: string) {
   const h = Math.floor(m / 60)
   if (h < 24)  return `${h}h atrás`
   return `${Math.floor(h / 24)}d atrás`
-}
-
-function contactKey(lead: Lead) {
-  return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
 }
 
 function displayName(lead: Lead) {

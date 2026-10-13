@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -8,6 +8,7 @@ import {
   GraduationCap, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { contactKey } from '@/lib/contactKey'
 import { supabase } from '@/lib/supabase'
 import { useLeads, useProductsForFilter } from '@/hooks/useLeads'
 import { useContactStagesBatch } from '@/hooks/useContactStage'
@@ -62,10 +63,6 @@ const PRODUCT_COLORS = [
 function productColor(name: string | null | undefined) {
   if (!name) return PRODUCT_COLORS[0]
   return PRODUCT_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % PRODUCT_COLORS.length]
-}
-
-function contactKey(lead: Lead) {
-  return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
 }
 
 // ── Contact shape ─────────────────────────────────────────────

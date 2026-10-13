@@ -4,15 +4,16 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   Search, X, RefreshCw, ChevronDown, Eye,
   Mail, Phone, MapPin, User, CheckCircle2,
-  XCircle, Calendar, Package, FileText,
+  XCircle, Package, FileText,
   Download, Edit2, Trash2, Loader2, AlertTriangle,
-  Save, ExternalLink, ChevronLeft, ChevronRight,
+  Save, ChevronLeft, ChevronRight,
   GraduationCap, CreditCard, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { contactKey } from '@/lib/contactKey'
 import { useLeads, useProductsForFilter, useUpdateLead, useDeleteLead } from '@/hooks/useLeads'
 import { useContactStagesBatch } from '@/hooks/useContactStage'
-import { STAGES, stageOf } from '@/lib/stageConfig'
+import { STAGES } from '@/lib/stageConfig'
 import type { LeadPatch } from '@/hooks/useLeads'
 import type { Lead } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
@@ -29,12 +30,6 @@ const PAGE_SIZE = 25
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function fmtDate(iso: string) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  }).format(new Date(iso))
-}
 
 function fmtDateShort(iso: string) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(iso))
@@ -50,9 +45,6 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d atrás`
 }
 
-function resolveTitle(nodeId: string, nodes: FormNode[]) {
-  return nodes.find(n => n.id === nodeId)?.title || `Campo ${nodeId.slice(0, 6)}`
-}
 
 function displayName(lead: Lead) {
   if (lead.name) return lead.name
@@ -76,10 +68,6 @@ function displaySchoolYear(lead: Lead): string {
     /ano.escolar|série|serie|turma|grade|school.year|ano.letivo|nivel|nível/i.test(n.title ?? '')
   )
   return node ? (answers[node.id] ?? '') : ''
-}
-
-function contactKey(lead: Lead) {
-  return lead.email ? lead.email.toLowerCase() : (lead.phone ?? lead.id)
 }
 
 // ── Payment badge ─────────────────────────────────────────────
@@ -329,145 +317,6 @@ function DeleteConfirm({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             Excluir
           </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Detail Drawer ─────────────────────────────────────────────
-
-function LeadDrawer({ lead, onClose, onEdit }: { lead: Lead; onClose: () => void; onEdit: () => void }) {
-  const name  = displayName(lead)
-  const nodes = (lead.product_form_nodes ?? []) as FormNode[]
-  const color = productColor(lead.product_name)
-  const answersEntries = Object.entries(lead.answers ?? {}).filter(([, v]) => !!v)
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
-
-  return (
-    <div className="fixed inset-0 z-50" style={{ pointerEvents: 'auto' }}>
-      <div className="absolute inset-0 transition-opacity"
-        style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-        onClick={onClose} />
-      <div className="absolute top-0 right-0 h-full w-full max-w-[520px] flex flex-col"
-        style={{ background: '#16181F', borderLeft: `1px solid ${BORDER}` }}>
-        <div className="flex items-start justify-between px-6 py-5 shrink-0"
-          style={{ borderBottom: `1px solid ${BORDER}` }}>
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
-              style={{ background: 'rgba(232,82,26,0.1)', color: '#E8521A' }}>
-              {(name || lead.email || '?')[0]?.toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-[#EDEDED] tracking-tight truncate">
-                {name || lead.email || 'Lead sem nome'}
-              </p>
-              {name && lead.email && <p className="text-[12px] text-white/35 mt-0.5 truncate">{lead.email}</p>}
-              <p className="text-[11px] text-white/25 mt-1">{fmtDate(lead.created_at)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-              style={{ background: 'rgba(96,165,250,0.1)', color: '#93C5FD', border: '1px solid rgba(96,165,250,0.2)' }}>
-              <Edit2 className="w-3 h-3" /> Editar
-            </button>
-            <button onClick={onClose}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/6 transition-all">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-6">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-              style={lead.qualified
-                ? { background: 'rgba(52,211,153,0.1)', color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }
-                : { background: 'rgba(239,68,68,0.08)', color: '#F87171', border: '1px solid rgba(239,68,68,0.15)' }}>
-              {lead.qualified ? <><CheckCircle2 className="w-3 h-3" /> Qualificado</> : <><XCircle className="w-3 h-3" /> Desqualificado</>}
-            </span>
-            <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} />
-            {lead.product_name && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-                style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}>
-                {lead.product_name}
-              </span>
-            )}
-          </div>
-
-          <div className="rounded-xl p-4 flex flex-col gap-3"
-            style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-1">Dados de Contato</p>
-            {[
-              { icon: User,     label: 'Nome',     value: lead.name  },
-              { icon: Mail,     label: 'E-mail',   value: lead.email },
-              { icon: Phone,    label: 'Telefone', value: lead.phone },
-              { icon: FileText, label: 'CPF',      value: lead.cpf   },
-              { icon: MapPin,   label: 'Cidade',   value: lead.city ? `${lead.city}${lead.state ? ` — ${lead.state}` : ''}` : null },
-              { icon: Calendar, label: 'Captado',  value: fmtDateShort(lead.created_at) },
-            ].filter(r => !!r.value).map(({ icon: Icon, label, value }) => (
-              <div key={label} className="flex items-start gap-3">
-                <Icon className="w-3.5 h-3.5 text-white/25 mt-0.5 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[10px] text-white/25 uppercase tracking-wider">{label}</p>
-                  <p className="text-[13px] text-[#EDEDED] mt-0.5 break-words">{value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_term || lead.utm_content || lead.referrer) && (
-            <div className="rounded-xl p-4 flex flex-col gap-3"
-              style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25 mb-1">Origem do Lead</p>
-              {[
-                { label: 'Fonte',     value: lead.utm_source   },
-                { label: 'Mídia',     value: lead.utm_medium   },
-                { label: 'Campanha',  value: lead.utm_campaign },
-                { label: 'Termo',     value: lead.utm_term     },
-                { label: 'Conteúdo', value: lead.utm_content  },
-                { label: 'Referrer', value: lead.referrer     },
-              ].filter(r => !!r.value).map(({ label, value }) => (
-                <div key={label} className="flex items-start gap-3">
-                  <ExternalLink className="w-3.5 h-3.5 text-white/25 mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-white/25 uppercase tracking-wider">{label}</p>
-                    <p className="text-[13px] text-[#EDEDED] mt-0.5 break-all">{value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {answersEntries.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25">Respostas do Formulário</p>
-              <div className="flex flex-col gap-2">
-                {answersEntries.map(([nodeId, answer], idx) => (
-                  <div key={nodeId} className="rounded-lg px-4 py-3"
-                    style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-1">
-                      {String(idx + 1).padStart(2, '0')} — {resolveTitle(nodeId, nodes)}
-                    </p>
-                    <p className="text-[13px] text-[#EDEDED] leading-snug">{answer}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {answersEntries.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 text-center rounded-xl"
-              style={{ background: '#13151A', border: `1px dashed ${BORDER}` }}>
-              <p className="text-[13px] text-white/25">Nenhuma resposta registrada</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

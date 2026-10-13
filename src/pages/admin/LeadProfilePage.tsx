@@ -7,6 +7,8 @@ import {
   CreditCard, Link2,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { contactKey } from '@/lib/contactKey'
+import ContactPipelinePanel from '@/components/ContactPipelinePanel'
 import { useLeadProfile } from '@/hooks/useLeadProfile'
 import type { LeadInteraction, LeadPurchase } from '@/hooks/useLeadProfile'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
@@ -79,7 +81,6 @@ function InteractionCard({
 }) {
   const [expanded, setExpanded] = useState(false)
   const color = productColor(interaction.product_name)
-  const name  = displayName(interaction)
   const entries = Object.entries(interaction.answers ?? {}).filter(([, v]) => !!v)
   const hasUtm = interaction.utm_source || interaction.utm_campaign || interaction.utm_medium
 
@@ -222,12 +223,10 @@ export default function LeadProfilePage() {
   const { data: profile, isLoading, error, refetch } = useLeadProfile(id)
 
   // Hooks must be called unconditionally — before any early returns
-  const primary    = profile?.primary
-  const contactKey = primary?.email
-    ? primary.email.toLowerCase()
-    : (primary?.phone ?? primary?.id)
-  const { data: currentStage } = useContactStage(contactKey)
-  const { data: stageHistory = [] } = useContactStageHistory(contactKey)
+  const primary = profile?.primary
+  const ckey    = primary ? contactKey(primary) : undefined
+  const { data: currentStage } = useContactStage(ckey)
+  const { data: stageHistory = [] } = useContactStageHistory(ckey)
 
   if (isLoading) {
     return (
@@ -305,7 +304,7 @@ export default function LeadProfilePage() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            <StageSelector contactKey={contactKey} currentStage={currentStage} />
+            <StageSelector contactKey={ckey} currentStage={currentStage} />
             {primary.qualified
               ? <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold"
                   style={{ background: 'rgba(52,211,153,0.08)', color: '#34D399', border: '1px solid rgba(52,211,153,0.15)' }}>
@@ -328,6 +327,17 @@ export default function LeadProfilePage() {
             </span>
           </div>
         </div>
+
+        {/* ── Avaliação e follow-ups ── */}
+        {ckey && (
+          <div className="mb-6">
+            <ContactPipelinePanel
+              contactKey={ckey}
+              leadId={primary.id}
+              currentStage={currentStage?.stage ?? null}
+            />
+          </div>
+        )}
 
         {/* ── Main grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
