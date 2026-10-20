@@ -64,6 +64,9 @@ function GradeForm({ studentId, classId, teacherId, row, onClose }: {
   async function save() {
     setError(null)
     if (!form.title.trim()) { setError('Dê um título à avaliação.'); return }
+    // assessed_on é NOT NULL no banco: se o campo for apagado, o normalizador
+    // manda null e o insert falha com erro cru. Melhor barrar aqui.
+    if (!form.assessed_on) { setError('Informe a data da avaliação.'); return }
     if (form.score !== '' && form.max_score && Number(form.score) > Number(form.max_score)) {
       setError('A nota não pode ser maior que o valor máximo.')
       return

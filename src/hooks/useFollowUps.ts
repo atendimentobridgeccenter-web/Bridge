@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 
 export type FollowUpChannel = 'whatsapp' | 'ligacao' | 'email' | 'presencial' | 'outro'
 
@@ -72,7 +73,7 @@ export function useCreateFollowUp() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('follow_ups')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select()
         .single()
       if (error) throw error
@@ -86,7 +87,7 @@ export function useUpdateFollowUp() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: FollowUpPatch }) => {
-      const { error } = await supabase.from('follow_ups').update(patch).eq('id', id)
+      const { error } = await supabase.from('follow_ups').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => invalidate(qc),

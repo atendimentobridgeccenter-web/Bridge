@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 import type { StudentSubject, JlptLevel, Modality } from './useStudents'
 
 export type ClassStatus = 'ativa' | 'encerrada'
@@ -188,7 +189,7 @@ export function useCreateClass() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('classes')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select('id')
         .single()
       if (error) throw error
@@ -207,7 +208,7 @@ export function useUpdateClass() {
       patch: ClassPatch
       sessions?: SessionDraft[]
     }) => {
-      const { error } = await supabase.from('classes').update(patch).eq('id', id)
+      const { error } = await supabase.from('classes').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
       if (sessions) await replaceSessions(id, sessions)
     },

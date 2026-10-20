@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 
 export interface Grade {
   id:          string
@@ -51,7 +52,7 @@ export function useCreateGrade() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('grades')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select(SELECT)
         .single()
       if (error) throw error
@@ -65,7 +66,7 @@ export function useUpdateGrade() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: GradePatch }) => {
-      const { error } = await supabase.from('grades').update(patch).eq('id', id)
+      const { error } = await supabase.from('grades').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => invalidate(qc),

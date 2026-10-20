@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 import type { JlptLevel } from './useStudents'
 
 export type EvaluationStatus = 'agendada' | 'realizada' | 'cancelada' | 'nao_compareceu'
@@ -146,7 +147,7 @@ export function useCreateEvaluation() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('evaluations')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select(SELECT)
         .single()
       if (error) throw error
@@ -160,7 +161,7 @@ export function useUpdateEvaluation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: EvaluationPatch }) => {
-      const { error } = await supabase.from('evaluations').update(patch).eq('id', id)
+      const { error } = await supabase.from('evaluations').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => invalidate(qc),

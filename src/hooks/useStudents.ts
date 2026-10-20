@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ export function useCreateStudent() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('students')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select()
         .single()
       if (error) throw error
@@ -167,7 +168,7 @@ export function useUpdateStudent() {
     mutationFn: async ({ id, patch }: { id: string; patch: StudentPatch }) => {
       const { error } = await supabase
         .from('students')
-        .update(patch)
+        .update(emptyToNull(patch))
         .eq('id', id)
       if (error) throw error
     },

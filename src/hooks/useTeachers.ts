@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 
 export type TeacherStatus = 'ativo' | 'inativo'
 
@@ -40,7 +41,7 @@ export function useCreateTeacher() {
       const { data: { user } } = await supabase.auth.getUser()
       const { data, error } = await supabase
         .from('teachers')
-        .insert({ ...patch, created_by: user?.id ?? null })
+        .insert({ ...emptyToNull(patch), created_by: user?.id ?? null })
         .select()
         .single()
       if (error) throw error
@@ -54,7 +55,7 @@ export function useUpdateTeacher() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: TeacherPatch }) => {
-      const { error } = await supabase.from('teachers').update(patch).eq('id', id)
+      const { error } = await supabase.from('teachers').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {

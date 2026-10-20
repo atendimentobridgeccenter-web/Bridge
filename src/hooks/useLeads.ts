@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { emptyToNull } from '@/lib/emptyToNull'
 import type { Lead } from '@/lib/types'
 
 export interface LeadPatch {
@@ -82,7 +83,7 @@ export function useUpdateLead() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: LeadPatch }) => {
-      const { error } = await supabase.from('leads').update(patch).eq('id', id)
+      const { error } = await supabase.from('leads').update(emptyToNull(patch)).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
