@@ -7,12 +7,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE = '#0D0E12'
-const BG_CARD = '#13151A'
-const BORDER  = 'rgba(255,255,255,0.07)'
+import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 

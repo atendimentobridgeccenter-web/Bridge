@@ -13,13 +13,7 @@ import {
 } from '@/hooks/useGrades'
 import type { Grade } from '@/hooks/useGrades'
 import { useMyTeacherProfile } from '@/hooks/useTeacherPortal'
-
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const STATUS: Record<string, { label: string; color: string }> = {
   rascunho:  { label: 'Rascunho',  color: '#FDBA74' },

@@ -4,14 +4,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0D0E12'
-const BG_CARD  = '#13151A'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const ACCENT   = '#E8521A'
+import { BG_PAGE, BG_CARD, BG_INPUT, BORDER, ACCENT } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { BridgeLead } from '@/lib/types'
 import { cn } from '@/lib/cn'
+import { BG_PAGE, BG_CARD as BG_COL, BG_DROP as BG_CARD, BORDER } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -25,13 +26,6 @@ interface KanbanLead {
   stripeSessionId: string | null
   isMock?:         boolean
 }
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE   = '#0D0E12'
-const BG_COL    = '#13151A'
-const BG_CARD   = '#1E202A'
-const BORDER    = 'rgba(255,255,255,0.06)'
 
 // ── Column config ─────────────────────────────────────────────
 

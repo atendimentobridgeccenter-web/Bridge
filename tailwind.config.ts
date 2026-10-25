@@ -8,10 +8,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        base:        '#0A0A0A',
-        surface:     '#111111',
-        'surface-2': '#161616',
-        'surface-3': '#1C1C1C',
+        base:        '#0B0C10',
+        surface:     '#14151B',
+        'surface-2': '#191B22',
+        'surface-3': '#1C1E27',
       },
       opacity: {
         '2':  '0.02',

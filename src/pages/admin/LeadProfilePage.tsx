@@ -15,14 +15,7 @@ import type { FormNode } from '@/components/form-builder/FormBuilder'
 import { useContactStage, useContactStageHistory } from '@/hooks/useContactStage'
 import { STAGES, stageOf } from '@/lib/stageConfig'
 import StageSelector from '@/components/StageSelector'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0D0E12'
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
+import { BG_PAGE, BG_CARD2, BG_CARD, BORDER2, BORDER } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 

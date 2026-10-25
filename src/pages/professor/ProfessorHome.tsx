@@ -8,12 +8,7 @@ import { useMyClasses, useMyStudents } from '@/hooks/useTeacherPortal'
 import { WEEKDAYS, formatSchedule } from '@/hooks/useClasses'
 import type { ClassRow } from '@/hooks/useClasses'
 import type { PortalStudent } from '@/hooks/useTeacherPortal'
-
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD2, BG_CARD, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const SUBJECT_LABEL: Record<string, string> = {
   jlpt: 'JLPT', refesco: 'Reforço Escolar', ingles: 'Inglês',

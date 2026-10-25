@@ -10,13 +10,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { Product, ProductStatus } from '@/lib/types'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_CARD  = '#1A1C23'
-const BG_INPUT = '#13151A'
-const BG_PAGE  = '#0F1117'
-const BG_DROP  = '#1E2029'
+import { BG_PAGE, BG_CARD, BG_INPUT, BG_DROP } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 

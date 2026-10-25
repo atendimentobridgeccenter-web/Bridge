@@ -5,11 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import Sidebar from './Sidebar'
 
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG     = '#111111'
-const BORDER = 'rgba(255,255,255,0.06)'
-const BG_DROP = '#1A1C23'
+import { BG_PAGE, BORDER, BG_DROP } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -406,7 +402,7 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
   return (
     <>
       <header className="h-12 shrink-0 flex items-center gap-3 px-6"
-        style={{ borderBottom: `1px solid ${BORDER}`, background: BG }}>
+        style={{ borderBottom: `1px solid ${BORDER}`, background: BG_PAGE }}>
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[13px]">
@@ -505,13 +501,13 @@ export default function AdminLayout() {
   }, [navigate])
 
   if (!ready) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: BG_PAGE }}>
       <div className="w-7 h-7 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
     </div>
   )
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0A0A0A' }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: BG_PAGE }}>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar user={user} />

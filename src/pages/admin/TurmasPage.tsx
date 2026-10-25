@@ -17,15 +17,7 @@ import {
 import type { Teacher, TeacherPatch } from '@/hooks/useTeachers'
 import { useStudents } from '@/hooks/useStudents'
 import type { StudentSubject, JlptLevel, Modality } from '@/hooks/useStudents'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const SUBJECT_LABEL: Record<StudentSubject, string> = {
   jlpt:    'JLPT',

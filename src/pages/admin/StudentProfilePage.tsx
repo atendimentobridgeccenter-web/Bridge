@@ -19,16 +19,7 @@ import ContactPipelinePanel from '@/components/ContactPipelinePanel'
 import { useContactStage } from '@/hooks/useContactStage'
 import { contactKey } from '@/lib/contactKey'
 import { stageOf } from '@/lib/stageConfig'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0D0E12'
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_PAGE, BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const STATUS: Record<StudentStatus, { label: string; color: string }> = {
   rascunho:  { label: 'Rascunho',  color: '#FDBA74' },

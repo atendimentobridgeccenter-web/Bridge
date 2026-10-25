@@ -16,12 +16,7 @@ import { useProduct } from '@/hooks/useProduct'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useBuilderStore } from '@/stores/useBuilderStore'
 import type { TrackingConfig } from '@/components/form-builder/QuizzRunner'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0F1117'
-const BG_CARD  = '#1A1C23'
-const BG_INPUT = '#0D0E12'
+import { BG_PAGE, BG_CARD, BG_INPUT } from '@/lib/theme'
 
 // ── Tabs config ───────────────────────────────────────────────
 

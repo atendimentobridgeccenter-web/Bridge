@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, Search, X, Loader2, Phone, Mail, CalendarDays, ChevronRight } from 'lucide-react'
 import { useMyClasses, useMyStudents } from '@/hooks/useTeacherPortal'
 import { formatSchedule } from '@/hooks/useClasses'
-
-const BG_CARD  = '#13151A'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const STATUS: Record<string, { label: string; color: string }> = {
   rascunho:  { label: 'Rascunho',  color: '#FDBA74' },

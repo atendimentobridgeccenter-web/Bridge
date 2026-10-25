@@ -13,14 +13,7 @@ import { useContactStagesBatch } from '@/hooks/useContactStage'
 import { STAGES } from '@/lib/stageConfig'
 import type { Lead } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0D0E12'
-const BG_CARD  = '#1A1C23'
-const BG_INPUT = '#0D0E12'
-const BG_DROP  = '#1E202A'
-const BORDER   = 'rgba(255,255,255,0.07)'
+import { BG_PAGE, BG_CARD, BG_INPUT, BG_DROP, BORDER } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 

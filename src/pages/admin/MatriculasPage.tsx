@@ -9,14 +9,7 @@ import type { Student, StudentStatus, LeadPaymentStatus } from '@/hooks/useStude
 import { useClasses, formatSchedule } from '@/hooks/useClasses'
 import { useTeachers } from '@/hooks/useTeachers'
 import ActivateEnrollmentModal from '@/components/ActivateEnrollmentModal'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD2, BG_CARD, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const STUDENT_STATUS: Record<StudentStatus, { label: string; color: string }> = {
   rascunho:  { label: 'Rascunho',  color: '#FDBA74' },

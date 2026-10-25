@@ -9,12 +9,7 @@ import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/cn'
 import { STAGES } from '@/lib/stageConfig'
-
-// ── Tokens ─────────────────────────────────────────────────────
-
-const BG_PAGE = '#0D0E12'
-const BG_CARD = '#1A1C23'
-const BORDER  = 'rgba(255,255,255,0.07)'
+import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
 
 // ── Types ──────────────────────────────────────────────────────
 

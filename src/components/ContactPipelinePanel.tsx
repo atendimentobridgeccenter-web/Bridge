@@ -20,15 +20,7 @@ import { useClasses, formatSchedule } from '@/hooks/useClasses'
 import { useUpdateContactStage } from '@/hooks/useContactStage'
 import type { Stage } from '@/lib/stageConfig'
 import type { JlptLevel } from '@/hooks/useStudents'
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_CARD  = '#13151A'
-const BG_CARD2 = '#16181F'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const JLPT_LEVELS: JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1']
 

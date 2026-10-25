@@ -6,12 +6,7 @@ import { useClasses, formatSchedule } from '@/hooks/useClasses'
 import { useActivateEnrollment, useStudents } from '@/hooks/useStudents'
 import type { Student } from '@/hooks/useStudents'
 import { useRecommendedClass } from '@/hooks/useEvaluations'
-
-const BG_CARD  = '#13151A'
-const BG_INPUT = '#0D0E12'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const BORDER2  = 'rgba(255,255,255,0.05)'
-const ACCENT   = '#E8521A'
+import { BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
 const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }

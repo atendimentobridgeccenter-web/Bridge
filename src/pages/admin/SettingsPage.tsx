@@ -9,14 +9,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
-
-// ── Tokens ─────────────────────────────────────────────────────
-
-const BG_PAGE  = '#0D0E12'
-const BG_CARD  = '#1A1C23'
-const BG_INPUT = '#13151A'
-const BORDER   = 'rgba(255,255,255,0.07)'
-const ACCENT   = '#E8521A'
+import { BG_PAGE, BG_CARD, BG_INPUT, BORDER, ACCENT } from '@/lib/theme'
 
 // ── Types ──────────────────────────────────────────────────────
 

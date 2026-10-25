@@ -17,15 +17,9 @@ import { STAGES } from '@/lib/stageConfig'
 import type { Stage } from '@/lib/stageConfig'
 import StageSelector from '@/components/StageSelector'
 import type { Lead } from '@/lib/types'
+import { BG_PAGE, BG_CARD, BG_DROP, BORDER } from '@/lib/theme'
 
 const CONTACTS_PER_PAGE = 50
-
-// ── Tokens ────────────────────────────────────────────────────
-
-const BG_PAGE = '#0D0E12'
-const BG_CARD = '#13151A'
-const BG_DROP = '#1E202A'
-const BORDER  = 'rgba(255,255,255,0.07)'
 
 // ── Helpers ───────────────────────────────────────────────────
 

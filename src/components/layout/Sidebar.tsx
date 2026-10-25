@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
+import { ACCENT, BG_SIDEBAR, BORDER2 } from '@/lib/theme'
 
 // ── Bridge logo ───────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ function NavItem({
           {isActive && !collapsed && (
             <span
               className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full"
-              style={{ background: '#E8521A' }}
+              style={{ background: ACCENT }}
             />
           )}
 
@@ -148,8 +149,8 @@ export default function Sidebar() {
       className="shrink-0 flex flex-col h-full select-none"
       style={{
         width:       collapsed ? 60 : 216,
-        background:  '#0E0F13',
-        borderRight: '1px solid rgba(255,255,255,0.055)',
+        background:  BG_SIDEBAR,
+        borderRight: `1px solid ${BORDER2}`,
         transition:  'width 200ms cubic-bezier(.4,0,.2,1)',
       }}
     >
@@ -157,7 +158,7 @@ export default function Sidebar() {
       <div
         className="flex items-center gap-2.5 relative"
         style={{
-          borderBottom: '1px solid rgba(255,255,255,0.055)',
+          borderBottom: `1px solid ${BORDER2}`,
           minHeight: 52,
           paddingLeft:  px,
           paddingRight: px,
@@ -165,7 +166,7 @@ export default function Sidebar() {
       >
         <div
           className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-          style={{ background: '#E8521A', boxShadow: '0 2px 8px rgba(232,82,26,0.4)' }}
+          style={{ background: ACCENT, boxShadow: '0 2px 8px rgba(232,82,26,0.4)' }}
         >
           <BridgeLogo size={13} />
         </div>
@@ -238,7 +239,7 @@ export default function Sidebar() {
       <div
         className="py-2.5"
         style={{
-          borderTop:    '1px solid rgba(255,255,255,0.055)',
+          borderTop:    `1px solid ${BORDER2}`,
           paddingLeft:  px,
           paddingRight: px,
         }}
