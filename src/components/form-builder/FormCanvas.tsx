@@ -12,7 +12,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { CheckCircle, XCircle, GitBranch } from 'lucide-react'
 import type { FormNode, LogicJump } from './FormBuilder'
-import { TYPE_META, SCREEN_TYPES, uid } from './FormBuilder'
+import { TYPE_META, SCREEN_TYPES, uid } from './formConstants'
 
 // ── Constants ─────────────────────────────────────────────────
 

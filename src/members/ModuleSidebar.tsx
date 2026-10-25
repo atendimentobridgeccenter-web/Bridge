@@ -23,7 +23,8 @@ export default function ModuleSidebar({ modules, activeLessonId, onSelect }: Pro
   function toggle(id: string) {
     setOpenMods(s => {
       const next = new Set(s)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }

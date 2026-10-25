@@ -12,11 +12,20 @@ export default defineConfig([
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
-      reactHooks.configs.flat.recommended,
+      reactHooks.configs['recommended-latest'],
       reactRefresh.configs.vite,
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+    rules: {
+      // Convenção do projeto: prefixar com `_` um parâmetro/variável
+      // intencionalmente não usado (callbacks de API externa, assinaturas
+      // fixas, etc.) em vez de silenciar a regra linha a linha.
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
     },
   },
 ])
