@@ -30,7 +30,7 @@ export default function DeleteButton({ onConfirm, loading, title = 'Excluir', ar
   if (loading) {
     return (
       <span className="p-1.5 inline-flex">
-        <Loader2 className="w-3 h-3 animate-spin text-white/40" />
+        <Loader2 className="w-3 h-3 animate-spin text-ink-mute" />
       </span>
     )
   }
@@ -53,7 +53,7 @@ export default function DeleteButton({ onConfirm, loading, title = 'Excluir', ar
     <button
       onClick={() => setArmed(true)}
       title={title}
-      className="p-1.5 rounded-lg text-white/30 hover:text-[#F87171] hover:bg-red-500/8 transition-all"
+      className="p-1.5 rounded-lg text-ink-mute hover:text-[#F87171] hover:bg-red-500/8 transition-all"
     >
       <Trash2 className="w-3 h-3" />
     </button>

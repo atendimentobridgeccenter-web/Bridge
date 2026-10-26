@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { Product, ProductStatus } from '@/lib/types'
-import { BG_PAGE, BG_CARD, BG_INPUT, BG_DROP } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_DROP, BG_INPUT, BG_PAGE } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -27,7 +27,7 @@ function Badge({ label, variant }: { label: string; variant: BadgeVariant }) {
     warning: 'bg-amber-500/10  text-amber-400  border border-amber-500/20',
     info:    'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
     orange:  'bg-[#E8521A]/10  text-[#F0643A]  border border-[#E8521A]/20',
-    muted:   'bg-white/4       text-white/30   border border-white/8',
+    muted:   'bg-tint/4       text-ink-mute   border border-tint/8',
     violet:  'bg-violet-500/10 text-violet-300 border border-violet-500/20',
   }
   return (
@@ -94,7 +94,7 @@ function ProductAvatar({
       width: dim, height: dim, borderRadius: rad, flexShrink: 0,
       background:  `linear-gradient(135deg, ${from}, ${to})`,
       display:     'flex', alignItems: 'center', justifyContent: 'center',
-      color:       'rgba(255,255,255,0.9)',
+      color:       'rgba(var(--tint), 0.9)',
       fontWeight:  700, fontSize: fs,
       letterSpacing: '0.02em',
     }}>
@@ -205,7 +205,7 @@ function ActionsDropdown({
         position: 'fixed', top: pos.top, right: pos.right, zIndex: 9999,
         width: 224, borderRadius: 14,
         background:  BG_DROP,
-        border:      '1px solid rgba(255,255,255,0.09)',
+        border:      '1px solid rgba(var(--tint), 0.09)',
         boxShadow:   '0 20px 56px rgba(0,0,0,0.65)',
         overflow:    'hidden',
         paddingTop:  6, paddingBottom: 6,
@@ -214,21 +214,21 @@ function ActionsDropdown({
       <DropMenuItem icon={Edit3} label="Editar Produto" onClick={() => { onEdit(row.id); setOpen(false) }} />
       <DropMenuItem icon={Copy} label="Duplicar Formulário" onClick={() => { onDuplicate(row.id); setOpen(false) }} />
       <DropSep />
-      <p style={{ padding: '4px 16px 2px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.25)' }}>
+      <p style={{ padding: '4px 16px 2px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(var(--tint), 0.25)' }}>
         Copiar Link
       </p>
       {copyLinks.map(({ icon: Icon, label, desc, url }) => (
         <button
           key={label}
           onClick={() => copy(url, label)}
-          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/4 transition-colors group"
+          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-tint/4 transition-colors group"
         >
-          <Icon className="w-3.5 h-3.5 text-white/25 shrink-0 group-hover:text-white/50" />
+          <Icon className="w-3.5 h-3.5 text-ink-faint shrink-0 group-hover:text-ink-sub" />
           <div className="text-left min-w-0 flex-1">
-            <p className="text-[12px] text-white/65 group-hover:text-white/90 leading-tight">{label}</p>
-            <p className="text-[10px] text-white/25 truncate">{desc}</p>
+            <p className="text-[12px] text-ink group-hover:text-ink leading-tight">{label}</p>
+            <p className="text-[10px] text-ink-faint truncate">{desc}</p>
           </div>
-          <Copy className="w-3 h-3 text-white/15 shrink-0 group-hover:text-white/40" />
+          <Copy className="w-3 h-3 text-ink-ghost shrink-0 group-hover:text-ink-mute" />
         </button>
       ))}
       {row.isReal && (
@@ -248,8 +248,8 @@ function ActionsDropdown({
         className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center transition-all',
           open
-            ? 'text-white/80 bg-white/8'
-            : 'text-white/25 hover:text-white/60 hover:bg-white/5',
+            ? 'text-ink bg-tint/8'
+            : 'text-ink-faint hover:text-ink-sub hover:bg-tint/5',
         )}
       >
         <MoreHorizontal className="w-4 h-4" />
@@ -271,7 +271,7 @@ function DropMenuItem({ icon: Icon, label, onClick, danger = false }: {
       className={cn(
         'w-full flex items-center gap-3 px-4 py-2 text-[12px] transition-colors',
         danger ? 'text-red-400/70 hover:text-red-400 hover:bg-red-500/6'
-               : 'text-white/60 hover:text-white/90 hover:bg-white/4',
+               : 'text-ink-sub hover:text-ink hover:bg-tint/4',
       )}
     >
       <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -281,7 +281,7 @@ function DropMenuItem({ icon: Icon, label, onClick, danger = false }: {
 }
 
 function DropSep() {
-  return <div style={{ margin: '6px 12px', height: 1, background: 'rgba(255,255,255,0.06)' }} />
+  return <div style={{ margin: '6px 12px', height: 1, background: 'rgba(var(--tint), 0.06)' }} />
 }
 
 // ── List row ──────────────────────────────────────────────────
@@ -296,7 +296,7 @@ function ProductListRow({ row, onEdit, onDelete, onDuplicate }: {
   return (
     <tr
       className="group border-b transition-colors duration-100"
-      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      style={{ borderColor: 'rgba(var(--tint), 0.05)' }}
       onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = '#22242F' }}
       onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
     >
@@ -305,8 +305,8 @@ function ProductListRow({ row, onEdit, onDelete, onDuplicate }: {
         <div className="flex items-center gap-3">
           <ProductAvatar name={row.name} thumbnailUrl={row.thumbnailUrl} size="sm" />
           <div>
-            <p className="text-[13px] font-semibold text-[#EDEDED] leading-none">{row.name}</p>
-            <p className="text-[11px] text-white/25 mt-0.5">/{row.slug}</p>
+            <p className="text-[13px] font-semibold text-ink leading-none">{row.name}</p>
+            <p className="text-[11px] text-ink-faint mt-0.5">/{row.slug}</p>
           </div>
         </div>
       </td>
@@ -321,7 +321,7 @@ function ProductListRow({ row, onEdit, onDelete, onDuplicate }: {
         {row.model === 'lead' ? (
           <Badge label="Captação (Lead)" variant="violet" />
         ) : (
-          <span className="text-[13px] font-semibold text-[#EDEDED] tabular-nums">{row.preco}</span>
+          <span className="text-[13px] font-semibold text-ink tabular-nums">{row.preco}</span>
         )}
       </td>
 
@@ -329,8 +329,8 @@ function ProductListRow({ row, onEdit, onDelete, onDuplicate }: {
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-1.5 flex-wrap">
           {row.variantes.map(v => (
-            <span key={v} className="text-[11px] px-2 py-0.5 rounded-md text-white/40"
-              style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <span key={v} className="text-[11px] px-2 py-0.5 rounded-md text-ink-mute"
+              style={{ background: 'rgba(var(--tint), 0.05)' }}>
               {v}
             </span>
           ))}
@@ -368,7 +368,7 @@ function ProductGridCard({ row, onEdit, onDelete, onDuplicate }: {
       className="group rounded-2xl flex flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
       style={{
         background: BG_CARD,
-        border:     '1px solid rgba(255,255,255,0.07)',
+        border:     '1px solid rgba(var(--tint), 0.07)',
         boxShadow:  '0 2px 12px rgba(0,0,0,0.25)',
       }}
     >
@@ -389,7 +389,7 @@ function ProductGridCard({ row, onEdit, onDelete, onDuplicate }: {
               style={{
                 width: 56, height: 56, borderRadius: 16,
                 background: `linear-gradient(135deg, ${from}, ${to})`,
-                fontSize: 22, fontWeight: 700, color: 'rgba(255,255,255,0.9)',
+                fontSize: 22, fontWeight: 700, color: 'rgba(var(--tint), 0.9)',
               }}
             >
               {row.name.split(' ').slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '?'}
@@ -411,8 +411,8 @@ function ProductGridCard({ row, onEdit, onDelete, onDuplicate }: {
       {/* Info */}
       <div className="flex flex-col gap-3 p-4">
         <div>
-          <p className="text-[13px] font-semibold text-[#EDEDED] leading-snug line-clamp-1">{row.name}</p>
-          <p className="text-[11px] text-white/25 mt-0.5">/{row.slug}</p>
+          <p className="text-[13px] font-semibold text-ink leading-snug line-clamp-1">{row.name}</p>
+          <p className="text-[11px] text-ink-faint mt-0.5">/{row.slug}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -433,16 +433,16 @@ function ProductGridCard({ row, onEdit, onDelete, onDuplicate }: {
         <button
           onClick={() => onEdit(row.id)}
           className="w-full mt-auto py-2 rounded-lg text-[12px] font-medium transition-all opacity-0 group-hover:opacity-100"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'rgba(var(--tint), 0.05)', color: 'rgba(var(--tint), 0.55)', border: '1px solid rgba(var(--tint), 0.07)' }}
           onMouseEnter={e => {
             ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(232,82,26,0.1)'
             ;(e.currentTarget as HTMLButtonElement).style.color = '#F0643A'
             ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,82,26,0.3)'
           }}
           onMouseLeave={e => {
-            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'
-            ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'
+            ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(var(--tint), 0.05)'
+            ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(var(--tint), 0.55)'
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.07)'
           }}
         >
           Editar produto
@@ -496,15 +496,15 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
           'transition-transform duration-300 ease-out',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
-        style={{ background: '#16181F', borderLeft: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: BG_CARD2, borderLeft: '1px solid rgba(var(--tint), 0.07)' }}
       >
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex items-start justify-between px-6 py-5" style={{ borderBottom: '1px solid rgba(var(--tint), 0.06)' }}>
           <div>
-            <h2 className="text-[15px] font-bold text-[#EDEDED] tracking-tight">Criar Novo Produto</h2>
-            <p className="text-[12px] text-white/35 mt-1">Defina o modelo e crie o rascunho.</p>
+            <h2 className="text-[15px] font-bold text-ink tracking-tight">Criar Novo Produto</h2>
+            <p className="text-[12px] text-ink-mute mt-1">Defina o modelo e crie o rascunho.</p>
           </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/6 transition-all">
+          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -512,7 +512,7 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
         {/* Form */}
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
+            <label className="text-[11px] font-semibold text-ink-mute uppercase tracking-widest">
               Nome do Produto
             </label>
             <input
@@ -521,15 +521,15 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
               placeholder="Ex: Mentoria Intensiva"
-              className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all"
-              style={{ background: '#0D0E12', border: '1px solid rgba(255,255,255,0.07)' }}
+              className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all"
+              style={{ background: BG_PAGE, border: '1px solid rgba(var(--tint), 0.07)' }}
               onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,82,26,0.5)' }}
-              onBlur={e  => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
+              onBlur={e  => { e.currentTarget.style.borderColor = 'rgba(var(--tint), 0.07)' }}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
+            <label className="text-[11px] font-semibold text-ink-mute uppercase tracking-widest">
               Modelo de Negócio
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -543,13 +543,13 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
                   onClick={() => setModel(key)}
                   className="flex flex-col items-start gap-1 px-3.5 py-3 rounded-lg text-left transition-all"
                   style={{
-                    background: model === key ? 'rgba(232,82,26,0.08)' : '#0D0E12',
-                    border:     model === key ? '1px solid rgba(232,82,26,0.40)' : '1px solid rgba(255,255,255,0.07)',
+                    background: model === key ? 'rgba(232,82,26,0.08)' : BG_PAGE,
+                    border:     model === key ? '1px solid rgba(232,82,26,0.40)' : '1px solid rgba(var(--tint), 0.07)',
                   }}
                 >
                   <span className="text-base">{icon}</span>
-                  <span className="text-[12px] font-semibold text-white/80">{label}</span>
-                  <span className="text-[10px] text-white/30 leading-snug">{desc}</span>
+                  <span className="text-[12px] font-semibold text-ink">{label}</span>
+                  <span className="text-[10px] text-ink-mute leading-snug">{desc}</span>
                 </button>
               ))}
             </div>
@@ -560,7 +560,7 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
             style={{ background: 'rgba(232,82,26,0.06)', border: '1px solid rgba(232,82,26,0.12)' }}
           >
             <ChevronRight className="w-3.5 h-3.5 text-[#E8521A] mt-0.5 shrink-0" />
-            <p className="text-[11px] text-white/40 leading-relaxed">
+            <p className="text-[11px] text-ink-mute leading-relaxed">
               {model === 'paid'
                 ? 'Configure o preço e integração Stripe na aba "Precificação" após criar o produto.'
                 : 'Produto gratuito — o fluxo final do Quizz exibirá uma página de sucesso em vez de redirecionar ao checkout.'}
@@ -569,7 +569,7 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="px-6 py-5" style={{ borderTop: '1px solid rgba(var(--tint), 0.06)' }}>
           <button
             onClick={handleSave}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold text-white transition-all"
@@ -580,7 +580,7 @@ function NewProductDrawer({ open, onClose, onSave }: DrawerProps) {
             <Plus className="w-3.5 h-3.5" />
             Criar Rascunho
           </button>
-          <button onClick={onClose} className="w-full mt-2 py-2 text-[12px] text-white/25 hover:text-white/50 transition-colors">
+          <button onClick={onClose} className="w-full mt-2 py-2 text-[12px] text-ink-faint hover:text-ink-sub transition-colors">
             Cancelar
           </button>
         </div>
@@ -595,7 +595,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
   return (
     <div
       className="flex items-center gap-0.5 p-1 rounded-lg"
-      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }}
     >
       {([
         { key: 'list' as const, icon: LayoutList,  label: 'Lista' },
@@ -607,8 +607,8 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
           onClick={() => onChange(key)}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all"
           style={{
-            background: view === key ? 'rgba(255,255,255,0.08)' : 'transparent',
-            color:      view === key ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.30)',
+            background: view === key ? 'rgba(var(--tint), 0.08)' : 'transparent',
+            color:      view === key ? 'rgba(var(--tint), 0.85)' : 'rgba(var(--tint), 0.30)',
           }}
         >
           <Icon className="w-3.5 h-3.5" />
@@ -721,8 +721,8 @@ export default function Products() {
           {/* ── Page header ── */}
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">Produtos</h1>
-              <p className="text-[13px] text-white/30 mt-0.5">Catálogo de produtos e serviços Bridge</p>
+              <h1 className="text-xl font-bold text-ink tracking-tight">Produtos</h1>
+              <p className="text-[13px] text-ink-mute mt-0.5">Catálogo de produtos e serviços Bridge</p>
             </div>
             <button
               onClick={() => setDrawer(true)}
@@ -740,17 +740,17 @@ export default function Products() {
             {/* Search */}
             <div
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1"
-              style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{ background: BG_CARD, border: '1px solid rgba(var(--tint), 0.07)' }}
             >
-              <Search className="w-4 h-4 text-white/25 shrink-0" />
+              <Search className="w-4 h-4 text-ink-faint shrink-0" />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Buscar por nome ou tipo..."
-                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-white/70 placeholder:text-white/25"
+                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-ink placeholder:text-ink-faint"
               />
               {query && (
-                <button onClick={() => setQuery('')} className="text-white/25 hover:text-white/60 transition-colors">
+                <button onClick={() => setQuery('')} className="text-ink-faint hover:text-ink-sub transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -779,16 +779,16 @@ export default function Products() {
             <div className="flex flex-col items-center justify-center gap-4 py-24">
               <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ background: 'rgba(var(--tint), 0.04)', border: '1px solid rgba(var(--tint), 0.06)' }}
               >
-                <Package className="w-5 h-5 text-white/20" />
+                <Package className="w-5 h-5 text-ink-faint" />
               </div>
               <div className="text-center">
-                <p className="text-[14px] font-medium text-white/40">
+                <p className="text-[14px] font-medium text-ink-mute">
                   {query ? 'Nenhum produto encontrado' : 'Nenhum produto ainda'}
                 </p>
                 {query && (
-                  <p className="text-[12px] text-white/20 mt-1">
+                  <p className="text-[12px] text-ink-faint mt-1">
                     Tente outro termo ou{' '}
                     <button className="text-[#E8521A] hover:underline" onClick={() => setQuery('')}>limpe a busca</button>
                   </p>
@@ -798,14 +798,14 @@ export default function Products() {
           ) : view === 'list' ? (
 
             /* ── List view ── */
-            <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: '1px solid rgba(var(--tint), 0.07)' }}>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <tr style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
                       {['Produto', 'Tipo', 'Preço', 'Variantes', 'Status', ''].map((h, i) => (
                         <th key={i} className="text-left px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider"
-                          style={{ color: 'rgba(255,255,255,0.28)' }}>
+                          style={{ color: 'rgba(var(--tint), 0.28)' }}>
                           {h}
                         </th>
                       ))}
@@ -826,10 +826,10 @@ export default function Products() {
 
                 {!products.length && (
                   <div className="px-5 py-3 flex items-center gap-2"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    style={{ borderTop: '1px solid rgba(var(--tint), 0.05)' }}>
                     <span className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase tracking-widest"
                       style={{ background: 'rgba(232,82,26,0.12)', color: '#F0643A' }}>Demo</span>
-                    <p className="text-[11px] text-white/20">
+                    <p className="text-[11px] text-ink-faint">
                       Dados de exemplo. Crie seu primeiro produto para ver dados reais.
                     </p>
                   </div>
@@ -856,7 +856,7 @@ export default function Products() {
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase tracking-widest"
                     style={{ background: 'rgba(232,82,26,0.12)', color: '#F0643A' }}>Demo</span>
-                  <p className="text-[11px] text-white/20">
+                  <p className="text-[11px] text-ink-faint">
                     Dados de exemplo. Crie seu primeiro produto para ver dados reais.
                   </p>
                 </div>

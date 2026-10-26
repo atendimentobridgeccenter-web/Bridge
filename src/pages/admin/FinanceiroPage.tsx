@@ -4,7 +4,7 @@ import {
   TrendingUp, CreditCard, ChevronRight, ArrowUpRight, Clock, CheckCircle2, Users,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_PAGE, BORDER, INK_FAINT, INK_MUTE, INK_SUB } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -101,7 +101,7 @@ function MonthlyChart({ leads }: { leads: FinRow[] }) {
     <div className="flex items-end gap-2 h-20 pt-2">
       {bars.map((b, i) => (
         <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
-          <span className="text-[9px] font-medium tabular-nums" style={{ color: b.count > 0 ? '#34D399' : '#2E3042' }}>
+          <span className="text-[9px] font-medium tabular-nums" style={{ color: b.count > 0 ? '#34D399' : INK_FAINT }}>
             {b.count > 0 ? b.count : ''}
           </span>
           <div
@@ -110,10 +110,10 @@ function MonthlyChart({ leads }: { leads: FinRow[] }) {
               height: b.count > 0 ? `${Math.max((b.count / max) * 100, 8)}%` : '4px',
               background: i === bars.length - 1
                 ? 'rgba(52,211,153,0.7)'
-                : b.count > 0 ? 'rgba(52,211,153,0.25)' : 'rgba(255,255,255,0.04)',
+                : b.count > 0 ? 'rgba(52,211,153,0.25)' : 'rgba(var(--tint), 0.04)',
             }}
           />
-          <span className="text-[9px]" style={{ color: '#2E3042' }}>{b.label}</span>
+          <span className="text-[9px]" style={{ color: INK_FAINT }}>{b.label}</span>
         </div>
       ))}
     </div>
@@ -177,7 +177,7 @@ export default function FinanceiroPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Financeiro</h1>
-            <p className="text-[12px] mt-0.5" style={{ color: '#404252' }}>
+            <p className="text-[12px] mt-0.5" style={{ color: INK_MUTE }}>
               Pagamentos Stripe, mensalidades e receita consolidada
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function FinanceiroPage() {
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: '#404252' }}>{stat.label}</span>
+                <span className="text-[11px]" style={{ color: INK_MUTE }}>{stat.label}</span>
                 <div className="w-6 h-6 rounded-md flex items-center justify-center"
                   style={{ background: `${stat.color}16` }}>
                   <stat.icon className="w-3 h-3" style={{ color: stat.color }} />
@@ -209,7 +209,7 @@ export default function FinanceiroPage() {
                 style={{ color: isLoading ? '#ffffff15' : stat.color }}>
                 {isLoading ? '—' : stat.value}
               </p>
-              <p className="text-[10.5px]" style={{ color: '#2E3042' }}>{stat.sub}</p>
+              <p className="text-[10.5px]" style={{ color: INK_FAINT }}>{stat.sub}</p>
             </div>
           ))}
         </div>
@@ -225,7 +225,7 @@ export default function FinanceiroPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[13px] font-semibold text-[#DADCE6]">Pagamentos por mês</p>
-                <p className="text-[11px] mt-0.5" style={{ color: '#404252' }}>
+                <p className="text-[11px] mt-0.5" style={{ color: INK_MUTE }}>
                   últimos 6 meses · confirmados via Stripe
                 </p>
               </div>
@@ -234,7 +234,7 @@ export default function FinanceiroPage() {
               <div className="flex items-end gap-2 h-20">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="flex-1 rounded animate-pulse"
-                    style={{ height: `${20 + i * 10}%`, background: 'rgba(255,255,255,0.04)' }} />
+                    style={{ height: `${20 + i * 10}%`, background: 'rgba(var(--tint), 0.04)' }} />
                 ))}
               </div>
             ) : (
@@ -262,13 +262,13 @@ export default function FinanceiroPage() {
               <div className="flex flex-col gap-2">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="h-10 rounded-lg animate-pulse"
-                    style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    style={{ background: 'rgba(var(--tint), 0.04)' }} />
                 ))}
               </div>
             ) : pending.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 gap-2">
                 <CheckCircle2 className="w-6 h-6" style={{ color: '#34D39940' }} />
-                <p className="text-[11px]" style={{ color: '#2E3042' }}>Nenhum pendente</p>
+                <p className="text-[11px]" style={{ color: INK_FAINT }}>Nenhum pendente</p>
               </div>
             ) : (
               <div className="flex flex-col gap-1.5">
@@ -284,15 +284,15 @@ export default function FinanceiroPage() {
                       <p className="text-[11.5px] font-medium text-[#DADCE6] truncate">
                         {lead.name ?? lead.email ?? 'Anônimo'}
                       </p>
-                      <p className="text-[10px] truncate" style={{ color: '#404252' }}>
+                      <p className="text-[10px] truncate" style={{ color: INK_MUTE }}>
                         {lead.products?.name ?? '—'}
                       </p>
                     </div>
-                    <ChevronRight className="w-3 h-3 text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
+                    <ChevronRight className="w-3 h-3 text-ink-ghost group-hover:text-ink-mute transition-colors shrink-0" />
                   </Link>
                 ))}
                 {pending.length > 6 && (
-                  <p className="text-[10.5px] text-center mt-1" style={{ color: '#404252' }}>
+                  <p className="text-[10.5px] text-center mt-1" style={{ color: INK_MUTE }}>
                     +{pending.length - 6} mais
                   </p>
                 )}
@@ -307,10 +307,10 @@ export default function FinanceiroPage() {
           style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
         >
           <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
             <div>
               <p className="text-[13px] font-semibold text-[#DADCE6]">Pagamentos Confirmados</p>
-              <p className="text-[11px] mt-0.5" style={{ color: '#404252' }}>
+              <p className="text-[11px] mt-0.5" style={{ color: INK_MUTE }}>
                 {confirmed.length} registros · confirmados via webhook Stripe
               </p>
             </div>
@@ -320,17 +320,17 @@ export default function FinanceiroPage() {
             <div className="flex flex-col">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-5 py-3"
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <div className="flex-1 h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                  <div className="w-16 h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}>
+                  <div className="flex-1 h-3 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.05)' }} />
+                  <div className="w-16 h-3 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.04)' }} />
                 </div>
               ))}
             </div>
           ) : confirmed.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <CreditCard className="w-10 h-10 text-white/8" />
-              <p className="text-[13px]" style={{ color: '#2E3042' }}>Nenhum pagamento confirmado ainda</p>
-              <p className="text-[11px]" style={{ color: '#1C1E28' }}>Configure o webhook Stripe para receber confirmações</p>
+              <CreditCard className="w-10 h-10 text-ink-ghost" />
+              <p className="text-[13px]" style={{ color: INK_FAINT }}>Nenhum pagamento confirmado ainda</p>
+              <p className="text-[11px]" style={{ color: BG_CARD2 }}>Configure o webhook Stripe para receber confirmações</p>
             </div>
           ) : (
             <div>
@@ -339,8 +339,8 @@ export default function FinanceiroPage() {
                 className="grid px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider"
                 style={{
                   gridTemplateColumns: '1fr 1fr 120px 120px',
-                  color: '#2E3042',
-                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  color: INK_FAINT,
+                  borderBottom: '1px solid rgba(var(--tint), 0.04)',
                 }}
               >
                 <span>Pessoa</span>
@@ -356,7 +356,7 @@ export default function FinanceiroPage() {
                   className="group grid px-5 py-3 transition-all hover:bg-white/[0.025] items-center"
                   style={{
                     gridTemplateColumns: '1fr 1fr 120px 120px',
-                    borderBottom: idx < confirmed.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                    borderBottom: idx < confirmed.length - 1 ? '1px solid rgba(var(--tint), 0.03)' : 'none',
                   }}
                 >
                   <div className="min-w-0">
@@ -364,13 +364,13 @@ export default function FinanceiroPage() {
                       {lead.name ?? lead.email ?? 'Anônimo'}
                     </p>
                     {lead.email && (
-                      <p className="text-[10.5px] truncate" style={{ color: '#404252' }}>{lead.email}</p>
+                      <p className="text-[10.5px] truncate" style={{ color: INK_MUTE }}>{lead.email}</p>
                     )}
                   </div>
-                  <p className="text-[12px] truncate" style={{ color: '#5A5C6A' }}>
+                  <p className="text-[12px] truncate" style={{ color: INK_SUB }}>
                     {lead.products?.name ?? '—'}
                   </p>
-                  <p className="text-[11.5px] tabular-nums" style={{ color: '#5A5C6A' }}>
+                  <p className="text-[11.5px] tabular-nums" style={{ color: INK_SUB }}>
                     {fmtDate(lead.paid_at)}
                   </p>
                   <span
@@ -392,10 +392,10 @@ export default function FinanceiroPage() {
           style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
         >
           <div className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
             <div>
               <p className="text-[13px] font-semibold text-[#DADCE6]">Mensalidades — Alunos Ativos</p>
-              <p className="text-[11px] mt-0.5" style={{ color: '#404252' }}>
+              <p className="text-[11px] mt-0.5" style={{ color: INK_MUTE }}>
                 {activeStudents.length} alunos · {fmtJPY(mrr)}/mês estimado
               </p>
             </div>
@@ -411,13 +411,13 @@ export default function FinanceiroPage() {
           {isLoading ? (
             <div className="flex flex-col gap-2 p-5">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-10 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                <div key={i} className="h-10 rounded-lg animate-pulse" style={{ background: 'rgba(var(--tint), 0.04)' }} />
               ))}
             </div>
           ) : activeStudents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2">
-              <Users className="w-8 h-8 text-white/8" />
-              <p className="text-[12px]" style={{ color: '#2E3042' }}>Nenhum aluno ativo</p>
+              <Users className="w-8 h-8 text-ink-ghost" />
+              <p className="text-[12px]" style={{ color: INK_FAINT }}>Nenhum aluno ativo</p>
             </div>
           ) : (
             <div>
@@ -425,7 +425,7 @@ export default function FinanceiroPage() {
                 <div
                   key={s.id}
                   className="flex items-center gap-4 px-5 py-3"
-                  style={{ borderBottom: idx < Math.min(activeStudents.length, 10) - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}
+                  style={{ borderBottom: idx < Math.min(activeStudents.length, 10) - 1 ? '1px solid rgba(var(--tint), 0.03)' : 'none' }}
                 >
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
                     style={{ background: 'rgba(96,165,250,0.12)', color: '#60A5FA' }}>
@@ -433,7 +433,7 @@ export default function FinanceiroPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-medium text-[#DADCE6] truncate">{s.name ?? s.email ?? '—'}</p>
-                    <p className="text-[10.5px] truncate" style={{ color: '#404252' }}>
+                    <p className="text-[10.5px] truncate" style={{ color: INK_MUTE }}>
                       {s.subject ?? '—'}{s.teacher ? ` · ${s.teacher}` : ''}
                     </p>
                   </div>
@@ -441,14 +441,14 @@ export default function FinanceiroPage() {
                     <p className="text-[12.5px] font-semibold tabular-nums" style={{ color: '#60A5FA' }}>
                       {s.monthly_fee != null ? fmtJPY(s.monthly_fee) : '—'}
                     </p>
-                    <p className="text-[10px]" style={{ color: '#2E3042' }}>/mês</p>
+                    <p className="text-[10px]" style={{ color: INK_FAINT }}>/mês</p>
                   </div>
                 </div>
               ))}
               {activeStudents.length > 10 && (
                 <div className="px-5 py-3 text-center">
                   <Link to="/admin/alunos" className="text-[11px] transition-colors hover:opacity-70"
-                    style={{ color: '#404252' }}>
+                    style={{ color: INK_MUTE }}>
                     +{activeStudents.length - 10} alunos · Ver todos
                   </Link>
                 </div>

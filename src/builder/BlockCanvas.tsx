@@ -96,7 +96,7 @@ function SortableBlock({
         'opacity-0 group-hover:opacity-100 transition-opacity',
         selected && 'opacity-100',
       )}>
-        <span className="px-2 py-0.5 rounded text-[10px] font-semibold text-white/70"
+        <span className="px-2 py-0.5 rounded text-[10px] font-semibold text-ink"
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}>
           {BLOCK_LABELS[block.type] ?? block.type}
         </span>
@@ -108,14 +108,14 @@ function SortableBlock({
       )}>
         <button
           {...attributes} {...listeners}
-          className="p-1.5 rounded-lg text-white/50 hover:text-white cursor-grab active:cursor-grabbing transition-colors"
+          className="p-1.5 rounded-lg text-ink-sub hover:text-ink cursor-grab active:cursor-grabbing transition-colors"
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
           onClick={e => e.stopPropagation()}
         >
           <GripVertical className="w-3.5 h-3.5" />
         </button>
         <button
-          className="p-1.5 rounded-lg text-red-400 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg text-red-400 hover:text-ink transition-colors"
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
           onClick={e => { e.stopPropagation(); onDelete() }}
         >
@@ -175,10 +175,10 @@ export default function BlockCanvas({ blocks, selectedId, onSelect, onChange }: 
             className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
           >
-            <Layers className="w-6 h-6 text-white/15" />
+            <Layers className="w-6 h-6 text-ink-ghost" />
           </div>
-          <p className="text-[14px] font-medium text-white/30">Página vazia</p>
-          <p className="text-[12px] text-white/15 mt-1">Clique em um bloco no painel esquerdo</p>
+          <p className="text-[14px] font-medium text-ink-mute">Página vazia</p>
+          <p className="text-[12px] text-ink-ghost mt-1">Clique em um bloco no painel esquerdo</p>
         </div>
       </div>
     )

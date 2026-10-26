@@ -5,11 +5,11 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import { useRole } from '@/hooks/useRole'
 import { useMyTeacherProfile } from '@/hooks/useTeacherPortal'
+import ThemeToggle from '@/components/ui/ThemeToggle'
+import {
+  BG_PAGE, BG_SIDEBAR, SIDEBAR_BORDER, BG_CARD, ACCENT, WARNING, WARNING_BG,
+} from '@/lib/theme'
 
-const BG      = '#111111'
-const BG_PAGE = '#0A0A0A'
-const BORDER  = 'rgba(255,255,255,0.06)'
-const ACCENT  = '#E8521A'
 
 const NAV = [
   { to: '/professor',        icon: CalendarDays, label: 'Minhas turmas', end: true  },
@@ -48,14 +48,14 @@ export default function ProfessorLayout() {
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background: BG_PAGE }}>
       <header className="h-14 shrink-0 flex items-center gap-4 px-5"
-        style={{ borderBottom: `1px solid ${BORDER}`, background: BG }}>
+        style={{ borderBottom: `1px solid ${SIDEBAR_BORDER}`, background: BG_SIDEBAR }}>
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-lg grid place-items-center" style={{ background: ACCENT }}>
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
           <div className="hidden sm:block">
-            <p className="text-[13px] font-semibold text-[#EDEDED] leading-tight">Bridge</p>
-            <p className="text-[10px] text-white/30 leading-tight">Portal do professor</p>
+            <p className="text-[13px] font-semibold text-rail leading-tight">Bridge</p>
+            <p className="text-[10px] text-rail-mute leading-tight">Portal do professor</p>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function ProfessorLayout() {
             <NavLink key={to} to={to} end={end}
               className={({ isActive }) => cn(
                 'px-3 py-1.5 rounded-xl text-[12.5px] font-medium flex items-center gap-1.5 transition-all',
-                isActive ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/65',
+                isActive ? 'text-rail' : 'text-rail-mute hover:text-rail',
               )}
               style={({ isActive }) => isActive
                 ? { background: 'rgba(255,255,255,0.07)', border: `1px solid rgba(255,255,255,0.12)` }
@@ -79,7 +79,7 @@ export default function ProfessorLayout() {
 
         <div className="flex items-center gap-3 shrink-0">
           <div className="text-right hidden sm:block">
-            <p className="text-[12px] text-[#EDEDED] leading-tight">
+            <p className="text-[12px] text-rail leading-tight">
               {profile.data?.name ?? user.email}
             </p>
             {role === 'admin' && (
@@ -88,29 +88,30 @@ export default function ProfessorLayout() {
               </p>
             )}
           </div>
+          <ThemeToggle onRail />
           <button onClick={signOut} title="Sair"
-            className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/8 transition-all">
+            className="p-2 rounded-lg text-rail-mute hover:text-red-400 hover:bg-red-500/8 transition-all">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-5">
+      <main className="flex-1 overflow-auto px-5 py-6 sm:px-8 sm:py-8">
         {unlinked ? (
           <div className="max-w-[460px] mx-auto mt-16 rounded-2xl p-6 flex flex-col gap-3"
-            style={{ background: '#13151A', border: '1px solid rgba(251,191,36,0.25)' }}>
+            style={{ background: BG_CARD, border: `1px solid ${WARNING_BG}`, boxShadow: 'var(--shadow-card)' }}>
             <div className="flex items-center gap-2.5">
-              <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: '#FCD34D' }} />
-              <p className="text-[14px] font-semibold text-[#EDEDED]">Conta ainda não vinculada</p>
+              <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: WARNING }} />
+              <p className="text-[14px] font-semibold text-ink">Conta ainda não vinculada</p>
             </div>
-            <p className="text-[12.5px] text-white/45 leading-relaxed">
+            <p className="text-[12.5px] text-ink-sub leading-relaxed">
               Esta conta de acesso não está ligada a nenhuma ficha de professor ativa,
               então não há turmas para mostrar.
             </p>
-            <p className="text-[12px] text-white/30 leading-relaxed">
-              Peça à secretaria para abrir <strong className="text-white/50">Turmas → Professores</strong>,
+            <p className="text-[12px] text-ink-mute leading-relaxed">
+              Peça à secretaria para abrir <strong className="text-ink-sub">Turmas → Professores</strong>,
               editar sua ficha e vinculá-la a este e-mail
-              (<span className="text-white/50">{user.email}</span>).
+              (<span className="text-ink-sub">{user.email}</span>).
             </p>
           </div>
         ) : (

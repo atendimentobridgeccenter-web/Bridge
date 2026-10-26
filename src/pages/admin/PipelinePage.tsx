@@ -13,7 +13,7 @@ import { useContactStagesBatch } from '@/hooks/useContactStage'
 import { STAGES } from '@/lib/stageConfig'
 import type { Lead } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
-import { BG_PAGE, BG_CARD, BG_INPUT, BG_DROP, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_DROP, BG_INPUT, BG_PAGE, BORDER } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -83,12 +83,12 @@ function SelectFilter({ value, onChange, placeholder, options }: {
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] transition-all whitespace-nowrap"
-        style={{ background: BG_CARD, border: `1px solid ${open ? 'rgba(232,82,26,0.4)' : BORDER}`, color: selected ? '#EDEDED' : 'rgba(255,255,255,0.35)' }}>
-        <Package className="w-3.5 h-3.5 shrink-0 text-white/25" />
+        style={{ background: BG_CARD, border: `1px solid ${open ? 'rgba(232,82,26,0.4)' : BORDER}`, color: selected ? '#EDEDED' : 'rgba(var(--tint), 0.35)' }}>
+        <Package className="w-3.5 h-3.5 shrink-0 text-ink-faint" />
         <span className="truncate max-w-[160px]">{selected?.label ?? placeholder}</span>
         {value
-          ? <button onClick={e => { e.stopPropagation(); onChange('') }} className="ml-auto shrink-0 text-white/25 hover:text-white/60 transition-colors"><X className="w-3 h-3" /></button>
-          : <ChevronDown className="w-3.5 h-3.5 ml-auto shrink-0 text-white/25" />}
+          ? <button onClick={e => { e.stopPropagation(); onChange('') }} className="ml-auto shrink-0 text-ink-faint hover:text-ink-sub transition-colors"><X className="w-3 h-3" /></button>
+          : <ChevronDown className="w-3.5 h-3.5 ml-auto shrink-0 text-ink-faint" />}
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 rounded-xl z-50 py-1.5 min-w-[200px]"
@@ -96,7 +96,7 @@ function SelectFilter({ value, onChange, placeholder, options }: {
           {options.map(opt => (
             <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
               className={cn('w-full flex items-center px-4 py-2 text-[12px] text-left transition-colors',
-                opt.value === value ? 'text-[#F0643A]' : 'text-white/60 hover:text-white/90 hover:bg-white/4')}>
+                opt.value === value ? 'text-[#F0643A]' : 'text-ink-sub hover:text-ink hover:bg-tint/4')}>
               {opt.label}
             </button>
           ))}
@@ -153,16 +153,16 @@ function DeleteConfirm({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
           <div>
-            <p className="text-[14px] font-bold text-[#EDEDED]">Excluir lead?</p>
-            <p className="text-[12px] text-white/35 mt-0.5">Esta ação não pode ser desfeita.</p>
+            <p className="text-[14px] font-bold text-ink">Excluir lead?</p>
+            <p className="text-[12px] text-ink-mute mt-0.5">Esta ação não pode ser desfeita.</p>
           </div>
         </div>
-        <p className="text-[13px] text-white/50">
-          O lead <strong className="text-white/70">{displayName(lead) || lead.email || 'sem nome'}</strong> será permanentemente removido.
+        <p className="text-[13px] text-ink-sub">
+          O lead <strong className="text-ink">{displayName(lead) || lead.email || 'sem nome'}</strong> será permanentemente removido.
         </p>
         <div className="flex gap-3 mt-1">
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-ink-mute transition-all"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Cancelar
           </button>
@@ -190,9 +190,9 @@ function PipelineCard({ lead, onView, onEdit, onDelete }: {
   return (
     <div
       className="rounded-xl p-3.5 flex flex-col gap-2.5 cursor-pointer group transition-all"
-      style={{ background: '#13151A', border: `1px solid ${BORDER}` }}
+      style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
       onClick={onView}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--tint), 0.12)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER }}
     >
       <div className="flex items-start gap-2.5">
@@ -201,11 +201,11 @@ function PipelineCard({ lead, onView, onEdit, onDelete }: {
           {(name || lead.email || '?')[0]?.toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold text-[#EDEDED] truncate leading-tight">
-            {name || <span className="text-white/30 font-normal">Sem nome</span>}
+          <p className="text-[12px] font-semibold text-ink truncate leading-tight">
+            {name || <span className="text-ink-mute font-normal">Sem nome</span>}
           </p>
           {studentName && (
-            <p className="flex items-center gap-1 text-[10px] text-white/35 truncate mt-0.5">
+            <p className="flex items-center gap-1 text-[10px] text-ink-mute truncate mt-0.5">
               <GraduationCap className="w-2.5 h-2.5 shrink-0" />
               {studentName}
             </p>
@@ -213,11 +213,11 @@ function PipelineCard({ lead, onView, onEdit, onDelete }: {
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
           <button onClick={e => { e.stopPropagation(); onEdit() }}
-            className="p-1 rounded text-white/25 hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors">
+            className="p-1 rounded text-ink-faint hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors">
             <Edit2 className="w-3 h-3" />
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete() }}
-            className="p-1 rounded text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+            className="p-1 rounded text-ink-faint hover:text-red-400 hover:bg-red-500/10 transition-colors">
             <Trash2 className="w-3 h-3" />
           </button>
         </div>
@@ -237,12 +237,12 @@ function PipelineCard({ lead, onView, onEdit, onDelete }: {
             ? <><CheckCircle2 className="w-2.5 h-2.5" />Qualificado</>
             : <><XCircle      className="w-2.5 h-2.5" />Desqualificado</>}
         </span>
-        <span className="text-[10px] text-white/20">{timeAgo(lead.created_at)}</span>
+        <span className="text-[10px] text-ink-faint">{timeAgo(lead.created_at)}</span>
       </div>
       <PaymentBadge status={lead.payment_status} paidAt={lead.paid_at} />
 
       {lead.email && (
-        <p className="text-[10px] text-white/25 truncate">{lead.email}</p>
+        <p className="text-[10px] text-ink-faint truncate">{lead.email}</p>
       )}
     </div>
   )
@@ -271,13 +271,13 @@ function PipelineView({ leads, stagesMap, onView, onEdit, onDelete }: {
           <div className="flex items-center gap-2 px-1">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ background: stage.color }} />
             <span className="text-[12px] font-semibold" style={{ color: stage.color }}>{stage.label}</span>
-            <span className="ml-auto text-[11px] text-white/25 tabular-nums">{colLeads.length}</span>
+            <span className="ml-auto text-[11px] text-ink-faint tabular-nums">{colLeads.length}</span>
           </div>
           <div className="flex flex-col gap-2.5">
             {colLeads.length === 0 ? (
               <div className="rounded-xl py-8 flex items-center justify-center"
-                style={{ border: `1px dashed rgba(255,255,255,0.06)` }}>
-                <p className="text-[11px] text-white/20">Nenhum lead</p>
+                style={{ border: `1px dashed rgba(var(--tint), 0.06)` }}>
+                <p className="text-[11px] text-ink-faint">Nenhum lead</p>
               </div>
             ) : (
               colLeads.map(lead => (
@@ -355,13 +355,13 @@ export default function PipelinePage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">Pipeline</h1>
-              <p className="text-[13px] text-white/30 mt-0.5">Leads por estágio de relacionamento</p>
+              <h1 className="text-xl font-bold text-ink tracking-tight">Pipeline</h1>
+              <p className="text-[13px] text-ink-mute mt-0.5">Leads por estágio de relacionamento</p>
             </div>
             <button onClick={refresh}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.45)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)' }}
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.45)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.18)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER }}>
               <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
               Atualizar
@@ -372,12 +372,12 @@ export default function PipelinePage() {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1 min-w-[200px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <Search className="w-4 h-4 text-white/25 shrink-0" />
+              <Search className="w-4 h-4 text-ink-faint shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nome, e-mail…"
-                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-white/70 placeholder:text-white/25" />
+                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-ink placeholder:text-ink-faint" />
               {search && (
-                <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/60 transition-colors">
+                <button onClick={() => setSearch('')} className="text-ink-faint hover:text-ink-sub transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -398,7 +398,7 @@ export default function PipelinePage() {
                   className="px-3 py-2 text-[12px] font-medium transition-all"
                   style={qualFilter === opt.value
                     ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
-                    : { color: 'rgba(255,255,255,0.35)' }}>
+                    : { color: 'rgba(var(--tint), 0.35)' }}>
                   {opt.label}
                 </button>
               ))}
@@ -418,7 +418,7 @@ export default function PipelinePage() {
                   className="px-3 py-2 text-[12px] font-medium transition-all"
                   style={paymentFilter === opt.value
                     ? { background: opt.value === 'confirmed' ? 'rgba(52,211,153,0.15)' : opt.value === 'pending' ? 'rgba(251,191,36,0.12)' : 'rgba(232,82,26,0.15)', color: opt.value === 'confirmed' ? '#34D399' : opt.value === 'pending' ? '#FBBF24' : '#F0643A' }
-                    : { color: 'rgba(255,255,255,0.35)' }}>
+                    : { color: 'rgba(var(--tint), 0.35)' }}>
                   {opt.label}
                 </button>
               ))}
@@ -430,10 +430,10 @@ export default function PipelinePage() {
             <button
               onClick={() => setStageFilter('all')}
               className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all',
-                stageFilter === 'all' ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60')}
+                stageFilter === 'all' ? 'text-ink' : 'text-ink-mute hover:text-ink-sub')}
               style={{
-                background: stageFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                border: `1px solid ${stageFilter === 'all' ? 'rgba(255,255,255,0.15)' : 'transparent'}`,
+                background: stageFilter === 'all' ? 'rgba(var(--tint), 0.08)' : 'transparent',
+                border: `1px solid ${stageFilter === 'all' ? 'rgba(var(--tint), 0.15)' : 'transparent'}`,
               }}>
               Todos os estágios
             </button>
@@ -445,7 +445,7 @@ export default function PipelinePage() {
                   className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
                   style={{
                     background: active ? s.bg    : 'transparent',
-                    color:      active ? s.color : 'rgba(255,255,255,0.35)',
+                    color:      active ? s.color : 'rgba(var(--tint), 0.35)',
                     border:     `1px solid ${active ? s.border : 'transparent'}`,
                   }}>
                   {s.label}
@@ -455,7 +455,7 @@ export default function PipelinePage() {
             {(stageFilter !== 'all' || qualFilter !== 'all' || paymentFilter !== 'all' || search || productId) && (
               <button
                 onClick={() => { setStageFilter('all'); setQualFilter('all'); setPaymentFilter('all'); setSearch(''); setProductId('') }}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-white/25 hover:text-white/60 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-ink-faint hover:text-ink-sub flex items-center gap-1"
                 style={{ border: '1px solid transparent' }}>
                 <X className="w-3 h-3" /> Limpar filtros
               </button>

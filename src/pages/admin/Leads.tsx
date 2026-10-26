@@ -82,22 +82,22 @@ function LeadCard({ lead }: { lead: BridgeLead }) {
       className="rounded-xl p-4 cursor-default transition-all duration-150"
       style={{
         background: '#111111',
-        border: '1px solid rgba(255,255,255,0.05)',
+        border: '1px solid rgba(var(--tint), 0.05)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.12)'
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(var(--tint), 0.12)'
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.05)'
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(var(--tint), 0.05)'
       }}
     >
       {name && (
-        <p className="text-xs font-semibold text-[#EDEDED] mb-0.5 truncate tracking-tight">{name}</p>
+        <p className="text-xs font-semibold text-ink mb-0.5 truncate tracking-tight">{name}</p>
       )}
       <p className="text-xs text-[#71717A] truncate">{email}</p>
       <div className="flex items-center justify-between mt-3">
-        <span className="text-[10px] text-[#52525B]">{timeAgo(lead.updated_at)}</span>
+        <span className="text-[10px] text-ink-mute">{timeAgo(lead.updated_at)}</span>
         {lead.completed && (
           <span
             className="text-[10px] px-1.5 py-0.5 rounded font-medium"
@@ -130,8 +130,8 @@ function Column({
     <div
       className="flex flex-col flex-1 rounded-2xl min-h-[400px]"
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(var(--tint), 0.02)',
+        border: '1px solid rgba(var(--tint), 0.06)',
       }}
     >
       {/* Header */}
@@ -139,7 +139,7 @@ function Column({
         className="flex items-center justify-between px-4 py-3 rounded-t-2xl"
         style={{
           background: col.accentColor,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(var(--tint), 0.06)',
         }}
       >
         <div className="flex items-center gap-2">
@@ -200,10 +200,10 @@ export default function Leads() {
       {/* Top bar */}
       <div
         className="shrink-0 flex items-center justify-between px-8 py-5"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ borderBottom: '1px solid rgba(var(--tint), 0.06)' }}
       >
         <div>
-          <h1 className="text-lg font-semibold tracking-tight text-[#EDEDED]">Pipeline de Leads</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-ink">Pipeline de Leads</h1>
           <p className="text-xs text-[#71717A] mt-0.5">
             {total} lead{total !== 1 ? 's' : ''} no total
           </p>
@@ -212,13 +212,13 @@ export default function Leads() {
           onClick={load}
           disabled={loading}
           className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium
-                     text-[#A1A1AA] hover:text-[#EDEDED] transition-all disabled:opacity-40"
-          style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                     text-[#A1A1AA] hover:text-ink transition-all disabled:opacity-40"
+          style={{ border: '1px solid rgba(var(--tint), 0.08)' }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.16)'
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.16)'
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)'
+            (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.08)'
           }}
         >
           <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />

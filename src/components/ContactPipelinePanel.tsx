@@ -24,7 +24,7 @@ import { BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/them
 
 const JLPT_LEVELS: JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1']
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 
@@ -80,8 +80,8 @@ function SectionCard({ icon: Icon, title, hint, action, children }: {
       <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER2}` }}>
         <div className="flex items-center gap-2 min-w-0">
           <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: ACCENT }} />
-          <p className="text-[12px] font-semibold text-[#EDEDED]">{title}</p>
-          {hint && <p className="text-[11px] text-white/25 truncate hidden sm:block">· {hint}</p>}
+          <p className="text-[12px] font-semibold text-ink">{title}</p>
+          {hint && <p className="text-[11px] text-ink-faint truncate hidden sm:block">· {hint}</p>}
         </div>
         {action}
       </div>
@@ -101,7 +101,7 @@ function AddBtn({ onClick, label }: { onClick: () => void; label: string }) {
 }
 
 function Lbl({ children }: { children: React.ReactNode }) {
-  return <label className="text-[10.5px] font-medium text-white/40">{children}</label>
+  return <label className="text-[10.5px] font-medium text-ink-mute">{children}</label>
 }
 
 function FormActions({ onCancel, onSave, saving, error, saveLabel }: {
@@ -116,7 +116,7 @@ function FormActions({ onCancel, onSave, saving, error, saveLabel }: {
         </p>
       )}
       <button onClick={onCancel}
-        className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-white/45 hover:text-white/80 hover:bg-white/5 transition-all ml-auto">
+        className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-ink-sub hover:text-ink hover:bg-tint/5 transition-all ml-auto">
         Cancelar
       </button>
       <button onClick={onSave} disabled={saving}
@@ -253,7 +253,7 @@ function EvaluationForm({ contactKey, leadId, row, currentStage, onClose }: {
           onChange={e => set('meet_link', e.target.value)}
           onFocus={focusBorder} onBlur={blurBorder}
           placeholder="https://meet.google.com/…" />
-        <p className="text-[10.5px] text-white/25 leading-relaxed">
+        <p className="text-[10.5px] text-ink-faint leading-relaxed">
           Pode colar um link manualmente, ou salvar com data e hora e usar
           "Gerar link do Meet" na avaliação — aí o evento é criado no Google
           Calendar e o convite sai para o aluno e o especialista.
@@ -330,12 +330,12 @@ function EvaluationRow({ row, onEdit, onDelete }: {
   return (
     <div className="group px-4 py-3 flex flex-col gap-2" style={{ borderBottom: `1px solid ${BORDER2}` }}>
       <div className="flex items-center gap-2.5 flex-wrap">
-        <Clock className="w-3.5 h-3.5 text-white/25 shrink-0" />
-        <p className="text-[12.5px] font-medium text-[#EDEDED] tabular-nums">
+        <Clock className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+        <p className="text-[12.5px] font-medium text-ink tabular-nums">
           {fmtDateTime(row.scheduled_at)}
         </p>
         {row.duration_minutes && (
-          <span className="text-[11px] text-white/25 tabular-nums">{row.duration_minutes} min</span>
+          <span className="text-[11px] text-ink-faint tabular-nums">{row.duration_minutes} min</span>
         )}
         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
           style={{ background: `${cfg.color}1A`, color: cfg.color, border: `1px solid ${cfg.color}33` }}>
@@ -343,7 +343,7 @@ function EvaluationRow({ row, onEdit, onDelete }: {
         </span>
         <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={onEdit} title="Editar"
-            className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all">
+            className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
             <Pencil className="w-3 h-3" />
           </button>
           <DeleteButton onConfirm={onDelete} />
@@ -351,13 +351,13 @@ function EvaluationRow({ row, onEdit, onDelete }: {
       </div>
 
       <div className="flex items-center gap-4 flex-wrap pl-6">
-        <span className="text-[11.5px] text-white/40 flex items-center gap-1.5">
+        <span className="text-[11.5px] text-ink-mute flex items-center gap-1.5">
           <User className="w-3 h-3 shrink-0" />
           {row.specialist?.name ?? 'Especialista não definido'}
         </span>
         {row.meet_link && (
           <a href={row.meet_link} target="_blank" rel="noreferrer"
-            className="text-[11.5px] text-white/40 hover:text-white/75 flex items-center gap-1.5 transition-colors">
+            className="text-[11.5px] text-ink-mute hover:text-ink flex items-center gap-1.5 transition-colors">
             <Video className="w-3 h-3 shrink-0" /> Entrar no Meet
           </a>
         )}
@@ -396,7 +396,7 @@ function EvaluationRow({ row, onEdit, onDelete }: {
       )}
 
       {row.outcome_note && (
-        <p className="ml-6 text-[12px] text-white/45 leading-relaxed whitespace-pre-wrap">
+        <p className="ml-6 text-[12px] text-ink-sub leading-relaxed whitespace-pre-wrap">
           {row.outcome_note}
         </p>
       )}
@@ -496,21 +496,21 @@ function FollowUpRow({ row, onEdit, onDelete, onToggle, toggling }: {
           border: `1px solid ${done ? 'rgba(52,211,153,0.45)' : BORDER}`,
         }}>
         {toggling
-          ? <Loader2 className="w-2.5 h-2.5 animate-spin text-white/40" />
+          ? <Loader2 className="w-2.5 h-2.5 animate-spin text-ink-mute" />
           : done && <Check className="w-2.5 h-2.5" style={{ color: '#34D399' }} />}
       </button>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-semibold text-white/25 tabular-nums shrink-0">
+          <span className="text-[10px] font-semibold text-ink-faint tabular-nums shrink-0">
             #{row.seq}
           </span>
-          <p className={cn('text-[12px] tabular-nums', done ? 'text-white/25 line-through' : 'text-white/60')}>
+          <p className={cn('text-[12px] tabular-nums', done ? 'text-ink-faint line-through' : 'text-ink-sub')}>
             {fmtDateOnly(row.due_at)}
           </p>
           {row.channel && (
             <span className="text-[10px] px-1.5 py-0.5 rounded shrink-0"
-              style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }}>
+              style={{ background: 'rgba(var(--tint), 0.05)', color: 'rgba(var(--tint), 0.4)' }}>
               {FOLLOW_UP_CHANNEL[row.channel]}
             </span>
           )}
@@ -522,7 +522,7 @@ function FollowUpRow({ row, onEdit, onDelete, onToggle, toggling }: {
           )}
         </div>
         {row.note && (
-          <p className={cn('text-[12px] mt-1 whitespace-pre-wrap', done ? 'text-white/20' : 'text-white/45')}>
+          <p className={cn('text-[12px] mt-1 whitespace-pre-wrap', done ? 'text-ink-faint' : 'text-ink-sub')}>
             {row.note}
           </p>
         )}
@@ -530,7 +530,7 @@ function FollowUpRow({ row, onEdit, onDelete, onToggle, toggling }: {
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <button onClick={onEdit} title="Editar"
-          className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all">
+          className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
           <Pencil className="w-3 h-3" />
         </button>
         <DeleteButton onConfirm={onDelete} />
@@ -598,13 +598,13 @@ export default function ContactPipelinePanel({ contactKey, leadId, currentStage 
 
         {evaluations.isLoading ? (
           <div className="px-4 py-8 flex justify-center">
-            <Loader2 className="w-4 h-4 animate-spin text-white/20" />
+            <Loader2 className="w-4 h-4 animate-spin text-ink-faint" />
           </div>
         ) : evals.length === 0 && !evalForm ? (
           <div className="px-4 py-8 flex flex-col items-center gap-2">
-            <CalendarClock className="w-7 h-7 text-white/8" />
-            <p className="text-[12px] text-white/30">Nenhuma avaliação agendada</p>
-            <p className="text-[11px] text-white/20 text-center max-w-[240px]">
+            <CalendarClock className="w-7 h-7 text-ink-ghost" />
+            <p className="text-[12px] text-ink-mute">Nenhuma avaliação agendada</p>
+            <p className="text-[11px] text-ink-faint text-center max-w-[240px]">
               Ao agendar, o contato avança para "Avaliação agendada" no pipeline.
             </p>
           </div>
@@ -640,13 +640,13 @@ export default function ContactPipelinePanel({ contactKey, leadId, currentStage 
 
         {followUps.isLoading ? (
           <div className="px-4 py-8 flex justify-center">
-            <Loader2 className="w-4 h-4 animate-spin text-white/20" />
+            <Loader2 className="w-4 h-4 animate-spin text-ink-faint" />
           </div>
         ) : fus.length === 0 && !fuForm ? (
           <div className="px-4 py-8 flex flex-col items-center gap-2">
-            <ListChecks className="w-7 h-7 text-white/8" />
-            <p className="text-[12px] text-white/30">Nenhum follow-up</p>
-            <p className="text-[11px] text-white/20 text-center max-w-[240px]">
+            <ListChecks className="w-7 h-7 text-ink-ghost" />
+            <p className="text-[12px] text-ink-mute">Nenhum follow-up</p>
+            <p className="text-[11px] text-ink-faint text-center max-w-[240px]">
               Crie quantos precisar — a sequência é livre.
             </p>
           </div>

@@ -65,7 +65,7 @@ export default function StageSelector({ contactKey, currentStage, compact = fals
           style={{
             minWidth: 200,
             background: '#16181F',
-            border: '1px solid rgba(255,255,255,0.09)',
+            border: '1px solid rgba(var(--tint), 0.09)',
             boxShadow: '0 20px 60px rgba(0,0,0,0.55)',
             left: compact ? 0 : undefined,
           }}
@@ -81,7 +81,7 @@ export default function StageSelector({ contactKey, currentStage, compact = fals
                 }}
                 className={cn(
                   'w-full flex items-center justify-between px-3 py-2 rounded-lg text-[12px] font-medium transition-all text-left',
-                  pending === s.value ? 'ring-1' : 'hover:bg-white/5',
+                  pending === s.value ? 'ring-1' : 'hover:bg-tint/5',
                 )}
                 style={pending === s.value
                   // ring-1 do Tailwind le a cor de --tw-ring-color; `ringColor`
@@ -89,7 +89,7 @@ export default function StageSelector({ contactKey, currentStage, compact = fals
                   ? ({ background: s.bg, color: s.color, ['--tw-ring-color']: s.border } as React.CSSProperties)
                   : s.value === stage
                     ? { background: s.bg, color: s.color }
-                    : { color: 'rgba(255,255,255,0.55)' }
+                    : { color: 'rgba(var(--tint), 0.55)' }
                 }
               >
                 <span>{s.label}</span>
@@ -101,16 +101,16 @@ export default function StageSelector({ contactKey, currentStage, compact = fals
           {/* Note input — shown when a different stage is clicked */}
           {pending && pending !== stage && (
             <div className="px-3 pb-3 pt-1 flex flex-col gap-2"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-[10px] text-white/30 uppercase tracking-wider">Nota (opcional)</p>
+              style={{ borderTop: '1px solid rgba(var(--tint), 0.06)' }}>
+              <p className="text-[10px] text-ink-mute uppercase tracking-wider">Nota (opcional)</p>
               <input
                 autoFocus
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') apply(pending) }}
                 placeholder="Ex: ligou, pediu retorno..."
-                className="w-full bg-[#0D0E12] text-[12px] text-[#EDEDED] placeholder:text-white/20 px-2.5 py-2 rounded-lg outline-none"
-                style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+                className="w-full bg-[#0D0E12] text-[12px] text-ink placeholder:text-ink-faint px-2.5 py-2 rounded-lg outline-none"
+                style={{ border: '1px solid rgba(var(--tint), 0.08)' }}
               />
               <button
                 onClick={() => apply(pending)}

@@ -34,7 +34,7 @@ const CLASS_STATUS = {
 
 // ── Shared form bits ──────────────────────────────────────────
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 
@@ -48,7 +48,7 @@ function blurBorder(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement |
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-medium text-white/40">{label}</label>
+      <label className="text-[11px] font-medium text-ink-mute">{label}</label>
       {children}
     </div>
   )
@@ -81,12 +81,12 @@ function Drawer({ title, subtitle, onClose, children, footer }: {
           style={{ background: BG_CARD, borderBottom: `1px solid ${BORDER}` }}
         >
           <div className="min-w-0">
-            <p className="text-[14px] font-semibold text-[#EDEDED] truncate">{title}</p>
-            {subtitle && <p className="text-[11px] text-white/35 truncate mt-0.5">{subtitle}</p>}
+            <p className="text-[14px] font-semibold text-ink truncate">{title}</p>
+            {subtitle && <p className="text-[11px] text-ink-mute truncate mt-0.5">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/6 transition-all shrink-0"
+            className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
@@ -125,7 +125,7 @@ function GhostBtn({ onClick, children }: { onClick: () => void; children: React.
   return (
     <button
       onClick={onClick}
-      className="px-4 py-2 rounded-xl text-[12.5px] font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all"
+      className="px-4 py-2 rounded-xl text-[12.5px] font-medium text-ink-sub hover:text-ink hover:bg-tint/5 transition-all"
     >
       {children}
     </button>
@@ -153,8 +153,8 @@ function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel, load
             <AlertTriangle className="w-4 h-4" style={{ color: '#F87171' }} />
           </div>
           <div className="min-w-0">
-            <p className="text-[14px] font-semibold text-[#EDEDED]">{title}</p>
-            <div className="text-[12.5px] text-white/45 mt-1.5 leading-relaxed">{message}</div>
+            <p className="text-[14px] font-semibold text-ink">{title}</p>
+            <div className="text-[12.5px] text-ink-sub mt-1.5 leading-relaxed">{message}</div>
           </div>
         </div>
         <div className="flex items-center justify-end gap-2">
@@ -344,14 +344,14 @@ function ClassDrawer({ row, onClose }: { row: ClassRow | null; onClose: () => vo
             {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
           {teachers.length === 0 && (
-            <p className="text-[11px] text-white/30">
+            <p className="text-[11px] text-ink-mute">
               Nenhum professor ativo cadastrado — crie na aba Professores.
             </p>
           )}
         </Field>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-[11px] font-medium text-white/40">
+            <label className="text-[11px] font-medium text-ink-mute">
               Encontros na semana
             </label>
             <button
@@ -384,13 +384,13 @@ function ClassDrawer({ row, onClose }: { row: ClassRow | null; onClose: () => vo
                 onClick={() => setSessions(list => list.filter((_, idx) => idx !== i))}
                 disabled={sessions.length === 1}
                 title={sessions.length === 1 ? 'A turma precisa de pelo menos um encontro' : 'Remover encontro'}
-                className="p-2 rounded-lg text-white/30 hover:text-[#F87171] hover:bg-red-500/8 transition-all disabled:opacity-20 disabled:hover:bg-transparent shrink-0">
+                className="p-2 rounded-lg text-ink-mute hover:text-[#F87171] hover:bg-red-500/8 transition-all disabled:opacity-20 disabled:hover:bg-transparent shrink-0">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           ))}
 
-          <p className="text-[11px] text-white/25 leading-relaxed">
+          <p className="text-[11px] text-ink-faint leading-relaxed">
             Turma de duas aulas na semana leva dois encontros. O horário aparece
             agrupado quando coincide — "Seg, Qua · 19:00–20:30".
           </p>
@@ -451,7 +451,7 @@ function ClassDrawer({ row, onClose }: { row: ClassRow | null; onClose: () => vo
                 style={{
                   background: active ? cfg.bg : 'transparent',
                   border: `1px solid ${active ? cfg.border : BORDER}`,
-                  color: active ? cfg.color : 'rgba(255,255,255,0.35)',
+                  color: active ? cfg.color : 'rgba(var(--tint), 0.35)',
                 }}>
                 {cfg.label}
               </button>
@@ -519,12 +519,12 @@ function TeacherAccessForm({ teacher }: { teacher: Teacher }) {
             onFocus={focusBorder} onBlur={blurBorder}
             placeholder="Ao menos 8 caracteres" />
           <button onClick={suggest}
-            className="px-2.5 rounded-xl text-[11.5px] font-medium whitespace-nowrap text-white/50 hover:text-white/80 transition-all shrink-0"
+            className="px-2.5 rounded-xl text-[11.5px] font-medium whitespace-nowrap text-ink-sub hover:text-ink transition-all shrink-0"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Gerar
           </button>
         </div>
-        <p className="text-[11px] text-white/25 leading-relaxed">
+        <p className="text-[11px] text-ink-faint leading-relaxed">
           Anote e passe ao professor. Ele troca depois pelo "Esqueci minha senha".
         </p>
       </Field>
@@ -645,14 +645,14 @@ function TeacherDrawer({ row, onClose }: { row: Teacher | null; onClose: () => v
             <p className="text-[11.5px] font-medium flex items-center gap-1.5" style={{ color: '#34D399' }}>
               <KeyRound className="w-3 h-3 shrink-0" /> Acesso ativo
             </p>
-            <p className="text-[11px] text-white/35 leading-relaxed">
-              O professor entra em <code className="text-white/55">/professor</code> com
-              {row.email ? <> o e-mail <span className="text-white/55">{row.email}</span></> : ' o e-mail cadastrado'}.
+            <p className="text-[11px] text-ink-mute leading-relaxed">
+              O professor entra em <code className="text-ink-sub">/professor</code> com
+              {row.email ? <> o e-mail <span className="text-ink-sub">{row.email}</span></> : ' o e-mail cadastrado'}.
               Esqueceu a senha? Use "Esqueci minha senha" na tela de login.
             </p>
           </div>
         ) : !isEdit ? (
-          <p className="text-[11.5px] text-white/30 leading-relaxed">
+          <p className="text-[11.5px] text-ink-mute leading-relaxed">
             Salve o professor primeiro. Depois reabra esta ficha para conceder o
             acesso ao portal.
           </p>
@@ -672,7 +672,7 @@ function TeacherDrawer({ row, onClose }: { row: Teacher | null; onClose: () => v
                   style={{
                     background: active ? `${color}14` : 'transparent',
                     border: `1px solid ${active ? `${color}33` : BORDER}`,
-                    color: active ? color : 'rgba(255,255,255,0.35)',
+                    color: active ? color : 'rgba(var(--tint), 0.35)',
                   }}>
                   {label}
                 </button>
@@ -697,8 +697,8 @@ function TeacherDrawer({ row, onClose }: { row: Teacher | null; onClose: () => v
 function Occupancy({ enrolled, capacity }: { enrolled: number; capacity: number | null }) {
   if (capacity == null) {
     return (
-      <p className="text-[12px] text-white/45 tabular-nums">
-        {enrolled} <span className="text-white/25">aluno{enrolled !== 1 ? 's' : ''}</span>
+      <p className="text-[12px] text-ink-sub tabular-nums">
+        {enrolled} <span className="text-ink-faint">aluno{enrolled !== 1 ? 's' : ''}</span>
       </p>
     )
   }
@@ -708,9 +708,9 @@ function Occupancy({ enrolled, capacity }: { enrolled: number; capacity: number 
   return (
     <div className="flex flex-col gap-1.5 min-w-[72px]">
       <p className="text-[12px] font-medium tabular-nums" style={{ color: tone }}>
-        {enrolled}<span className="text-white/25"> / {capacity}</span>
+        {enrolled}<span className="text-ink-faint"> / {capacity}</span>
       </p>
-      <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+      <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(var(--tint), 0.07)' }}>
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: tone }} />
       </div>
     </div>
@@ -794,11 +794,11 @@ export default function TurmasPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-[20px] font-semibold text-[#EDEDED] flex items-center gap-2">
+          <h1 className="text-[20px] font-semibold text-ink flex items-center gap-2">
             <CalendarDays className="w-5 h-5" style={{ color: ACCENT }} />
             Turmas e Professores
           </h1>
-          <p className="text-[12.5px] text-white/35 mt-1 max-w-[560px]">
+          <p className="text-[12.5px] text-ink-mute mt-1 max-w-[560px]">
             Horário, professor e links de acesso vivem na turma. Mudar aqui vale para
             todos os alunos vinculados — sem editar ficha por ficha.
           </p>
@@ -806,7 +806,7 @@ export default function TurmasPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => (tab === 'turmas' ? classes.refetch() : teachers.refetch())}
-            className="p-2 rounded-xl text-white/30 hover:text-white/70 transition-all"
+            className="p-2 rounded-xl text-ink-mute hover:text-ink transition-all"
             style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
             title="Recarregar"
           >
@@ -839,15 +839,15 @@ export default function TurmasPage() {
                 <button key={value} onClick={() => setTab(value)}
                   className={cn(
                     'px-3 py-1.5 rounded-xl text-[12.5px] font-medium flex items-center gap-1.5 transition-all',
-                    active ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60',
+                    active ? 'text-ink' : 'text-ink-mute hover:text-ink-sub',
                   )}
                   style={{
-                    background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(255,255,255,0.12)' : 'transparent'}`,
+                    background: active ? 'rgba(var(--tint), 0.07)' : 'transparent',
+                    border: `1px solid ${active ? 'rgba(var(--tint), 0.12)' : 'transparent'}`,
                   }}>
                   <Icon className="w-3.5 h-3.5" />
                   {label}
-                  <span className="text-[11px] text-white/25 tabular-nums">{count}</span>
+                  <span className="text-[11px] text-ink-faint tabular-nums">{count}</span>
                 </button>
               )
             },
@@ -857,15 +857,15 @@ export default function TurmasPage() {
         <div className="h-5 w-px" style={{ background: BORDER }} />
 
         <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-          <Search className="w-4 h-4 text-white/25 shrink-0" />
+          <Search className="w-4 h-4 text-ink-faint shrink-0" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={tab === 'turmas' ? 'Buscar turma, professor, unidade…' : 'Buscar professor…'}
-            className="flex-1 bg-transparent text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none min-w-0"
+            className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-faint outline-none min-w-0"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/60 transition-colors">
+            <button onClick={() => setSearch('')} className="text-ink-faint hover:text-ink-sub transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
@@ -880,11 +880,11 @@ export default function TurmasPage() {
                 <button key={s} onClick={() => setStatusFilter(s)}
                   className={cn(
                     'px-2.5 py-1 rounded-lg text-[11.5px] font-medium transition-all',
-                    active ? 'text-[#EDEDED]' : 'text-white/30 hover:text-white/55',
+                    active ? 'text-ink' : 'text-ink-mute hover:text-ink-sub',
                   )}
                   style={{
-                    background: active ? 'rgba(255,255,255,0.07)' : 'transparent',
-                    border: `1px solid ${active ? 'rgba(255,255,255,0.12)' : 'transparent'}`,
+                    background: active ? 'rgba(var(--tint), 0.07)' : 'transparent',
+                    border: `1px solid ${active ? 'rgba(var(--tint), 0.12)' : 'transparent'}`,
                   }}>
                   {label}
                 </button>
@@ -897,7 +897,7 @@ export default function TurmasPage() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-5 h-5 animate-spin text-white/20" />
+          <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
         </div>
       ) : tab === 'turmas' ? (
         filteredClasses.length === 0 ? (
@@ -958,17 +958,17 @@ export default function TurmasPage() {
           title="Excluir turma?"
           message={
             <>
-              <strong className="text-white/70">{delClass.name}</strong> será removida.
+              <strong className="text-ink">{delClass.name}</strong> será removida.
               {(enrolledByClass.get(delClass.id) ?? 0) > 0 && (
                 <>
-                  {' '}Os <strong className="text-white/70">
+                  {' '}Os <strong className="text-ink">
                     {enrolledByClass.get(delClass.id)} aluno
                     {(enrolledByClass.get(delClass.id) ?? 0) !== 1 ? 's' : ''}
                   </strong>{' '}
                   vinculados ficarão sem turma e precisarão ser realocados — nenhuma ficha é apagada.
                 </>
               )}
-              {' '}Se a turma só terminou, prefira marcá-la como <strong className="text-white/70">Encerrada</strong>: o histórico é preservado.
+              {' '}Se a turma só terminou, prefira marcá-la como <strong className="text-ink">Encerrada</strong>: o histórico é preservado.
             </>
           }
           confirmLabel="Excluir"
@@ -985,17 +985,17 @@ export default function TurmasPage() {
           title="Excluir professor?"
           message={
             <>
-              <strong className="text-white/70">{delTeacher.name}</strong> será removido.
+              <strong className="text-ink">{delTeacher.name}</strong> será removido.
               {(classesByTeacher.get(delTeacher.id) ?? 0) > 0 && (
                 <>
-                  {' '}Suas <strong className="text-white/70">
+                  {' '}Suas <strong className="text-ink">
                     {classesByTeacher.get(delTeacher.id)} turma
                     {(classesByTeacher.get(delTeacher.id) ?? 0) !== 1 ? 's' : ''}
                   </strong>{' '}
                   ficarão sem professor responsável.
                 </>
               )}
-              {' '}Para tirá-lo das listas sem perder o vínculo histórico, marque-o como <strong className="text-white/70">Inativo</strong>.
+              {' '}Para tirá-lo das listas sem perder o vínculo histórico, marque-o como <strong className="text-ink">Inativo</strong>.
             </>
           }
           confirmLabel="Excluir"
@@ -1018,9 +1018,9 @@ function EmptyState({ icon: Icon, title, hint }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <Icon className="w-10 h-10 text-white/8" />
-      <p className="text-[13px] text-white/30">{title}</p>
-      {hint && <p className="text-[12px] text-white/20 max-w-[320px] text-center">{hint}</p>}
+      <Icon className="w-10 h-10 text-ink-ghost" />
+      <p className="text-[13px] text-ink-mute">{title}</p>
+      {hint && <p className="text-[12px] text-ink-faint max-w-[320px] text-center">{hint}</p>}
     </div>
   )
 }
@@ -1036,19 +1036,19 @@ function ClassCard({ row, enrolled, onEdit, onDelete }: {
     >
       <div className="px-4 py-3.5 flex items-start justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER2}` }}>
         <div className="min-w-0 flex-1">
-          <p className="text-[13.5px] font-semibold text-[#EDEDED] truncate">{row.name}</p>
+          <p className="text-[13.5px] font-semibold text-ink truncate">{row.name}</p>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             {row.subject && (
-              <span className="text-[11px] text-white/40">{SUBJECT_LABEL[row.subject]}</span>
+              <span className="text-[11px] text-ink-mute">{SUBJECT_LABEL[row.subject]}</span>
             )}
             {row.jlpt_level && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                style={{ background: 'rgba(var(--tint), 0.06)', color: 'rgba(var(--tint), 0.5)' }}>
                 {row.jlpt_level}
               </span>
             )}
             {row.school_year && (
-              <span className="text-[10.5px] text-white/25">{row.school_year}</span>
+              <span className="text-[10.5px] text-ink-faint">{row.school_year}</span>
             )}
           </div>
         </div>
@@ -1059,12 +1059,12 @@ function ClassCard({ row, enrolled, onEdit, onDelete }: {
           </span>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button onClick={onEdit}
-              className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all"
+              className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all"
               title="Editar">
               <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button onClick={onDelete}
-              className="p-1.5 rounded-lg text-white/30 hover:bg-white/6 transition-all"
+              className="p-1.5 rounded-lg text-ink-mute hover:bg-tint/6 transition-all"
               style={{ color: undefined }}
               title="Excluir">
               <Trash2 className="w-3.5 h-3.5 hover:text-[#F87171]" />
@@ -1075,17 +1075,17 @@ function ClassCard({ row, enrolled, onEdit, onDelete }: {
 
       <div className="px-4 py-3.5 flex items-center gap-4 flex-wrap" style={{ background: BG_CARD2 }}>
         <div className="flex items-center gap-2 min-w-0">
-          <Clock className="w-3.5 h-3.5 text-white/25 shrink-0" />
-          <p className="text-[12px] text-white/55 truncate tabular-nums">{formatSchedule(row.sessions)}</p>
+          <Clock className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+          <p className="text-[12px] text-ink-sub truncate tabular-nums">{formatSchedule(row.sessions)}</p>
         </div>
         <div className="flex items-center gap-2 min-w-0">
-          <User className="w-3.5 h-3.5 text-white/25 shrink-0" />
-          <p className="text-[12px] text-white/55 truncate">{row.teacher?.name ?? 'Sem professor'}</p>
+          <User className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+          <p className="text-[12px] text-ink-sub truncate">{row.teacher?.name ?? 'Sem professor'}</p>
         </div>
         {(row.modality || row.unit) && (
           <div className="flex items-center gap-2 min-w-0">
-            <MapPin className="w-3.5 h-3.5 text-white/25 shrink-0" />
-            <p className="text-[12px] text-white/55 truncate">
+            <MapPin className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+            <p className="text-[12px] text-ink-sub truncate">
               {[row.modality === 'online' ? 'Online' : row.modality === 'presencial' ? 'Presencial' : null, row.unit]
                 .filter(Boolean).join(' · ')}
             </p>
@@ -1093,12 +1093,12 @@ function ClassCard({ row, enrolled, onEdit, onDelete }: {
         )}
         {row.meet_link && (
           <a href={row.meet_link} target="_blank" rel="noreferrer"
-            className="flex items-center gap-1.5 text-[11.5px] text-white/35 hover:text-white/70 transition-colors">
+            className="flex items-center gap-1.5 text-[11.5px] text-ink-mute hover:text-ink transition-colors">
             <LinkIcon className="w-3 h-3" /> Meet
           </a>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <Users className="w-3.5 h-3.5 text-white/20 shrink-0" />
+          <Users className="w-3.5 h-3.5 text-ink-faint shrink-0" />
           <Occupancy enrolled={enrolled} capacity={row.capacity} />
         </div>
       </div>
@@ -1119,8 +1119,8 @@ function TeacherRow({ row, classCount, studentCount, first, onEdit, onDelete }: 
       <div
         className="w-8 h-8 rounded-xl grid place-items-center shrink-0 text-[12px] font-semibold"
         style={{
-          background: active ? 'rgba(232,82,26,0.12)' : 'rgba(255,255,255,0.04)',
-          color: active ? ACCENT : 'rgba(255,255,255,0.3)',
+          background: active ? 'rgba(232,82,26,0.12)' : 'rgba(var(--tint), 0.04)',
+          color: active ? ACCENT : 'rgba(var(--tint), 0.3)',
         }}
       >
         {row.name.trim().charAt(0).toUpperCase() || '?'}
@@ -1128,7 +1128,7 @@ function TeacherRow({ row, classCount, studentCount, first, onEdit, onDelete }: 
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="text-[13px] font-medium text-[#EDEDED] truncate">{row.name}</p>
+          <p className="text-[13px] font-medium text-ink truncate">{row.name}</p>
           {!active && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
               style={{ background: 'rgba(107,114,128,0.12)', color: '#9CA3AF' }}>
@@ -1138,12 +1138,12 @@ function TeacherRow({ row, classCount, studentCount, first, onEdit, onDelete }: 
         </div>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
           {row.email && (
-            <span className="text-[11px] text-white/30 flex items-center gap-1 truncate">
+            <span className="text-[11px] text-ink-mute flex items-center gap-1 truncate">
               <Mail className="w-2.5 h-2.5 shrink-0" /> {row.email}
             </span>
           )}
           {row.phone && (
-            <span className="text-[11px] text-white/30 flex items-center gap-1 tabular-nums">
+            <span className="text-[11px] text-ink-mute flex items-center gap-1 tabular-nums">
               <Phone className="w-2.5 h-2.5 shrink-0" /> {row.phone}
             </span>
           )}
@@ -1152,23 +1152,23 @@ function TeacherRow({ row, classCount, studentCount, first, onEdit, onDelete }: 
 
       <div className="hidden sm:flex items-center gap-5 shrink-0">
         <div className="text-right">
-          <p className="text-[13px] font-semibold text-[#EDEDED] tabular-nums">{classCount}</p>
-          <p className="text-[10px] text-white/25">turma{classCount !== 1 ? 's' : ''}</p>
+          <p className="text-[13px] font-semibold text-ink tabular-nums">{classCount}</p>
+          <p className="text-[10px] text-ink-faint">turma{classCount !== 1 ? 's' : ''}</p>
         </div>
         <div className="text-right">
-          <p className="text-[13px] font-semibold text-[#EDEDED] tabular-nums">{studentCount}</p>
-          <p className="text-[10px] text-white/25">aluno{studentCount !== 1 ? 's' : ''}</p>
+          <p className="text-[13px] font-semibold text-ink tabular-nums">{studentCount}</p>
+          <p className="text-[10px] text-ink-faint">aluno{studentCount !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <button onClick={onEdit}
-          className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all"
+          className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all"
           title="Editar">
           <Edit2 className="w-3.5 h-3.5" />
         </button>
         <button onClick={onDelete}
-          className="p-1.5 rounded-lg text-white/30 hover:bg-white/6 transition-all"
+          className="p-1.5 rounded-lg text-ink-mute hover:bg-tint/6 transition-all"
           title="Excluir">
           <Trash2 className="w-3.5 h-3.5 hover:text-[#F87171]" />
         </button>

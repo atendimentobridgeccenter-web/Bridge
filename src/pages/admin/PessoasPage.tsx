@@ -12,7 +12,7 @@ import { useLeads } from '@/hooks/useLeads'
 import { useContactStagesBatch } from '@/hooks/useContactStage'
 import type { Lead } from '@/lib/types'
 import { STAGES } from '@/lib/stageConfig'
-import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_PAGE, BORDER, INK_FAINT, INK_MUTE, INK_SUB } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ function PersonRow({
     <Link
       to={`/admin/leads/${lead.id}`}
       className="group flex items-center gap-4 px-4 py-3 transition-all duration-150 hover:bg-white/[0.025]"
-      style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}
+      style={{ borderBottom: `1px solid rgba(var(--tint), 0.04)` }}
     >
       {/* Avatar */}
       <div
@@ -128,7 +128,7 @@ function PersonRow({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 text-[11px]" style={{ color: '#404252' }}>
+        <div className="flex items-center gap-3 text-[11px]" style={{ color: INK_MUTE }}>
           {lead.email && <span className="flex items-center gap-1 truncate"><Mail className="w-2.5 h-2.5 shrink-0" />{lead.email}</span>}
           {lead.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="w-2.5 h-2.5" />{lead.phone}</span>}
           {lead.product_name && <span className="truncate">{lead.product_name}</span>}
@@ -152,7 +152,7 @@ function PersonRow({
 
       {/* Days since */}
       <div className="shrink-0 text-right hidden sm:block" style={{ minWidth: 52 }}>
-        <p className="text-[11px] tabular-nums" style={{ color: days > 7 ? '#EF4444' : '#404252' }}>
+        <p className="text-[11px] tabular-nums" style={{ color: days > 7 ? '#EF4444' : INK_MUTE }}>
           {timeAgo(lead.created_at)}
         </p>
         {days > 3 && !isAluno && !stage && (
@@ -160,7 +160,7 @@ function PersonRow({
         )}
       </div>
 
-      <ChevronRight className="w-3.5 h-3.5 text-white/10 group-hover:text-white/30 transition-colors shrink-0" />
+      <ChevronRight className="w-3.5 h-3.5 text-ink-ghost group-hover:text-ink-mute transition-colors shrink-0" />
     </Link>
   )
 }
@@ -170,8 +170,8 @@ function PersonRow({
 function EmptyState({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <Users className="w-10 h-10 text-white/8" />
-      <p className="text-[13px] text-white/25">
+      <Users className="w-10 h-10 text-ink-ghost" />
+      <p className="text-[13px] text-ink-faint">
         {query ? `Nenhum resultado para "${query}"` : 'Nenhuma pessoa encontrada'}
       </p>
     </div>
@@ -271,7 +271,7 @@ export default function PessoasPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Central de Clientes</h1>
-            <p className="text-[12px] mt-0.5" style={{ color: '#404252' }}>
+            <p className="text-[12px] mt-0.5" style={{ color: INK_MUTE }}>
               Leads, contatos e alunos em um único lugar
             </p>
           </div>
@@ -279,7 +279,7 @@ export default function PessoasPage() {
             <button
               onClick={refresh}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer"
-              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: '#5A5C6A' }}
+              style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: INK_SUB }}
             >
               <RefreshCw className={cn('w-3 h-3', loading && 'animate-spin')} />
               Atualizar
@@ -301,7 +301,7 @@ export default function PessoasPage() {
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-white/25">{item.label}</span>
+                <span className="text-[11px] text-ink-faint">{item.label}</span>
                 <div
                   className="w-6 h-6 rounded-md flex items-center justify-center"
                   style={{ background: `${item.color}16` }}
@@ -323,17 +323,17 @@ export default function PessoasPage() {
           style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
         >
           {/* Search + refresh row */}
-          <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid rgba(255,255,255,0.05)` }}>
+          <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: `1px solid rgba(var(--tint), 0.05)` }}>
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#404252' }} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: INK_MUTE }} />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Buscar por nome, email, telefone ou produto…"
                 className="w-full pl-8 pr-8 py-1.5 rounded-lg text-[12.5px] outline-none transition-all"
                 style={{
-                  background: '#0D0E12',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: BG_PAGE,
+                  border: '1px solid rgba(var(--tint), 0.06)',
                   color: '#DADCE6',
                 }}
               />
@@ -342,7 +342,7 @@ export default function PessoasPage() {
                   onClick={() => setQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer"
                 >
-                  <X className="w-3 h-3" style={{ color: '#404252' }} />
+                  <X className="w-3 h-3" style={{ color: INK_MUTE }} />
                 </button>
               )}
             </div>
@@ -355,8 +355,8 @@ export default function PessoasPage() {
                   onClick={() => setPayFilter(id)}
                   className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer"
                   style={payFilter === id
-                    ? { background: 'rgba(255,255,255,0.08)', color: '#DADCE6' }
-                    : { color: '#404252' }}
+                    ? { background: 'rgba(var(--tint), 0.08)', color: '#DADCE6' }
+                    : { color: INK_MUTE }}
                 >
                   {lbl}
                 </button>
@@ -365,7 +365,7 @@ export default function PessoasPage() {
           </div>
 
           {/* Journey tabs */}
-          <div className="flex items-center gap-0 px-4 py-0" style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+          <div className="flex items-center gap-0 px-4 py-0" style={{ borderBottom: `1px solid rgba(var(--tint), 0.04)` }}>
             {JOURNEY_TABS.map(tab => (
               <button
                 key={tab.id}
@@ -379,8 +379,8 @@ export default function PessoasPage() {
                 <span
                   className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full tabular-nums"
                   style={{
-                    background: journeyTab === tab.id ? `${tab.color}18` : 'rgba(255,255,255,0.04)',
-                    color:      journeyTab === tab.id ? tab.color : '#2E3042',
+                    background: journeyTab === tab.id ? `${tab.color}18` : 'rgba(var(--tint), 0.04)',
+                    color:      journeyTab === tab.id ? tab.color : INK_FAINT,
                   }}
                 >
                   {loading ? '…' : tab.count}
@@ -400,13 +400,13 @@ export default function PessoasPage() {
             <div className="flex flex-col">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-4 py-3"
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <div className="w-8 h-8 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}>
+                  <div className="w-8 h-8 rounded-full animate-pulse" style={{ background: 'rgba(var(--tint), 0.04)' }} />
                   <div className="flex-1 flex flex-col gap-1.5">
-                    <div className="h-3 w-32 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-2 w-48 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.03)' }} />
+                    <div className="h-3 w-32 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.05)' }} />
+                    <div className="h-2 w-48 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.03)' }} />
                   </div>
-                  <div className="h-5 w-12 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  <div className="h-5 w-12 rounded-full animate-pulse" style={{ background: 'rgba(var(--tint), 0.04)' }} />
                 </div>
               ))}
             </div>
@@ -416,8 +416,8 @@ export default function PessoasPage() {
             <div>
               {/* Count bar */}
               <div className="px-4 py-2 flex items-center justify-between"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                <span className="text-[11px]" style={{ color: '#2E3042' }}>
+                style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}>
+                <span className="text-[11px]" style={{ color: INK_FAINT }}>
                   {filtered.length} pessoa{filtered.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -454,9 +454,9 @@ export default function PessoasPage() {
               <div className="w-2 h-2 rounded-full shrink-0" style={{ background: item.color }} />
               <div className="flex-1 min-w-0">
                 <p className="text-[12.5px] font-semibold text-[#DADCE6] truncate">{item.label}</p>
-                <p className="text-[11px] mt-0.5" style={{ color: '#404252' }}>{item.sub}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: INK_MUTE }}>{item.sub}</p>
               </div>
-              <ArrowUpRight className="w-3.5 h-3.5 text-white/10 group-hover:text-white/40 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-ink-ghost group-hover:text-ink-mute transition-colors" />
             </Link>
           ))}
         </div>

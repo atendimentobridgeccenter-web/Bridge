@@ -104,7 +104,7 @@ export default function ResetPassword() {
                     placeholder="Mínimo 8 caracteres"
                     className={cn(
                       'w-full h-10 px-3 pr-10 rounded-lg text-sm text-white placeholder:text-zinc-600',
-                      'bg-zinc-800/80 border border-white/8',
+                      'bg-zinc-800/80 border border-tint/8',
                       'focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20',
                       'transition-all duration-150',
                     )}
@@ -129,7 +129,7 @@ export default function ResetPassword() {
                   placeholder="Repita a senha"
                   className={cn(
                     'w-full h-10 px-3 rounded-lg text-sm text-white placeholder:text-zinc-600',
-                    'bg-zinc-800/80 border border-white/8',
+                    'bg-zinc-800/80 border border-tint/8',
                     'focus:outline-none focus:border-violet-500/60 focus:ring-2 focus:ring-violet-500/20',
                     'transition-all duration-150',
                   )}
@@ -146,7 +146,7 @@ export default function ResetPassword() {
                       style={{
                         background: password.length >= i * 3
                           ? (password.length >= 12 ? '#34d399' : password.length >= 8 ? '#fbbf24' : '#f87171')
-                          : 'rgba(255,255,255,0.08)',
+                          : 'rgba(var(--tint), 0.08)',
                       }}
                     />
                   ))}

@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { BG_PAGE, BG_CARD, BG_INPUT, BORDER, ACCENT } from '@/lib/theme'
+import { ACCENT, BG_CARD, BG_CARD2, BG_INPUT, BG_PAGE, BORDER, INK_FAINT, INK_MUTE, INK_SUB } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -59,9 +59,9 @@ export default function CuponsPage() {
   const [saving,   setSaving]   = useState(false)
   const [form,     setForm]     = useState(BLANK_FORM)
 
-  const inputCls = 'w-full rounded-xl px-4 py-2.5 text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+  const inputCls = 'w-full rounded-xl px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
   const inputSty = { background: BG_INPUT, border: `1px solid ${BORDER}` }
-  const labelCls = 'block text-[12px] font-semibold text-white/40 mb-1.5 uppercase tracking-wider'
+  const labelCls = 'block text-[12px] font-semibold text-ink-mute mb-1.5 uppercase tracking-wider'
 
   async function load() {
     setLoading(true)
@@ -122,7 +122,7 @@ export default function CuponsPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Cupons de Desconto</h1>
-            <p className="text-[12px] mt-0.5" style={{ color: '#404252' }}>
+            <p className="text-[12px] mt-0.5" style={{ color: INK_MUTE }}>
               Códigos aplicados no formulário de pagamento
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function CuponsPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Cupons Ativos',  value: activeCount,   color: '#34D399' },
-            { label: 'Inativos',       value: inactiveCount, color: '#5A5C6A' },
+            { label: 'Inativos',       value: inactiveCount, color: INK_SUB },
             { label: 'Usos Totais',    value: totalUses,     color: '#FB923C' },
           ].map(item => (
             <div
@@ -151,7 +151,7 @@ export default function CuponsPage() {
               className="p-4 rounded-xl flex flex-col gap-1.5"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
             >
-              <span className="text-[11px]" style={{ color: '#404252' }}>{item.label}</span>
+              <span className="text-[11px]" style={{ color: INK_MUTE }}>{item.label}</span>
               <p className="text-[26px] font-bold tabular-nums leading-none"
                 style={{ color: loading ? '#ffffff15' : item.color }}>
                 {loading ? '—' : item.value}
@@ -172,7 +172,7 @@ export default function CuponsPage() {
               <button
                 type="button"
                 onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
-                className="text-white/30 hover:text-white/70 transition-colors cursor-pointer"
+                className="text-ink-mute hover:text-ink transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -281,7 +281,7 @@ export default function CuponsPage() {
               <button
                 type="button"
                 onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
-                className="px-4 py-2 rounded-xl text-[13px] font-medium text-white/40 hover:text-white/70 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-[13px] font-medium text-ink-mute hover:text-ink transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -303,7 +303,7 @@ export default function CuponsPage() {
         {/* ── List ── */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#404252' }} />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: INK_MUTE }} />
           </div>
         ) : coupons.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -313,8 +313,8 @@ export default function CuponsPage() {
             >
               <Ticket className="w-5 h-5 text-[#E8521A]" />
             </div>
-            <p className="text-[13px]" style={{ color: '#2E3042' }}>Nenhum cupom criado ainda.</p>
-            <p className="text-[11px]" style={{ color: '#1C1E28' }}>Clique em "Novo Cupom" para começar.</p>
+            <p className="text-[13px]" style={{ color: INK_FAINT }}>Nenhum cupom criado ainda.</p>
+            <p className="text-[11px]" style={{ color: BG_CARD2 }}>Clique em "Novo Cupom" para começar.</p>
           </div>
         ) : (
           <div
@@ -326,8 +326,8 @@ export default function CuponsPage() {
               className="grid px-5 py-3 text-[10px] font-semibold uppercase tracking-wider"
               style={{
                 gridTemplateColumns: '1fr 1fr 80px 100px 80px 44px',
-                color: '#2E3042',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
+                color: INK_FAINT,
+                borderBottom: '1px solid rgba(var(--tint), 0.04)',
               }}
             >
               <span>Código</span>
@@ -348,7 +348,7 @@ export default function CuponsPage() {
                   className="group grid items-center px-5 py-3 transition-all hover:bg-white/[0.02]"
                   style={{
                     gridTemplateColumns: '1fr 1fr 80px 100px 80px 44px',
-                    borderBottom: idx < coupons.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                    borderBottom: idx < coupons.length - 1 ? '1px solid rgba(var(--tint), 0.03)' : 'none',
                     opacity: (!c.active || expired || exhausted) ? 0.55 : 1,
                   }}
                 >
@@ -357,15 +357,15 @@ export default function CuponsPage() {
                     <span
                       className="font-mono font-bold text-[12.5px] px-2 py-0.5 rounded-md"
                       style={{
-                        background: c.active ? 'rgba(232,82,26,0.1)' : 'rgba(255,255,255,0.04)',
-                        color:      c.active ? '#E8521A'              : '#5A5C6A',
-                        border:     `1px solid ${c.active ? 'rgba(232,82,26,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                        background: c.active ? 'rgba(232,82,26,0.1)' : 'rgba(var(--tint), 0.04)',
+                        color:      c.active ? '#E8521A'              : INK_SUB,
+                        border:     `1px solid ${c.active ? 'rgba(232,82,26,0.2)' : 'rgba(var(--tint), 0.07)'}`,
                       }}
                     >
                       {c.code}
                     </span>
                     {c.description && (
-                      <p className="text-[10.5px] mt-0.5 truncate" style={{ color: '#2E3042' }}>{c.description}</p>
+                      <p className="text-[10.5px] mt-0.5 truncate" style={{ color: INK_FAINT }}>{c.description}</p>
                     )}
                   </div>
 
@@ -373,21 +373,21 @@ export default function CuponsPage() {
                   <div>
                     <p className="text-[13px] font-semibold text-[#DADCE6]">{discountLabel(c)}</p>
                     {c.expires_at && (
-                      <p className="text-[10px]" style={{ color: expired ? '#EF4444' : '#2E3042' }}>
+                      <p className="text-[10px]" style={{ color: expired ? '#EF4444' : INK_FAINT }}>
                         {expired ? 'Expirado' : `Expira ${fmtDate(c.expires_at)}`}
                       </p>
                     )}
                   </div>
 
                   {/* Uses */}
-                  <p className="text-[12.5px] tabular-nums" style={{ color: '#5A5C6A' }}>
+                  <p className="text-[12.5px] tabular-nums" style={{ color: INK_SUB }}>
                     {c.uses_count}{c.max_uses !== null ? `/${c.max_uses}` : ''}
                   </p>
 
                   {/* Applies to */}
                   <span
                     className="text-[10px] font-medium px-1.5 py-0.5 rounded self-center"
-                    style={{ background: 'rgba(255,255,255,0.05)', color: '#7B7E92' }}
+                    style={{ background: 'rgba(var(--tint), 0.05)', color: '#7B7E92' }}
                   >
                     {appliesToLabel(c.applies_to)}
                   </span>
@@ -397,7 +397,7 @@ export default function CuponsPage() {
                     onClick={() => toggleActive(c)}
                     title={c.active ? 'Desativar' : 'Ativar'}
                     className="relative rounded-full transition-all duration-200 shrink-0 cursor-pointer"
-                    style={{ width: 36, height: 20, background: c.active ? ACCENT : 'rgba(255,255,255,0.1)' }}
+                    style={{ width: 36, height: 20, background: c.active ? ACCENT : 'rgba(var(--tint), 0.1)' }}
                   >
                     <span
                       className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"

@@ -17,7 +17,7 @@ import { STAGES } from '@/lib/stageConfig'
 import type { Stage } from '@/lib/stageConfig'
 import StageSelector from '@/components/StageSelector'
 import type { Lead } from '@/lib/types'
-import { BG_PAGE, BG_CARD, BG_DROP, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_DROP, BG_PAGE, BORDER } from '@/lib/theme'
 
 const CONTACTS_PER_PAGE = 50
 
@@ -150,10 +150,10 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
     <div className="relative">
       <button onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] transition-all whitespace-nowrap"
-        style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.55)' }}>
-        <ArrowUpDown className="w-3.5 h-3.5 text-white/25" />
+        style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.55)' }}>
+        <ArrowUpDown className="w-3.5 h-3.5 text-ink-faint" />
         {current?.label}
-        <ChevronDown className={cn('w-3.5 h-3.5 text-white/25 transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3.5 h-3.5 text-ink-faint transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 rounded-xl z-50 py-1.5 min-w-[180px]"
@@ -161,7 +161,7 @@ function SortDropdown({ value, onChange }: { value: SortKey; onChange: (v: SortK
           {opts.map(o => (
             <button key={o.value} onClick={() => { onChange(o.value); setOpen(false) }}
               className={cn('w-full flex items-center px-4 py-2 text-[12px] text-left transition-colors',
-                o.value === value ? 'text-[#F0643A]' : 'text-white/55 hover:text-white/90 hover:bg-white/4')}>
+                o.value === value ? 'text-[#F0643A]' : 'text-ink-sub hover:text-ink hover:bg-tint/4')}>
               {o.label}
             </button>
           ))}
@@ -191,8 +191,8 @@ function ContactRow({
   return (
     <tr
       className="group border-b transition-colors duration-100 cursor-pointer"
-      style={{ borderColor: 'rgba(255,255,255,0.04)' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1A1C24' }}
+      style={{ borderColor: 'rgba(var(--tint), 0.04)' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BG_CARD2 }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
       onClick={onView}
     >
@@ -204,8 +204,8 @@ function ContactRow({
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
-              {contact.name || <span className="text-white/30 font-normal">—</span>}
+            <p className="text-[13px] font-semibold text-ink truncate">
+              {contact.name || <span className="text-ink-mute font-normal">—</span>}
             </p>
             {isStudent && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold mt-0.5"
@@ -219,19 +219,19 @@ function ContactRow({
 
       {/* Email */}
       <td className="px-5 py-3.5">
-        <span className="flex items-center gap-1.5 text-[12px] text-white/45 truncate max-w-[180px]">
+        <span className="flex items-center gap-1.5 text-[12px] text-ink-sub truncate max-w-[180px]">
           {contact.email
-            ? <><Mail className="w-3 h-3 shrink-0 text-white/20" />{contact.email}</>
-            : <span className="text-white/20">—</span>}
+            ? <><Mail className="w-3 h-3 shrink-0 text-ink-faint" />{contact.email}</>
+            : <span className="text-ink-faint">—</span>}
         </span>
       </td>
 
       {/* Telefone */}
       <td className="px-5 py-3.5">
-        <span className="flex items-center gap-1.5 text-[12px] text-white/45">
+        <span className="flex items-center gap-1.5 text-[12px] text-ink-sub">
           {contact.phone
-            ? <><Phone className="w-3 h-3 shrink-0 text-white/20" />{contact.phone}</>
-            : <span className="text-white/20">—</span>}
+            ? <><Phone className="w-3 h-3 shrink-0 text-ink-faint" />{contact.phone}</>
+            : <span className="text-ink-faint">—</span>}
         </span>
       </td>
 
@@ -239,7 +239,7 @@ function ContactRow({
       <td className="px-5 py-3.5">
         <div className="flex flex-wrap gap-1">
           {contact.productNames.length === 0
-            ? <span className="text-[12px] text-white/20">—</span>
+            ? <span className="text-[12px] text-ink-faint">—</span>
             : contact.productNames.slice(0, 2).map(name => {
                 const c = productColor(name)
                 return (
@@ -252,7 +252,7 @@ function ContactRow({
               })
           }
           {contact.productNames.length > 2 && (
-            <span className="text-[10px] text-white/25 self-center">
+            <span className="text-[10px] text-ink-faint self-center">
               +{contact.productNames.length - 2}
             </span>
           )}
@@ -261,7 +261,7 @@ function ContactRow({
 
       {/* Interações */}
       <td className="px-5 py-3.5 text-center">
-        <span className="text-[13px] font-semibold text-[#EDEDED]">{contact.interactions}</span>
+        <span className="text-[13px] font-semibold text-ink">{contact.interactions}</span>
       </td>
 
       {/* Status */}
@@ -291,15 +291,15 @@ function ContactRow({
 
       {/* Último contato */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/40">{fmtDateShort(contact.lastSeen)}</p>
-        <p className="text-[10px] text-white/20 mt-0.5">{timeAgo(contact.lastSeen)}</p>
+        <p className="text-[12px] text-ink-mute">{fmtDateShort(contact.lastSeen)}</p>
+        <p className="text-[10px] text-ink-faint mt-0.5">{timeAgo(contact.lastSeen)}</p>
       </td>
 
       {/* Ação */}
       <td className="px-4 py-3.5" style={{ width: 56 }}>
         <button
           onClick={e => { e.stopPropagation(); onView() }}
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all text-white/30 hover:text-white/80 hover:bg-white/6"
+          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg transition-all text-ink-mute hover:text-ink hover:bg-tint/6"
           title="Ver perfil"
         >
           <Eye className="w-3.5 h-3.5" />
@@ -392,8 +392,8 @@ export default function ContactsPage() {
       <div className="shrink-0 px-6 py-5" style={{ borderBottom: `1px solid ${BORDER}` }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-[20px] font-bold text-[#EDEDED] tracking-tight">Contatos</h1>
-            <p className="text-[12px] text-white/30 mt-0.5">
+            <h1 className="text-[20px] font-bold text-ink tracking-tight">Contatos</h1>
+            <p className="text-[12px] text-ink-mute mt-0.5">
               {contacts.length} contato{contacts.length !== 1 ? 's' : ''} únicos
               · {totalInteractions} interação{totalInteractions !== 1 ? 'ões' : ''} no total
             </p>
@@ -403,21 +403,21 @@ export default function ContactsPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <div className="px-3 py-1.5 rounded-lg text-[12px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <span className="text-white/30">Contatos: </span>
-              <span className="font-semibold text-[#EDEDED]">{contacts.length}</span>
+              <span className="text-ink-mute">Contatos: </span>
+              <span className="font-semibold text-ink">{contacts.length}</span>
             </div>
             <div className="px-3 py-1.5 rounded-lg text-[12px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <span className="text-white/30">Qualificados: </span>
+              <span className="text-ink-mute">Qualificados: </span>
               <span className="font-semibold text-emerald-400">{qualifiedContacts}</span>
             </div>
             <div className="px-3 py-1.5 rounded-lg text-[12px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <span className="text-white/30">Interações: </span>
+              <span className="text-ink-mute">Interações: </span>
               <span className="font-semibold text-[#93C5FD]">{totalInteractions}</span>
             </div>
             <button onClick={() => refetch()}
-              className="p-2 rounded-lg transition-colors text-white/25 hover:text-white/60 hover:bg-white/5"
+              className="p-2 rounded-lg transition-colors text-ink-faint hover:text-ink-sub hover:bg-tint/5"
               title="Atualizar">
               <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
             </button>
@@ -429,16 +429,16 @@ export default function ContactsPage() {
           {/* Search */}
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl flex-1 min-w-[200px] max-w-[360px]"
             style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-            <Search className="w-3.5 h-3.5 text-white/25 shrink-0" />
+            <Search className="w-3.5 h-3.5 text-ink-faint shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nome, email, telefone…"
-              className="flex-1 bg-transparent text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none"
+              className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-faint outline-none"
             />
             {search && (
               <button onClick={() => setSearch('')}>
-                <X className="w-3.5 h-3.5 text-white/25 hover:text-white/60" />
+                <X className="w-3.5 h-3.5 text-ink-faint hover:text-ink-sub" />
               </button>
             )}
           </div>
@@ -453,12 +453,12 @@ export default function ContactsPage() {
                 style={{
                   background: BG_CARD,
                   border: `1px solid ${productId ? 'rgba(232,82,26,0.35)' : BORDER}`,
-                  color: productId ? '#EDEDED' : 'rgba(255,255,255,0.35)',
+                  color: productId ? '#EDEDED' : 'rgba(var(--tint), 0.35)',
                 }}>
                 <option value="">Todos os produtos</option>
                 {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
-              <Package className="w-3 h-3 text-white/25 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Package className="w-3 h-3 text-ink-faint absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           )}
 
@@ -469,7 +469,7 @@ export default function ContactsPage() {
               'flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-medium transition-all',
               onlyQual
                 ? 'text-emerald-400'
-                : 'text-white/35 hover:text-white/60',
+                : 'text-ink-mute hover:text-ink-sub',
             )}
             style={{
               background: onlyQual ? 'rgba(52,211,153,0.08)' : BG_CARD,
@@ -489,10 +489,10 @@ export default function ContactsPage() {
           <button
             onClick={() => setStageFilter('all')}
             className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all',
-              stageFilter === 'all' ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60')}
+              stageFilter === 'all' ? 'text-ink' : 'text-ink-mute hover:text-ink-sub')}
             style={{
-              background: stageFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
-              border: `1px solid ${stageFilter === 'all' ? 'rgba(255,255,255,0.15)' : 'transparent'}`,
+              background: stageFilter === 'all' ? 'rgba(var(--tint), 0.08)' : 'transparent',
+              border: `1px solid ${stageFilter === 'all' ? 'rgba(var(--tint), 0.15)' : 'transparent'}`,
             }}
           >
             Todos
@@ -506,7 +506,7 @@ export default function ContactsPage() {
                 className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all')}
                 style={{
                   background: active ? s.bg : 'transparent',
-                  color:      active ? s.color : 'rgba(255,255,255,0.35)',
+                  color:      active ? s.color : 'rgba(var(--tint), 0.35)',
                   border:     `1px solid ${active ? s.border : 'transparent'}`,
                 }}
               >
@@ -521,22 +521,22 @@ export default function ContactsPage() {
       <div className="flex-1 overflow-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-48">
-            <RefreshCw className="w-5 h-5 text-white/20 animate-spin" />
+            <RefreshCw className="w-5 h-5 text-ink-faint animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 gap-2">
-            <p className="text-[14px] text-white/25">
+            <p className="text-[14px] text-ink-faint">
               {search || productId ? 'Nenhum contato encontrado.' : 'Sem contatos ainda.'}
             </p>
           </div>
         ) : (
           <table className="w-full">
             <thead className="sticky top-0 z-10" style={{ background: '#111318' }}>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <tr style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
                 {['Nome', 'E-mail', 'Telefone', 'Produtos', 'Interações', 'Status', 'Estágio', 'Último contato', ''].map((h, i) => (
                   <th key={i}
                     className="text-left px-5 py-3.5 text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    style={{ color: 'rgba(var(--tint), 0.25)' }}>
                     {h}
                   </th>
                 ))}
@@ -567,7 +567,7 @@ export default function ContactsPage() {
       {filtered.length > 0 && (
         <div className="shrink-0 px-5 py-2.5 flex items-center justify-between gap-4"
           style={{ borderTop: `1px solid ${BORDER}` }}>
-          <p className="text-[11px] text-white/20">
+          <p className="text-[11px] text-ink-faint">
             {(safePage - 1) * CONTACTS_PER_PAGE + 1}–{Math.min(safePage * CONTACTS_PER_PAGE, filtered.length)} de {filtered.length} contato{filtered.length !== 1 ? 's' : ''}
           </p>
 
@@ -576,7 +576,7 @@ export default function ContactsPage() {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={safePage === 1}
-                className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-ink hover:bg-tint/6 disabled:opacity-25 disabled:pointer-events-none">
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -588,13 +588,13 @@ export default function ContactsPage() {
                 }, [])
                 .map((p, i) =>
                   p === '…'
-                    ? <span key={`e${i}`} className="px-1 text-[11px] text-white/20">…</span>
+                    ? <span key={`e${i}`} className="px-1 text-[11px] text-ink-faint">…</span>
                     : <button key={p}
                         onClick={() => setPage(p as number)}
                         className="w-7 h-7 rounded-lg text-[11px] font-medium transition-all"
                         style={safePage === p
                           ? { background: 'rgba(232,82,26,0.2)', color: '#F0643A' }
-                          : { color: 'rgba(255,255,255,0.35)' }}>
+                          : { color: 'rgba(var(--tint), 0.35)' }}>
                         {p}
                       </button>
                 )
@@ -602,13 +602,13 @@ export default function ContactsPage() {
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={safePage === totalPages}
-                className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-ink hover:bg-tint/6 disabled:opacity-25 disabled:pointer-events-none">
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
-          <p className="text-[10px] text-white/15">
+          <p className="text-[10px] text-ink-ghost">
             {isFetching ? 'Atualizando…' : `${leads.length} entradas`}
           </p>
         </div>

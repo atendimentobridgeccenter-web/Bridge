@@ -16,7 +16,7 @@ import { useProduct } from '@/hooks/useProduct'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useBuilderStore } from '@/stores/useBuilderStore'
 import type { TrackingConfig } from '@/components/form-builder/QuizzRunner'
-import { BG_PAGE, BG_CARD, BG_INPUT } from '@/lib/theme'
+import { BG_CARD, BG_INPUT, BG_PAGE } from '@/lib/theme'
 
 // ── Tabs config ───────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ const TABS: { id: TabId; icon: React.ElementType; label: string }[] = [
 const STATUS_STYLE: Record<ProductStatus, { label: string; cls: string }> = {
   published: { label: 'Publicado', cls: 'bg-emerald-500/12 text-emerald-400 border border-emerald-500/20' },
   draft:     { label: 'Rascunho',  cls: 'bg-amber-500/12  text-amber-400  border border-amber-500/20'    },
-  archived:  { label: 'Arquivado', cls: 'bg-white/4        text-white/30   border border-white/8'         },
+  archived:  { label: 'Arquivado', cls: 'bg-tint/4        text-ink-mute   border border-tint/8'         },
 }
 
 // ── Shared primitives ─────────────────────────────────────────
@@ -44,8 +44,8 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <label className="text-[12px] font-semibold text-white/50">{label}</label>
-        {hint && <p className="text-[11px] text-white/25 mt-0.5">{hint}</p>}
+        <label className="text-[12px] font-semibold text-ink-sub">{label}</label>
+        {hint && <p className="text-[11px] text-ink-faint mt-0.5">{hint}</p>}
       </div>
       {children}
     </div>
@@ -62,13 +62,13 @@ function Input({ value, onChange, placeholder, type = 'text', mono }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       className={cn(
-        'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED]',
-        'placeholder:text-white/20 outline-none transition-all',
+        'w-full px-3.5 py-2.5 rounded-lg text-[13px] text-ink',
+        'placeholder:text-ink-faint outline-none transition-all',
         mono && 'font-mono',
       )}
-      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }}
       onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(232,82,26,0.45)' }}
-      onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
+      onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(var(--tint), 0.07)' }}
     />
   )
 }
@@ -82,11 +82,11 @@ function Textarea({ value, onChange, placeholder, rows = 4 }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-[#EDEDED]
-                 placeholder:text-white/20 outline-none resize-none transition-all"
-      style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
+      className="w-full px-3.5 py-2.5 rounded-lg text-[13px] text-ink
+                 placeholder:text-ink-faint outline-none resize-none transition-all"
+      style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }}
       onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(232,82,26,0.45)' }}
-      onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
+      onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(var(--tint), 0.07)' }}
     />
   )
 }
@@ -96,10 +96,10 @@ function Section({ title, description, children }: {
 }) {
   return (
     <div className="flex flex-col gap-4 p-5 rounded-xl"
-      style={{ background: BG_CARD, border: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: BG_CARD, border: '1px solid rgba(var(--tint), 0.06)' }}>
       <div>
-        <p className="text-[13px] font-semibold text-[#EDEDED]">{title}</p>
-        {description && <p className="text-[11px] text-white/30 mt-0.5">{description}</p>}
+        <p className="text-[13px] font-semibold text-ink">{title}</p>
+        {description && <p className="text-[11px] text-ink-mute mt-0.5">{description}</p>}
       </div>
       <div className="flex flex-col gap-4">{children}</div>
     </div>
@@ -130,16 +130,16 @@ function GeralPanel({
           </Field>
           <Field label="Slug da URL" hint="Gerado automaticamente. Você pode editar.">
             <div className="flex items-center rounded-lg overflow-hidden"
-              style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}>
-              <span className="px-3 text-[12px] text-white/25 select-none shrink-0"
-                style={{ borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }}>
+              <span className="px-3 text-[12px] text-ink-faint select-none shrink-0"
+                style={{ borderRight: '1px solid rgba(var(--tint), 0.07)' }}>
                 bridge.com/
               </span>
               <input
                 value={product.slug ?? ''}
                 onChange={e => onUpdate({ slug: e.target.value })}
-                className="flex-1 px-3 py-2.5 bg-transparent text-[13px] text-[#EDEDED]
-                           placeholder:text-white/20 outline-none"
+                className="flex-1 px-3 py-2.5 bg-transparent text-[13px] text-ink
+                           placeholder:text-ink-faint outline-none"
                 placeholder="mentoria-intensiva"
               />
             </div>
@@ -165,9 +165,9 @@ function GeralPanel({
             disabled={uploading}
             className="w-full aspect-video rounded-xl flex flex-col items-center justify-center gap-3
                        border-2 border-dashed transition-all relative overflow-hidden"
-            style={{ borderColor: 'rgba(255,255,255,0.07)', background: BG_INPUT }}
+            style={{ borderColor: 'rgba(var(--tint), 0.07)', background: BG_INPUT }}
             onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(232,82,26,0.4)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.07)' }}
           >
             {product.thumbnail_url && !uploading ? (
               <>
@@ -187,8 +187,8 @@ function GeralPanel({
                   <ImageIcon className="w-5 h-5 text-[#E8521A]" />
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-[12px] font-medium text-white/40">Clique para enviar</p>
-                  <p className="text-[11px] text-white/20 mt-0.5">PNG, JPG, WebP · Máx. 4MB</p>
+                  <p className="text-[12px] font-medium text-ink-mute">Clique para enviar</p>
+                  <p className="text-[11px] text-ink-faint mt-0.5">PNG, JPG, WebP · Máx. 4MB</p>
                 </div>
               </>
             )}
@@ -197,7 +197,7 @@ function GeralPanel({
             <button
               type="button"
               onClick={() => onUpdate({ thumbnail_url: null })}
-              className="text-[11px] text-white/25 hover:text-red-400 transition-colors text-center w-full"
+              className="text-[11px] text-ink-faint hover:text-red-400 transition-colors text-center w-full"
             >
               Remover imagem
             </button>
@@ -218,7 +218,7 @@ function GeralPanel({
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all w-full',
                     active ? 'ring-1 ring-[#E8521A]/40' : '',
                   )}
-                  style={{ background: active ? 'rgba(232,82,26,0.06)' : BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: active ? 'rgba(232,82,26,0.06)' : BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }}
                 >
                   <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-md', st.cls)}>
                     {st.label}
@@ -242,7 +242,7 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
       type="button"
       onClick={onToggle}
       className="relative shrink-0 w-11 h-6 rounded-full transition-all duration-200"
-      style={{ background: enabled ? '#E8521A' : 'rgba(255,255,255,0.1)' }}
+      style={{ background: enabled ? '#E8521A' : 'rgba(var(--tint), 0.1)' }}
     >
       <span
         className="absolute top-1 w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow-sm"
@@ -328,24 +328,24 @@ function PrecificacaoPanel({
         className="flex items-center gap-4 px-5 py-4 rounded-xl transition-all"
         style={checkoutEnabled
           ? { background: 'rgba(232,82,26,0.06)', border: '1px solid rgba(232,82,26,0.18)' }
-          : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }
+          : { background: 'rgba(var(--tint), 0.03)', border: '1px solid rgba(var(--tint), 0.07)' }
         }
       >
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all"
           style={checkoutEnabled
             ? { background: 'rgba(232,82,26,0.12)' }
-            : { background: 'rgba(255,255,255,0.05)' }
+            : { background: 'rgba(var(--tint), 0.05)' }
           }
         >
-          <CreditCard className={cn('w-4 h-4', checkoutEnabled ? 'text-[#E8521A]' : 'text-white/25')} />
+          <CreditCard className={cn('w-4 h-4', checkoutEnabled ? 'text-[#E8521A]' : 'text-ink-faint')} />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className={cn('text-[14px] font-bold tracking-tight', checkoutEnabled ? 'text-[#EDEDED]' : 'text-white/35')}>
+          <p className={cn('text-[14px] font-bold tracking-tight', checkoutEnabled ? 'text-ink' : 'text-ink-mute')}>
             Checkout de Pagamento
           </p>
-          <p className="text-[11px] text-white/30 mt-0.5">
+          <p className="text-[11px] text-ink-mute mt-0.5">
             {checkoutEnabled
               ? 'Ativo — o quizz vai redirecionar para o Stripe ao final.'
               : 'Desativado — o quizz funciona apenas como captação de lead.'}
@@ -375,13 +375,13 @@ function PrecificacaoPanel({
                   <span className="text-[11px] text-emerald-400 font-mono truncate flex-1">price_{rawId}</span>
                   <a href={`https://dashboard.stripe.com/prices/${product.price_id_stripe}`}
                     target="_blank" rel="noreferrer"
-                    className="text-[10px] text-white/25 hover:text-white/50 flex items-center gap-1 shrink-0">
+                    className="text-[10px] text-ink-faint hover:text-ink-sub flex items-center gap-1 shrink-0">
                     <ExternalLink className="w-2.5 h-2.5" /> Stripe
                   </a>
                 </div>
               )}
               <a href="https://dashboard.stripe.com/products" target="_blank" rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-[11px] text-white/25 hover:text-white/50 transition-colors">
+                className="inline-flex items-center gap-1.5 text-[11px] text-ink-faint hover:text-ink-sub transition-colors">
                 <ExternalLink className="w-3 h-3" /> Abrir Stripe Dashboard
               </a>
             </Section>
@@ -399,17 +399,17 @@ function PrecificacaoPanel({
                   <Field label="Valor">
                     <div className="flex gap-2">
                       <select value={createCurrency} onChange={e => setCreateCurrency(e.target.value as 'brl' | 'jpy')}
-                        className="px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none appearance-none"
-                        style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)', width: '80px' }}>
+                        className="px-3 py-2.5 rounded-lg text-[13px] text-ink outline-none appearance-none"
+                        style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)', width: '80px' }}>
                         <option value="brl">BRL</option>
                         <option value="jpy">JPY</option>
                       </select>
                       <input type="number" value={createAmount} onChange={e => setCreateAmount(e.target.value)}
                         placeholder={createCurrency === 'brl' ? '297' : '12000'}
-                        className="flex-1 px-3 py-2.5 rounded-lg text-[13px] text-[#EDEDED] outline-none [appearance:textfield]"
-                        style={{ background: BG_INPUT, border: '1px solid rgba(255,255,255,0.07)' }} />
+                        className="flex-1 px-3 py-2.5 rounded-lg text-[13px] text-ink outline-none [appearance:textfield]"
+                        style={{ background: BG_INPUT, border: '1px solid rgba(var(--tint), 0.07)' }} />
                     </div>
-                    <p className="text-[10px] text-white/25 mt-1">
+                    <p className="text-[10px] text-ink-faint mt-1">
                       {createCurrency === 'brl' ? 'Valor em reais (297 = R$297,00)' : 'Valor em ienes (12000 = ¥12.000)'}
                     </p>
                   </Field>
@@ -426,8 +426,8 @@ function PrecificacaoPanel({
                       {createLoading ? 'Criando…' : 'Criar no Stripe'}
                     </button>
                     <button onClick={() => { setShowCreate(false); setCreateError(null); setCreateAmount('') }}
-                      className="px-4 py-2.5 rounded-lg text-[12px] text-white/30 hover:text-white/60 transition-colors"
-                      style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      className="px-4 py-2.5 rounded-lg text-[12px] text-ink-mute hover:text-ink-sub transition-colors"
+                      style={{ background: 'rgba(var(--tint), 0.04)' }}>
                       Cancelar
                     </button>
                   </div>
@@ -451,11 +451,11 @@ function PrecificacaoPanel({
                   <div className="flex flex-col gap-1.5 mb-3">
                     {extraIds.map((pid, i) => (
                       <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                        <span className="text-[11px] font-mono text-white/50 flex-1 truncate">{pid}</span>
+                        style={{ background: 'rgba(var(--tint), 0.03)', border: '1px solid rgba(var(--tint), 0.07)' }}>
+                        <span className="text-[11px] font-mono text-ink-sub flex-1 truncate">{pid}</span>
                         <button
                           onClick={() => setExtraIds(extraIds.filter((_, j) => j !== i))}
-                          className="text-white/20 hover:text-red-400 transition-colors shrink-0 text-[14px] leading-none"
+                          className="text-ink-faint hover:text-red-400 transition-colors shrink-0 text-[14px] leading-none"
                         >×</button>
                       </div>
                     ))}
@@ -469,7 +469,7 @@ function PrecificacaoPanel({
                   }}
                   placeholder="Selecionar e adicionar preço…"
                 />
-                <p className="text-[10px] text-white/20 mt-1">
+                <p className="text-[10px] text-ink-faint mt-1">
                   Todos os preços acima serão cobrados juntos no checkout do cartão.
                 </p>
               </Section>
@@ -480,9 +480,9 @@ function PrecificacaoPanel({
           <Section title="Preços por Opção do Quizz" description="Price IDs definidos nas opções do Formulário.">
             {quizPrices.length === 0 ? (
               <div className="py-6 flex flex-col items-center gap-2 text-center">
-                <p className="text-[12px] text-white/30">Nenhum preço vinculado a opções do quizz.</p>
-                <p className="text-[11px] text-white/20 leading-relaxed">
-                  Na aba <strong className="text-white/35">Formulário</strong>, selecione uma questão de múltipla escolha
+                <p className="text-[12px] text-ink-mute">Nenhum preço vinculado a opções do quizz.</p>
+                <p className="text-[11px] text-ink-faint leading-relaxed">
+                  Na aba <strong className="text-ink-mute">Formulário</strong>, selecione uma questão de múltipla escolha
                   e configure um Price ID por opção.
                 </p>
               </div>
@@ -490,10 +490,10 @@ function PrecificacaoPanel({
               <div className="flex flex-col gap-2">
                 {quizPrices.map((p, i) => (
                   <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    style={{ background: 'rgba(var(--tint), 0.02)', border: '1px solid rgba(var(--tint), 0.06)' }}>
                     <div className="min-w-0">
-                      <p className="text-[12px] font-medium text-[#EDEDED] truncate">{p.option}</p>
-                      <p className="text-[10px] font-mono text-white/25 truncate mt-0.5">{p.priceId}</p>
+                      <p className="text-[12px] font-medium text-ink truncate">{p.option}</p>
+                      <p className="text-[10px] font-mono text-ink-faint truncate mt-0.5">{p.priceId}</p>
                     </div>
                     <span className="text-[13px] font-bold font-mono text-[#E8521A] shrink-0">
                       {p.currency.toUpperCase() === 'JPY'
@@ -509,14 +509,14 @@ function PrecificacaoPanel({
       ) : (
         /* ── Modo Captação de Lead ────────────────────────────────── */
         <div className="flex flex-col items-center justify-center py-10 gap-4 text-center rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.07)' }}>
+          style={{ background: 'rgba(var(--tint), 0.02)', border: '1px dashed rgba(var(--tint), 0.07)' }}>
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-            style={{ background: 'rgba(255,255,255,0.05)' }}>
-            <CreditCard className="w-5 h-5 text-white/20" />
+            style={{ background: 'rgba(var(--tint), 0.05)' }}>
+            <CreditCard className="w-5 h-5 text-ink-faint" />
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-white/30">Modo Captação de Lead</p>
-            <p className="text-[11px] text-white/20 mt-1 leading-relaxed max-w-xs">
+            <p className="text-[13px] font-semibold text-ink-mute">Modo Captação de Lead</p>
+            <p className="text-[11px] text-ink-faint mt-1 leading-relaxed max-w-xs">
               O quizz coletará os dados do lead e exibirá uma tela de confirmação.<br />
               Nenhum redirecionamento para checkout será feito.
             </p>
@@ -557,8 +557,8 @@ function RastreioPanel({
     })
   }
 
-  const labelCls = 'text-[12px] font-semibold text-white/50'
-  const hintCls  = 'text-[11px] text-white/25 mt-0.5'
+  const labelCls = 'text-[12px] font-semibold text-ink-sub'
+  const hintCls  = 'text-[11px] text-ink-faint mt-0.5'
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -636,7 +636,7 @@ function RastreioPanel({
         {/* Personalizar nomes de eventos */}
         <Section title="Personalizar Eventos" description="Nome do evento disparado ao concluir o formulário e ao efetuar uma compra.">
           <div className="flex items-center gap-2 mb-1">
-            <Tag className="w-3.5 h-3.5 text-white/30" />
+            <Tag className="w-3.5 h-3.5 text-ink-mute" />
             <p className={labelCls}>Evento de Lead (form concluído)</p>
           </div>
           <Input
@@ -644,12 +644,12 @@ function RastreioPanel({
             onChange={v => updateTracking({ leadEventName: v || undefined })}
             placeholder="Lead"
           />
-          <p className={hintCls}>Padrão: <code className="text-white/40">Lead</code> — dispara no Meta Pixel e GA4</p>
+          <p className={hintCls}>Padrão: <code className="text-ink-mute">Lead</code> — dispara no Meta Pixel e GA4</p>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '4px 0' }} />
+          <div style={{ borderTop: '1px solid rgba(var(--tint), 0.06)', margin: '4px 0' }} />
 
           <div className="flex items-center gap-2 mb-1">
-            <Tag className="w-3.5 h-3.5 text-white/30" />
+            <Tag className="w-3.5 h-3.5 text-ink-mute" />
             <p className={labelCls}>Evento de Compra (checkout concluído)</p>
           </div>
           <Input
@@ -657,29 +657,29 @@ function RastreioPanel({
             onChange={v => updateTracking({ purchaseEventName: v || undefined })}
             placeholder="Purchase"
           />
-          <p className={hintCls}>Padrão: <code className="text-white/40">Purchase</code> — disparado via Stripe webhook</p>
+          <p className={hintCls}>Padrão: <code className="text-ink-mute">Purchase</code> — disparado via Stripe webhook</p>
         </Section>
 
         {/* Como funciona */}
         <div className="rounded-xl p-5 flex flex-col gap-3"
           style={{ background: 'rgba(232,82,26,0.04)', border: '1px solid rgba(232,82,26,0.12)' }}>
-          <p className="text-[12px] font-semibold text-[#EDEDED]">Como funciona o rastreio</p>
-          <div className="flex flex-col gap-2.5 text-[11px] leading-relaxed text-white/40">
+          <p className="text-[12px] font-semibold text-ink">Como funciona o rastreio</p>
+          <div className="flex flex-col gap-2.5 text-[11px] leading-relaxed text-ink-mute">
             <div className="flex gap-2">
               <span className="text-[#E8521A] shrink-0 mt-0.5">①</span>
               <span>Os scripts (Pixel, GA4, GTM) são injetados quando o visitante abre o formulário.</span>
             </div>
             <div className="flex gap-2">
               <span className="text-[#E8521A] shrink-0 mt-0.5">②</span>
-              <span>Ao concluir o formulário (lead qualificado), o evento de <strong className="text-white/60">Lead</strong> é disparado automaticamente.</span>
+              <span>Ao concluir o formulário (lead qualificado), o evento de <strong className="text-ink-sub">Lead</strong> é disparado automaticamente.</span>
             </div>
             <div className="flex gap-2">
               <span className="text-[#E8521A] shrink-0 mt-0.5">③</span>
-              <span>Leads desqualificados pelas regras de lógica <strong className="text-white/60">não disparam</strong> eventos de conversão.</span>
+              <span>Leads desqualificados pelas regras de lógica <strong className="text-ink-sub">não disparam</strong> eventos de conversão.</span>
             </div>
             <div className="flex gap-2">
               <span className="text-[#E8521A] shrink-0 mt-0.5">④</span>
-              <span>O evento de <strong className="text-white/60">Purchase</strong> é disparado pelo webhook Stripe após pagamento confirmado.</span>
+              <span>O evento de <strong className="text-ink-sub">Purchase</strong> é disparado pelo webhook Stripe após pagamento confirmado.</span>
             </div>
           </div>
         </div>
@@ -687,8 +687,8 @@ function RastreioPanel({
         {/* CRM info */}
         <div className="rounded-xl p-5 flex flex-col gap-3"
           style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.12)' }}>
-          <p className="text-[12px] font-semibold text-[#EDEDED]">CRM automático</p>
-          <p className="text-[11px] text-white/40 leading-relaxed">
+          <p className="text-[12px] font-semibold text-ink">CRM automático</p>
+          <p className="text-[11px] text-ink-mute leading-relaxed">
             Todo lead que conclui o formulário é salvo automaticamente na tabela <code className="text-emerald-400/70">leads</code> com nome, e-mail, telefone, cidade, estado, respostas completas e status de qualificação.
           </p>
           <p className="text-[11px] text-emerald-400/60">
@@ -710,8 +710,8 @@ function VendasPanel({ productId, productSlug }: { productId: string; productSlu
         <LayoutTemplate className="w-7 h-7 text-[#E8521A]" />
       </div>
       <div>
-        <h3 className="text-[15px] font-bold text-[#EDEDED] tracking-tight">Editor Visual de Página de Vendas</h3>
-        <p className="text-[13px] text-white/30 mt-2 max-w-sm leading-relaxed">
+        <h3 className="text-[15px] font-bold text-ink tracking-tight">Editor Visual de Página de Vendas</h3>
+        <p className="text-[13px] text-ink-mute mt-2 max-w-sm leading-relaxed">
           Abra o editor completo para criar blocos, editar layout e publicar a página de vendas deste produto.
         </p>
       </div>
@@ -735,9 +735,9 @@ function VendasPanel({ productId, productSlug }: { productId: string; productSlu
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-medium transition-all"
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.4)',
+              background: 'rgba(var(--tint), 0.04)',
+              border: '1px solid rgba(var(--tint), 0.08)',
+              color: 'rgba(var(--tint), 0.4)',
             }}
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -844,20 +844,20 @@ export default function ProductConfigPage() {
       {/* Page header */}
       <div
         className="shrink-0 flex items-center gap-4 px-8 py-4"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#13151A' }}
+        style={{ borderBottom: '1px solid rgba(var(--tint), 0.06)', background: BG_CARD }}
       >
         <button
           onClick={() => navigate('/admin/products')}
-          className="flex items-center gap-1.5 text-[12px] text-white/30 hover:text-white/70 transition-colors"
+          className="flex items-center gap-1.5 text-[12px] text-ink-mute hover:text-ink transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Produtos
         </button>
 
-        <span className="text-white/10">/</span>
+        <span className="text-ink-ghost">/</span>
 
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <h1 className="text-[15px] font-bold text-[#EDEDED] tracking-tight truncate">
+          <h1 className="text-[15px] font-bold text-ink tracking-tight truncate">
             {displayProduct.name}
           </h1>
           <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-md shrink-0', statusStyle.cls)}>
@@ -882,7 +882,7 @@ export default function ProductConfigPage() {
       {/* Tab bar */}
       <div
         className="shrink-0 flex items-end gap-1 px-8"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#13151A' }}
+        style={{ borderBottom: '1px solid rgba(var(--tint), 0.06)', background: BG_CARD }}
       >
         {TABS.map(t => {
           const Icon   = t.icon
@@ -893,10 +893,10 @@ export default function ProductConfigPage() {
               onClick={() => setTab(t.id)}
               className={cn(
                 'relative flex items-center gap-2 px-4 py-3 text-[13px] font-medium transition-all',
-                active ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60',
+                active ? 'text-ink' : 'text-ink-mute hover:text-ink-sub',
               )}
             >
-              <Icon className={cn('w-3.5 h-3.5', active ? 'text-[#E8521A]' : 'text-white/25')} />
+              <Icon className={cn('w-3.5 h-3.5', active ? 'text-[#E8521A]' : 'text-ink-faint')} />
               {t.label}
               {active && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"

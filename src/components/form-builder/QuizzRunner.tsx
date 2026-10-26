@@ -283,7 +283,7 @@ function PhoneInput({ value, onChange, onEnter }: {
         onChange={e => handleNumber(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') onEnter() }}
         placeholder={countryDef.placeholder}
-        className="flex-1 bg-transparent outline-none border-0 border-b-2 text-[22px] text-[#F1F5F9] placeholder:text-white/20 py-3 transition-colors leading-snug"
+        className="flex-1 bg-transparent outline-none border-0 border-b-2 text-[22px] text-[#F1F5F9] placeholder:text-ink-faint py-3 transition-colors leading-snug"
         style={{ borderBottomColor: borderColor }}
       />
     </div>
@@ -296,7 +296,7 @@ function AnswerInput({ node, value, onChange, onEnter }: {
   const borderColor = value ? '#E8521A' : 'rgba(255,255,255,0.12)'
   const sharedCls = `
     w-full bg-transparent outline-none border-0 border-b-2
-    text-[22px] text-[#F1F5F9] placeholder:text-white/20
+    text-[22px] text-[#F1F5F9] placeholder:text-ink-faint
     py-3 transition-colors leading-snug
   `
 
@@ -864,13 +864,13 @@ function BankDepositScreen({ node, pct, onAdvance }: {
             <div className="px-5 py-4 flex flex-col gap-3">
               {!isNaN(enrollNum) && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[13px] text-white/50">Matrícula</span>
+                  <span className="text-[13px] text-ink-sub">Matrícula</span>
                   <span className="text-[14px] font-semibold text-[#F1F5F9]">{fmtMoney(enrollNum, currency)}</span>
                 </div>
               )}
               {!isNaN(monthNum) && (
                 <div className="flex justify-between items-center">
-                  <span className="text-[13px] text-white/50">Mensalidade</span>
+                  <span className="text-[13px] text-ink-sub">Mensalidade</span>
                   <span className="text-[14px] font-semibold text-[#F1F5F9]">{fmtMoney(monthNum, currency)}</span>
                 </div>
               )}
@@ -886,7 +886,7 @@ function BankDepositScreen({ node, pct, onAdvance }: {
               )}
               <div className="pt-3 flex justify-between items-center"
                 style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                <span className="text-[13px] font-bold text-white/70">Total a pagar</span>
+                <span className="text-[13px] font-bold text-ink">Total a pagar</span>
                 <span className="text-[22px] font-bold text-[#F1F5F9]">{fmtMoney(totalFinal, currency)}</span>
               </div>
             </div>
@@ -913,7 +913,7 @@ function BankDepositScreen({ node, pct, onAdvance }: {
                 onKeyDown={e => { if (e.key === 'Enter') applyCoupon() }}
                 placeholder="Ex: BRIDGE10"
                 disabled={!!coupon}
-                className="flex-1 px-3.5 py-2.5 rounded-lg text-[13px] font-mono text-[#EDEDED] placeholder:text-white/20 outline-none transition-colors uppercase"
+                className="flex-1 px-3.5 py-2.5 rounded-lg text-[13px] font-mono text-ink placeholder:text-ink-faint outline-none transition-colors uppercase"
                 style={{
                   background: '#0D0E12',
                   border: `1px solid ${coupon ? 'rgba(52,211,153,0.4)' : couponError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`,
@@ -1281,8 +1281,8 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
         {productName && (
           <div className="px-4 py-3 rounded-xl text-left"
             style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p className="text-[11px] uppercase tracking-widest font-semibold text-white/25 mb-1">Produto</p>
-            <p className="text-[14px] font-medium text-[#EDEDED]">{productName}</p>
+            <p className="text-[11px] uppercase tracking-widest font-semibold text-ink-faint mb-1">Produto</p>
+            <p className="text-[14px] font-medium text-ink">{productName}</p>
           </div>
         )}
 
@@ -1901,7 +1901,7 @@ export default function QuizzRunner({
                           if (e.key === 'Enter' && otherDraft.trim()) advance(otherDraft.trim())
                         }}
                         placeholder="Escreva sua resposta…"
-                        className="w-full bg-transparent outline-none border-0 border-b-2 text-[18px] text-[#F1F5F9] placeholder:text-white/20 py-2 transition-colors"
+                        className="w-full bg-transparent outline-none border-0 border-b-2 text-[18px] text-[#F1F5F9] placeholder:text-ink-faint py-2 transition-colors"
                         style={{ borderBottomColor: otherDraft ? '#E8521A' : 'rgba(255,255,255,0.12)' }}
                       />
                     </div>

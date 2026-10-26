@@ -8,7 +8,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import type { BridgeLead } from '@/lib/types'
 import { cn } from '@/lib/cn'
-import { BG_PAGE, BG_CARD as BG_COL, BG_DROP as BG_CARD, BORDER } from '@/lib/theme'
+import { BG_CARD as BG_COL, BG_CARD2, BG_DROP as BG_CARD, BG_PAGE, BORDER, INK_MUTE } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -281,12 +281,12 @@ function LeadCard({
       </div>
 
       {/* Separator */}
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+      <div style={{ height: 1, background: 'rgba(var(--tint), 0.05)' }} />
 
       {/* Product + value */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: 'rgba(var(--tint), 0.2)' }}>
             Produto
           </p>
           <p className="text-[12px] truncate" style={{ color: '#A1A1AA' }}>
@@ -295,7 +295,7 @@ function LeadCard({
         </div>
         {lead.value !== null && (
           <div className="shrink-0 text-right">
-            <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            <p className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: 'rgba(var(--tint), 0.2)' }}>
               Valor
             </p>
             <p className="text-[13px] font-bold font-mono" style={{ color: cfg.valueColor }}>
@@ -307,14 +307,14 @@ function LeadCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+        <span className="text-[10px]" style={{ color: 'rgba(var(--tint), 0.2)' }}>
           {timeAgo(lead.updatedAt)}
         </span>
 
         {lead.isMock && (
           <span
             className="text-[9px] px-1.5 py-0.5 rounded font-semibold"
-            style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)' }}
+            style={{ background: 'rgba(var(--tint), 0.05)', color: 'rgba(var(--tint), 0.2)' }}
           >
             DEMO
           </span>
@@ -371,7 +371,7 @@ function KanbanColumn({
               <p className="text-[12px] font-bold leading-tight" style={{ color: '#F1F5F9' }}>
                 {cfg.label}
               </p>
-              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(var(--tint), 0.3)' }}>
                 {cfg.sub}
               </p>
             </div>
@@ -389,13 +389,13 @@ function KanbanColumn({
         {total > 0 && (
           <div
             className="flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-lg"
-            style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}
+            style={{ background: 'rgba(var(--tint), 0.04)', border: `1px solid ${BORDER}` }}
           >
             <TrendingUp className="w-3 h-3 shrink-0" style={{ color: cfg.dot }} />
             <span className="text-[11px] font-mono font-semibold" style={{ color: cfg.dot }}>
               {fmtJPY(total)}
             </span>
-            <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            <span className="text-[10px]" style={{ color: 'rgba(var(--tint), 0.2)' }}>
               potencial
             </span>
           </div>
@@ -406,7 +406,7 @@ function KanbanColumn({
       <div className="flex-1 flex flex-col gap-2.5 p-3 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 240px)' }}>
         {leads.length === 0 ? (
           <div className="flex flex-1 items-center justify-center py-12">
-            <p className="text-[11px] text-center leading-relaxed" style={{ color: 'rgba(255,255,255,0.15)' }}>
+            <p className="text-[11px] text-center leading-relaxed" style={{ color: 'rgba(var(--tint), 0.15)' }}>
               Nenhum lead<br />nesta etapa
             </p>
           </div>
@@ -454,7 +454,7 @@ function LeadDrawer({
         className="fixed right-0 top-0 bottom-0 z-50 flex flex-col overflow-hidden"
         style={{
           width: 400,
-          background: '#16181F',
+          background: BG_CARD2,
           borderLeft: `1px solid ${BORDER}`,
           boxShadow: '-24px 0 64px rgba(0,0,0,0.5)',
         }}
@@ -490,9 +490,9 @@ function LeadDrawer({
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: '#52525B' }}
+            style={{ color: INK_MUTE }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#EDEDED' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#52525B' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = INK_MUTE }}
           >
             <X className="w-4 h-4" />
           </button>
@@ -505,11 +505,11 @@ function LeadDrawer({
           {(l.product !== '—' || l.value !== null) && (
             <div
               className="flex items-center justify-between px-4 py-3 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER}` }}
+              style={{ background: 'rgba(var(--tint), 0.03)', border: `1px solid ${BORDER}` }}
             >
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                  style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  style={{ color: 'rgba(var(--tint), 0.2)' }}>
                   Produto de Interesse
                 </p>
                 <p className="text-[13px] font-medium" style={{ color: '#EDEDED' }}>
@@ -519,7 +519,7 @@ function LeadDrawer({
               {l.value !== null && (
                 <div className="text-right">
                   <p className="text-[10px] uppercase tracking-widest font-semibold mb-1"
-                    style={{ color: 'rgba(255,255,255,0.2)' }}>
+                    style={{ color: 'rgba(var(--tint), 0.2)' }}>
                     Valor
                   </p>
                   <p className="text-[18px] font-bold font-mono" style={{ color: cfg.valueColor }}>
@@ -534,7 +534,7 @@ function LeadDrawer({
           {Object.keys(l.answers).length > 0 && (
             <div>
               <p className="text-[10px] uppercase tracking-widest font-semibold mb-3"
-                style={{ color: 'rgba(255,255,255,0.25)' }}>
+                style={{ color: 'rgba(var(--tint), 0.25)' }}>
                 Respostas do Quizz
               </p>
               <div className="flex flex-col gap-2">
@@ -542,9 +542,9 @@ function LeadDrawer({
                   <div
                     key={key}
                     className="px-3 py-3 rounded-lg"
-                    style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${BORDER}` }}
+                    style={{ background: 'rgba(var(--tint), 0.02)', border: `1px solid ${BORDER}` }}
                   >
-                    <p className="text-[10px] font-semibold capitalize mb-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    <p className="text-[10px] font-semibold capitalize mb-1" style={{ color: 'rgba(var(--tint), 0.25)' }}>
                       {key.replace(/_/g, ' ')}
                     </p>
                     <p className="text-[12px]" style={{ color: '#C4C4C8' }}>
@@ -559,7 +559,7 @@ function LeadDrawer({
           {/* Timeline */}
           <div>
             <p className="text-[10px] uppercase tracking-widest font-semibold mb-3"
-              style={{ color: 'rgba(255,255,255,0.25)' }}>
+              style={{ color: 'rgba(var(--tint), 0.25)' }}>
               Atividade
             </p>
             <div className="flex flex-col gap-2">
@@ -569,7 +569,7 @@ function LeadDrawer({
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between">
                   <span className="text-[12px]" style={{ color: '#71717A' }}>{item.label}</span>
-                  <span className="text-[11px] font-mono" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <span className="text-[11px] font-mono" style={{ color: 'rgba(var(--tint), 0.35)' }}>
                     {timeAgo(item.time)}
                   </span>
                 </div>
@@ -588,7 +588,7 @@ function LeadDrawer({
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl
                        text-[13px] font-semibold transition-all"
             style={{
-              background: 'rgba(255,255,255,0.05)',
+              background: 'rgba(var(--tint), 0.05)',
               border:     `1px solid ${BORDER}`,
               color:      '#A1A1AA',
             }}
@@ -618,9 +618,9 @@ function LeadDrawer({
               rel="noreferrer"
               className="flex items-center justify-center gap-2 w-full py-2 rounded-xl
                          text-[12px] font-medium transition-colors"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.6)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.3)' }}
+              style={{ color: 'rgba(var(--tint), 0.3)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(var(--tint), 0.6)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(var(--tint), 0.3)' }}
             >
               <ExternalLink className="w-3 h-3" />
               Ver no Stripe Dashboard
@@ -701,7 +701,7 @@ export default function LeadsKanbanPage() {
                 </span>
               )}
             </div>
-            <p className="text-[13px] mt-0.5" style={{ color: '#52525B' }}>
+            <p className="text-[13px] mt-0.5" style={{ color: INK_MUTE }}>
               Acompanhe a jornada de qualificação e checkout dos seus leads
             </p>
           </div>
@@ -711,9 +711,9 @@ export default function LeadsKanbanPage() {
             {/* Search */}
             <div
               className="flex items-center gap-2 px-3 py-2 rounded-lg"
-              style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}
+              style={{ background: 'rgba(var(--tint), 0.04)', border: `1px solid ${BORDER}` }}
             >
-              <Search className="w-3.5 h-3.5 shrink-0" style={{ color: '#52525B' }} />
+              <Search className="w-3.5 h-3.5 shrink-0" style={{ color: INK_MUTE }} />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
@@ -723,7 +723,7 @@ export default function LeadsKanbanPage() {
               />
               {query && (
                 <button onClick={() => setQuery('')}>
-                  <X className="w-3 h-3" style={{ color: '#52525B' }} />
+                  <X className="w-3 h-3" style={{ color: INK_MUTE }} />
                 </button>
               )}
             </div>
@@ -732,7 +732,7 @@ export default function LeadsKanbanPage() {
             <button
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
               style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(var(--tint), 0.04)',
                 border:     `1px solid ${BORDER}`,
                 color:      '#71717A',
               }}
@@ -749,7 +749,7 @@ export default function LeadsKanbanPage() {
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
               style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(var(--tint), 0.04)',
                 border:     `1px solid ${BORDER}`,
                 color:      '#71717A',
               }}
@@ -773,11 +773,11 @@ export default function LeadsKanbanPage() {
             <div className="flex items-center gap-6 mt-4">
               {kpis.flatMap((kpi, i) => [
                 <div key={kpi.label} className="flex items-center gap-2">
-                  <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>{kpi.label}</span>
+                  <span className="text-[11px]" style={{ color: 'rgba(var(--tint), 0.25)' }}>{kpi.label}</span>
                   <span className="text-[13px] font-bold font-mono" style={{ color: kpi.color }}>{kpi.value}</span>
                 </div>,
                 i < kpis.length - 1
-                  ? <span key={`sep-${i}`} style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+                  ? <span key={`sep-${i}`} style={{ width: 1, height: 14, background: 'rgba(var(--tint), 0.08)', flexShrink: 0 }} />
                   : null,
               ])}
             </div>

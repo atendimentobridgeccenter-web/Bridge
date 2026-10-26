@@ -44,13 +44,13 @@ export default function BlockPalette({ onAdd }: Props) {
       style={{ background: '#13151A', borderRight: '1px solid rgba(255,255,255,0.07)' }}
     >
       <div className="px-4 py-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25">Blocos</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-faint">Blocos</p>
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
         {GROUPS.map(group => (
           <div key={group.label} className="mb-1">
-            <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
+            <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
               {group.label}
             </p>
             <div className="px-2 flex flex-col gap-0.5">
@@ -63,14 +63,14 @@ export default function BlockPalette({ onAdd }: Props) {
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
                 >
-                  <span className="shrink-0 text-white/25 group-hover:text-[#E8521A] transition-colors">
+                  <span className="shrink-0 text-ink-faint group-hover:text-[#E8521A] transition-colors">
                     {item.icon}
                   </span>
                   <span>
-                    <span className="block text-[12px] font-medium text-white/55 group-hover:text-white/90 transition-colors leading-none">
+                    <span className="block text-[12px] font-medium text-ink-sub group-hover:text-ink transition-colors leading-none">
                       {item.label}
                     </span>
-                    <span className="block text-[10px] text-white/20 mt-0.5 leading-none">{item.desc}</span>
+                    <span className="block text-[10px] text-ink-faint mt-0.5 leading-none">{item.desc}</span>
                   </span>
                 </button>
               ))}

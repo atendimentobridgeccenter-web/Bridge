@@ -25,7 +25,7 @@ export default function BuilderHeader({
                        bg-zinc-900 border-b border-white/6 z-10">
       <button
         onClick={() => navigate('/admin')}
-        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+        className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-ink transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
       </button>
@@ -65,7 +65,7 @@ export default function BuilderHeader({
         <button
           onClick={() => window.open(`/${slug}`, '_blank')}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs
-                     text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
+                     text-zinc-500 hover:text-ink hover:bg-zinc-800 transition-colors"
         >
           <Eye className="w-3.5 h-3.5" />
           Preview
@@ -77,7 +77,7 @@ export default function BuilderHeader({
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
             published
               ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 border border-emerald-500/20'
-              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white border border-white/6',
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-ink border border-white/6',
           )}
         >
           {published && <Check className="w-3 h-3" />}

@@ -46,7 +46,7 @@ export default function MyProducts() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Top nav */}
-      <header className="border-b border-white/6 px-8 py-4 flex items-center justify-between">
+      <header className="border-b border-tint/6 px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center">
             <Zap className="w-3.5 h-3.5 text-white fill-white" />
@@ -57,7 +57,7 @@ export default function MyProducts() {
           <span className="text-xs text-zinc-600 truncate max-w-[200px]">{email}</span>
           <button
             onClick={signOut}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-ink transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" /> Sair
           </button>
@@ -72,7 +72,7 @@ export default function MyProducts() {
         {/* Empty */}
         {products.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-white/6
+            <div className="w-14 h-14 rounded-2xl bg-zinc-800 border border-tint/6
                             flex items-center justify-center mb-5">
               <Package className="w-6 h-6 text-zinc-600" />
             </div>
@@ -95,7 +95,7 @@ export default function MyProducts() {
               key={p.id}
               to={`/view/${p.slug}`}
               className={cn(
-                'group rounded-2xl border border-white/6 bg-zinc-900/50 overflow-hidden',
+                'group rounded-2xl border border-tint/6 bg-zinc-900/50 overflow-hidden',
                 'hover:border-violet-500/25 hover:bg-zinc-900 transition-all duration-200',
               )}
             >

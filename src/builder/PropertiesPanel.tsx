@@ -15,8 +15,8 @@ import type {
 const BG   = '#13151A'
 const BOR  = 'rgba(255,255,255,0.07)'
 const inputCls = cn(
-  'w-full px-3 py-2 rounded-lg text-[12px] text-white/80 outline-none transition-all',
-  'placeholder:text-white/20',
+  'w-full px-3 py-2 rounded-lg text-[12px] text-ink outline-none transition-all',
+  'placeholder:text-ink-faint',
 )
 const inputStyle = { background: '#0D0E12', border: `1px solid ${BOR}` }
 
@@ -25,7 +25,7 @@ const inputStyle = { background: '#0D0E12', border: `1px solid ${BOR}` }
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-white/30">{label}</label>
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{label}</label>
       {children}
     </div>
   )
@@ -106,7 +106,7 @@ function NumberInput({ value, onChange, label, min, max }: {
 function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[12px] text-white/50">{label}</span>
+      <span className="text-[12px] text-ink-sub">{label}</span>
       <button
         onClick={() => onChange(!value)}
         className="relative rounded-full transition-all duration-200"
@@ -133,7 +133,7 @@ function StyleSection({ style, onChange }: { style: BlockStyle; onChange: (s: Bl
   return (
     <>
       <Sep />
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Estilo da seção</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Estilo da seção</p>
       <Field label="Fundo (cor ou gradient)">
         <div className="flex items-center gap-2">
           <input type="color" value={s.bg || '#000000'} onChange={e => set('bg', e.target.value)}
@@ -186,7 +186,7 @@ function FeaturesPanel({ props, onChange }: { props: FeaturesProps; onChange: (p
       </Field>
       {props.features.map((f, i) => (
         <div key={i} className="flex flex-col gap-2 pt-2" style={{ borderTop: `1px solid ${BOR}` }}>
-          <p className="text-[10px] font-semibold text-white/25">Item {i + 1}</p>
+          <p className="text-[10px] font-semibold text-ink-faint">Item {i + 1}</p>
           <Field label="Ícone Lucide"><TextInput value={f.icon} onChange={v => { const fs = [...props.features]; fs[i] = { ...f, icon: v }; onChange({ ...props, features: fs }) }} /></Field>
           <Field label="Título"><TextInput value={f.title} onChange={v => { const fs = [...props.features]; fs[i] = { ...f, title: v }; onChange({ ...props, features: fs }) }} /></Field>
           <Field label="Descrição"><TextInput value={f.description} onChange={v => { const fs = [...props.features]; fs[i] = { ...f, description: v }; onChange({ ...props, features: fs }) }} multiline /></Field>
@@ -297,7 +297,7 @@ function ButtonPanel({ props, onChange, productSlug }: {
         <Field label="URL"><TextInput value={props.url ?? ''} onChange={v => onChange({ ...props, url: v })} placeholder="https://..." /></Field>
       )}
       {(props.target === 'form' || props.target === 'checkout') && (
-        <div className="px-3 py-2 rounded-lg text-[11px] text-white/40" style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)' }}>
+        <div className="px-3 py-2 rounded-lg text-[11px] text-ink-mute" style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)' }}>
           URL: {props.url || '(defina o slug do produto)'}
         </div>
       )}
@@ -337,7 +337,7 @@ function AccordionPanel({ props, onChange }: { props: AccordionBlockProps; onCha
         {props.items.map((item, idx) => (
           <div key={item.id} className="flex flex-col gap-2 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BOR}` }}>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-white/25">Item {idx + 1}</span>
+              <span className="text-[10px] font-semibold text-ink-faint">Item {idx + 1}</span>
               <button onClick={() => removeItem(item.id)} className="text-red-400/60 hover:text-red-400 transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -347,7 +347,7 @@ function AccordionPanel({ props, onChange }: { props: AccordionBlockProps; onCha
           </div>
         ))}
         <button onClick={addItem}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/40 hover:text-white/70 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-ink-mute hover:text-ink transition-colors"
           style={{ border: `1px dashed ${BOR}` }}>
           <Plus className="w-3.5 h-3.5" /> Adicionar item
         </button>
@@ -386,7 +386,7 @@ function CarouselPanel({ props, onChange }: { props: CarouselBlockProps; onChang
         {props.slides.map((slide, idx) => (
           <div key={slide.id} className="flex flex-col gap-2 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BOR}` }}>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-white/25">Slide {idx + 1}</span>
+              <span className="text-[10px] font-semibold text-ink-faint">Slide {idx + 1}</span>
               <button onClick={() => removeSlide(slide.id)} className="text-red-400/60 hover:text-red-400 transition-colors">
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -397,7 +397,7 @@ function CarouselPanel({ props, onChange }: { props: CarouselBlockProps; onChang
           </div>
         ))}
         <button onClick={addSlide}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-white/40 hover:text-white/70 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-ink-mute hover:text-ink transition-colors"
           style={{ border: `1px dashed ${BOR}` }}>
           <Plus className="w-3.5 h-3.5" /> Adicionar slide
         </button>
@@ -435,12 +435,12 @@ export default function PropertiesPanel({ block, onChange, productSlug }: Props)
         <div className="text-center px-6">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
             style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BOR}` }}>
-            <svg className="w-4 h-4 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-ink-ghost" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </div>
-          <p className="text-[12px] text-white/25 leading-relaxed">
+          <p className="text-[12px] text-ink-faint leading-relaxed">
             Clique em um bloco para editar suas propriedades
           </p>
         </div>
@@ -458,7 +458,7 @@ export default function PropertiesPanel({ block, onChange, productSlug }: Props)
       <div className="shrink-0 flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: `1px solid ${BOR}` }}>
         <span className="w-2 h-2 rounded-full bg-[#E8521A]" />
-        <span className="text-[12px] font-semibold text-white/70">
+        <span className="text-[12px] font-semibold text-ink">
           {BLOCK_LABELS[block.type] ?? block.type}
         </span>
       </div>

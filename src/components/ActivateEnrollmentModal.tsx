@@ -8,7 +8,7 @@ import type { Student } from '@/hooks/useStudents'
 import { useRecommendedClass } from '@/hooks/useEvaluations'
 import { BG_CARD, BG_INPUT, BORDER2, BORDER, ACCENT } from '@/lib/theme'
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 
@@ -20,7 +20,7 @@ function blurBorder(e: React.FocusEvent<HTMLElement>) {
 }
 
 function Lbl({ children }: { children: React.ReactNode }) {
-  return <label className="text-[10.5px] font-medium text-white/40">{children}</label>
+  return <label className="text-[10.5px] font-medium text-ink-mute">{children}</label>
 }
 
 export default function ActivateEnrollmentModal({ student, onClose }: {
@@ -88,14 +88,14 @@ export default function ActivateEnrollmentModal({ student, onClose }: {
 
         <div className="px-5 py-4 flex items-start justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER2}` }}>
           <div className="min-w-0">
-            <p className="text-[14px] font-semibold text-[#EDEDED] flex items-center gap-2">
+            <p className="text-[14px] font-semibold text-ink flex items-center gap-2">
               <UserCheck className="w-4 h-4 shrink-0" style={{ color: ACCENT }} />
               Ativar matrícula
             </p>
-            <p className="text-[11.5px] text-white/35 mt-1 truncate">{student.student_name}</p>
+            <p className="text-[11.5px] text-ink-mute mt-1 truncate">{student.student_name}</p>
           </div>
           <button onClick={onClose}
-            className="p-1.5 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/6 transition-all shrink-0">
+            className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -110,12 +110,12 @@ export default function ActivateEnrollmentModal({ student, onClose }: {
                 <Sparkles className="w-3 h-3 shrink-0" />
                 A avaliação indicou {recClass.name}
               </p>
-              <p className="text-[11px] text-white/40 tabular-nums">
+              <p className="text-[11px] text-ink-mute tabular-nums">
                 {formatSchedule(recClass.sessions)}
                 {recommended.data?.recommended_level && ` · nível ${recommended.data.recommended_level}`}
               </p>
               {recommended.data?.outcome_note && (
-                <p className="text-[11px] text-white/35 whitespace-pre-wrap">
+                <p className="text-[11px] text-ink-mute whitespace-pre-wrap">
                   {recommended.data.outcome_note}
                 </p>
               )}
@@ -142,7 +142,7 @@ export default function ActivateEnrollmentModal({ student, onClose }: {
               })}
             </select>
             {options.length === 0 && (
-              <p className="text-[11px] text-white/30">
+              <p className="text-[11px] text-ink-mute">
                 Nenhuma turma ativa cadastrada — crie em Turmas antes de ativar.
               </p>
             )}
@@ -173,7 +173,7 @@ export default function ActivateEnrollmentModal({ student, onClose }: {
             </div>
           </div>
 
-          <p className="text-[11px] text-white/25 leading-relaxed flex items-start gap-1.5">
+          <p className="text-[11px] text-ink-faint leading-relaxed flex items-start gap-1.5">
             <Users className="w-3 h-3 shrink-0 mt-0.5" />
             Ao ativar, o aluno passa a ocupar vaga na turma e aparece no portal do
             professor responsável.
@@ -187,7 +187,7 @@ export default function ActivateEnrollmentModal({ student, onClose }: {
             </p>
           )}
           <button onClick={onClose}
-            className="px-4 py-2 rounded-xl text-[12.5px] font-medium text-white/50 hover:text-white/80 hover:bg-white/5 transition-all ml-auto">
+            className="px-4 py-2 rounded-xl text-[12.5px] font-medium text-ink-sub hover:text-ink hover:bg-tint/5 transition-all ml-auto">
             Cancelar
           </button>
           <button onClick={submit} disabled={activate.isPending}

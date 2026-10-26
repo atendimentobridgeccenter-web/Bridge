@@ -36,7 +36,7 @@ const PAYMENT_METHOD: Record<string, string> = {
   deposito: 'Depósito bancário', dinheiro: 'Em dinheiro', stripe: 'Stripe',
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 
@@ -80,7 +80,7 @@ function Card({ title, icon: Icon, action, children }: {
       <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: `1px solid ${BORDER2}` }}>
         <div className="flex items-center gap-2 min-w-0">
           <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: ACCENT }} />
-          <p className="text-[12px] font-semibold text-[#EDEDED]">{title}</p>
+          <p className="text-[12px] font-semibold text-ink">{title}</p>
         </div>
         {action}
       </div>
@@ -94,17 +94,17 @@ function Row({ icon: Icon, label, value, href }: {
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      <Icon className="w-3.5 h-3.5 text-white/20 shrink-0 mt-0.5" />
+      <Icon className="w-3.5 h-3.5 text-ink-faint shrink-0 mt-0.5" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10.5px] text-white/30">{label}</p>
+        <p className="text-[10.5px] text-ink-mute">{label}</p>
         {value
           ? href
             ? <a href={href} target="_blank" rel="noreferrer"
-                className="text-[12.5px] text-white/70 hover:text-white break-words transition-colors">
+                className="text-[12.5px] text-ink hover:text-ink break-words transition-colors">
                 {value}
               </a>
-            : <p className="text-[12.5px] text-white/70 break-words">{value}</p>
-          : <p className="text-[12.5px] text-white/20">—</p>}
+            : <p className="text-[12.5px] text-ink break-words">{value}</p>
+          : <p className="text-[12.5px] text-ink-faint">—</p>}
       </div>
     </div>
   )
@@ -218,7 +218,7 @@ function GradeForm({ studentId, defaultClassId, row, onClose }: {
           </p>
         )}
         <button onClick={onClose}
-          className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-white/45 hover:text-white/80 hover:bg-white/5 transition-all ml-auto">
+          className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-ink-sub hover:text-ink hover:bg-tint/5 transition-all ml-auto">
           Cancelar
         </button>
         <button onClick={save} disabled={saving}
@@ -241,26 +241,26 @@ function GradeRow({ row, onEdit, onDelete }: {
     <div className="group rounded-xl px-3.5 py-3 flex items-start gap-3"
       style={{ background: BG_CARD2, border: `1px solid ${BORDER2}` }}>
       <div className="min-w-0 flex-1">
-        <p className="text-[12.5px] font-medium text-[#EDEDED] truncate">{row.title}</p>
+        <p className="text-[12.5px] font-medium text-ink truncate">{row.title}</p>
         <div className="flex items-center gap-2.5 mt-1 flex-wrap">
-          <span className="text-[11px] text-white/30 tabular-nums">{fmtShort(row.assessed_on)}</span>
-          {row.teacher && <span className="text-[11px] text-white/30">{row.teacher.name}</span>}
-          {row.class && <span className="text-[11px] text-white/25 truncate">{row.class.name}</span>}
+          <span className="text-[11px] text-ink-mute tabular-nums">{fmtShort(row.assessed_on)}</span>
+          {row.teacher && <span className="text-[11px] text-ink-mute">{row.teacher.name}</span>}
+          {row.class && <span className="text-[11px] text-ink-faint truncate">{row.class.name}</span>}
         </div>
-        {row.note && <p className="text-[11.5px] text-white/40 mt-1.5 whitespace-pre-wrap">{row.note}</p>}
+        {row.note && <p className="text-[11.5px] text-ink-mute mt-1.5 whitespace-pre-wrap">{row.note}</p>}
       </div>
 
       <div className="text-right shrink-0">
         <p className="text-[15px] font-semibold tabular-nums" style={{ color: tone }}>
           {row.score != null ? row.score : '—'}
-          {row.max_score != null && <span className="text-[11px] text-white/25"> / {row.max_score}</span>}
+          {row.max_score != null && <span className="text-[11px] text-ink-faint"> / {row.max_score}</span>}
         </p>
-        {pct != null && <p className="text-[10px] text-white/25 tabular-nums">{Math.round(pct)}%</p>}
+        {pct != null && <p className="text-[10px] text-ink-faint tabular-nums">{Math.round(pct)}%</p>}
       </div>
 
       <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <button onClick={onEdit} title="Editar"
-          className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all">
+          className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
           <Pencil className="w-3 h-3" />
         </button>
         <DeleteButton onConfirm={onDelete} />
@@ -288,7 +288,7 @@ export default function StudentProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG_PAGE }}>
-        <Loader2 className="w-5 h-5 animate-spin text-white/20" />
+        <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
       </div>
     )
   }
@@ -296,11 +296,11 @@ export default function StudentProfilePage() {
   if (error || !student) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <AlertCircle className="w-9 h-9 text-white/10" />
-        <p className="text-[13px] text-white/35">Aluno não encontrado</p>
+        <AlertCircle className="w-9 h-9 text-ink-ghost" />
+        <p className="text-[13px] text-ink-mute">Aluno não encontrado</p>
         <button onClick={() => navigate('/admin/alunos')}
           className="text-[12px] px-3 py-1.5 rounded-lg transition-all"
-          style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.55)' }}>
+          style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.55)' }}>
           Voltar para Alunos
         </button>
       </div>
@@ -324,7 +324,7 @@ export default function StudentProfilePage() {
 
       {/* Back */}
       <button onClick={() => navigate('/admin/alunos')}
-        className="flex items-center gap-1.5 text-[12px] text-white/35 hover:text-white/70 transition-colors w-fit">
+        className="flex items-center gap-1.5 text-[12px] text-ink-mute hover:text-ink transition-colors w-fit">
         <ArrowLeft className="w-3.5 h-3.5" /> Alunos
       </button>
 
@@ -335,7 +335,7 @@ export default function StudentProfilePage() {
           {initials(s.student_name)}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-[20px] font-bold text-[#EDEDED] tracking-tight truncate">
+          <h1 className="text-[20px] font-bold text-ink tracking-tight truncate">
             {s.student_name}
           </h1>
           <div className="flex items-center gap-2.5 mt-1 flex-wrap">
@@ -350,11 +350,11 @@ export default function StudentProfilePage() {
               </span>
             )}
             {s.subject && (
-              <span className="text-[11.5px] text-white/40">{SUBJECT_LABEL[s.subject] ?? s.subject}</span>
+              <span className="text-[11.5px] text-ink-mute">{SUBJECT_LABEL[s.subject] ?? s.subject}</span>
             )}
             {s.jlpt_level && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                style={{ background: 'rgba(var(--tint), 0.06)', color: 'rgba(var(--tint), 0.5)' }}>
                 {s.jlpt_level}
               </span>
             )}
@@ -367,11 +367,11 @@ export default function StudentProfilePage() {
                 style={{ color: avg >= 70 ? '#34D399' : avg >= 50 ? '#FCD34D' : '#F87171' }}>
                 {avg}%
               </p>
-              <p className="text-[9.5px] text-white/25">média</p>
+              <p className="text-[9.5px] text-ink-faint">média</p>
             </div>
           )}
           <button onClick={() => refetch()} title="Recarregar"
-            className="p-2 rounded-xl text-white/30 hover:text-white/70 transition-all"
+            className="p-2 rounded-xl text-ink-mute hover:text-ink transition-all"
             style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
           </button>
@@ -437,7 +437,7 @@ export default function StudentProfilePage() {
                 </RouterLink>
               </>
             ) : (
-              <p className="text-[12px] text-white/30">
+              <p className="text-[12px] text-ink-mute">
                 Ficha cadastrada manualmente — sem inscrição de origem.
               </p>
             )}
@@ -450,7 +450,7 @@ export default function StudentProfilePage() {
           <Card title="Turma" icon={CalendarDays}>
             {s.class ? (
               <>
-                <p className="text-[13.5px] font-semibold text-[#EDEDED]">{s.class.name}</p>
+                <p className="text-[13.5px] font-semibold text-ink">{s.class.name}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Row icon={Clock}  label="Horário"    value={formatSchedule(s.class.sessions)} />
                   <Row icon={User}   label="Professor"  value={s.class.teacher?.name ?? null} />
@@ -464,13 +464,13 @@ export default function StudentProfilePage() {
                 <div className="flex items-center gap-4 flex-wrap pt-1">
                   {s.class.meet_link && (
                     <a href={s.class.meet_link} target="_blank" rel="noreferrer"
-                      className="text-[11.5px] text-white/40 hover:text-white/75 flex items-center gap-1.5 transition-colors">
+                      className="text-[11.5px] text-ink-mute hover:text-ink flex items-center gap-1.5 transition-colors">
                       <Video className="w-3 h-3" /> Google Meet
                     </a>
                   )}
                   {s.class.classroom_link && (
                     <a href={s.class.classroom_link} target="_blank" rel="noreferrer"
-                      className="text-[11.5px] text-white/40 hover:text-white/75 flex items-center gap-1.5 transition-colors">
+                      className="text-[11.5px] text-ink-mute hover:text-ink flex items-center gap-1.5 transition-colors">
                       <BookOpen className="w-3 h-3" /> Classroom
                     </a>
                   )}
@@ -483,8 +483,8 @@ export default function StudentProfilePage() {
               </>
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="text-[12.5px] text-white/35">Sem turma vinculada.</p>
-                <p className="text-[11.5px] text-white/25">
+                <p className="text-[12.5px] text-ink-mute">Sem turma vinculada.</p>
+                <p className="text-[11.5px] text-ink-faint">
                   Horário, professor e links de acesso vêm da turma — vincule uma na ficha do aluno.
                 </p>
               </div>
@@ -514,12 +514,12 @@ export default function StudentProfilePage() {
 
             {grades.isLoading ? (
               <div className="py-6 flex justify-center">
-                <Loader2 className="w-4 h-4 animate-spin text-white/20" />
+                <Loader2 className="w-4 h-4 animate-spin text-ink-faint" />
               </div>
             ) : gradeRows.length === 0 && !gradeForm ? (
               <div className="py-8 flex flex-col items-center gap-2">
-                <GraduationCap className="w-7 h-7 text-white/8" />
-                <p className="text-[12px] text-white/30">Nenhuma nota lançada</p>
+                <GraduationCap className="w-7 h-7 text-ink-ghost" />
+                <p className="text-[12px] text-ink-mute">Nenhuma nota lançada</p>
               </div>
             ) : (
               gradeRows.map(g => (
@@ -548,8 +548,8 @@ export default function StudentProfilePage() {
               )}
               {s.notes && (
                 <div>
-                  <p className="text-[10.5px] text-white/30 mb-1">Observações</p>
-                  <p className="text-[12.5px] text-white/60 whitespace-pre-wrap">{s.notes}</p>
+                  <p className="text-[10.5px] text-ink-mute mb-1">Observações</p>
+                  <p className="text-[12.5px] text-ink-sub whitespace-pre-wrap">{s.notes}</p>
                 </div>
               )}
             </Card>

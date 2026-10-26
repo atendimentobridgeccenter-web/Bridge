@@ -82,7 +82,7 @@ function NavItem({
         'transition-all duration-150 cursor-pointer',
         collapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-[7px]',
         isActive
-          ? 'bg-white/8 text-[#EDEDED]'
+          ? 'bg-white/8 text-rail'
           : 'text-[#5A5C6A] hover:text-[#C4C6D0] hover:bg-white/[0.035]',
       )}
     >

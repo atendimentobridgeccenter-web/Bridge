@@ -73,7 +73,7 @@ export default function LessonView({ lesson }: { lesson: Lesson | null }) {
                          [&_h2]:text-white [&_h3]:text-zinc-200
                          [&_a]:text-violet-400 [&_a:hover]:text-violet-300
                          [&_code]:bg-zinc-800 [&_code]:text-violet-300 [&_code]:px-1 [&_code]:rounded
-                         [&_pre]:bg-zinc-900 [&_pre]:border [&_pre]:border-white/8"
+                         [&_pre]:bg-zinc-900 [&_pre]:border [&_pre]:border-tint/8"
               dangerouslySetInnerHTML={{ __html: lesson.text_content }}
             />
           )}
@@ -106,7 +106,7 @@ export default function LessonView({ lesson }: { lesson: Lesson | null }) {
           animate={{ opacity: 1 }}
           className="flex flex-col items-center justify-center h-full text-center py-20"
         >
-          <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 border border-white/6
+          <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 border border-tint/6
                           flex items-center justify-center mb-5">
             <BookOpen className="w-6 h-6 text-zinc-600" />
           </div>

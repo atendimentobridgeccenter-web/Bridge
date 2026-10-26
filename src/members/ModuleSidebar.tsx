@@ -32,8 +32,8 @@ export default function ModuleSidebar({ modules, activeLessonId, onSelect }: Pro
   const totalLessons = modules.reduce((n, m) => n + m.content_json.lessons.length, 0)
 
   return (
-    <aside className="w-72 shrink-0 border-r border-white/6 bg-zinc-950 flex flex-col overflow-hidden">
-      <div className="px-5 py-4 border-b border-white/6">
+    <aside className="w-72 shrink-0 border-r border-tint/6 bg-zinc-950 flex flex-col overflow-hidden">
+      <div className="px-5 py-4 border-b border-tint/6">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">Conteúdo</p>
         <p className="text-xs text-zinc-600 mt-0.5">{modules.length} módulos · {totalLessons} aulas</p>
       </div>

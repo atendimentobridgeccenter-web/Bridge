@@ -158,7 +158,7 @@ export default function MatriculasPage() {
     URL.revokeObjectURL(url)
   }
 
-  const selectCls = 'px-2.5 py-1.5 rounded-lg text-[12px] text-[#EDEDED] outline-none appearance-none cursor-pointer'
+  const selectCls = 'px-2.5 py-1.5 rounded-lg text-[12px] text-ink outline-none appearance-none cursor-pointer'
   const selectStyle = { background: BG_CARD2, border: `1px solid ${BORDER}` }
 
   return (
@@ -167,23 +167,23 @@ export default function MatriculasPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-[20px] font-semibold text-[#EDEDED] flex items-center gap-2">
+          <h1 className="text-[20px] font-semibold text-ink flex items-center gap-2">
             <ClipboardCheck className="w-5 h-5" style={{ color: ACCENT }} />
             Controle de Matrícula
           </h1>
-          <p className="text-[12.5px] text-white/35 mt-1 max-w-[560px]">
+          <p className="text-[12.5px] text-ink-mute mt-1 max-w-[560px]">
             Quem está em cada turma, quem tem pagamento em aberto e quem ainda
             precisa ser alocado. As vagas são contadas a partir dos alunos ativos.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => students.refetch()} title="Recarregar"
-            className="p-2 rounded-xl text-white/30 hover:text-white/70 transition-all"
+            className="p-2 rounded-xl text-ink-mute hover:text-ink transition-all"
             style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <RefreshCw className={cn('w-3.5 h-3.5', students.isFetching && 'animate-spin')} />
           </button>
           <button onClick={exportCSV} disabled={filtered.length === 0}
-            className="px-3.5 py-2 rounded-xl text-[12.5px] font-medium flex items-center gap-1.5 text-white/60 hover:text-white/90 transition-all disabled:opacity-30"
+            className="px-3.5 py-2 rounded-xl text-[12.5px] font-medium flex items-center gap-1.5 text-ink-sub hover:text-ink transition-all disabled:opacity-30"
             style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <Download className="w-3.5 h-3.5" /> CSV
           </button>
@@ -205,10 +205,10 @@ export default function MatriculasPage() {
       <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5 flex-wrap"
         style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
         <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-          <Search className="w-4 h-4 text-white/25 shrink-0" />
+          <Search className="w-4 h-4 text-ink-faint shrink-0" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Buscar aluno, responsável, turma, professor…"
-            className="flex-1 bg-transparent text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none min-w-0" />
+            className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-faint outline-none min-w-0" />
         </div>
 
         <select className={selectCls} style={selectStyle}
@@ -248,7 +248,7 @@ export default function MatriculasPage() {
 
         {anyFilter && (
           <button onClick={clearFilters}
-            className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium text-white/40 hover:text-white/75 transition-all flex items-center gap-1">
+            className="px-2.5 py-1.5 rounded-lg text-[11.5px] font-medium text-ink-mute hover:text-ink transition-all flex items-center gap-1">
             <X className="w-3 h-3" /> Limpar
           </button>
         )}
@@ -257,16 +257,16 @@ export default function MatriculasPage() {
       {/* Content */}
       {students.isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-5 h-5 animate-spin text-white/20" />
+          <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
         </div>
       ) : groups.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <ClipboardCheck className="w-10 h-10 text-white/8" />
-          <p className="text-[13px] text-white/30">
+          <ClipboardCheck className="w-10 h-10 text-ink-ghost" />
+          <p className="text-[13px] text-ink-mute">
             {anyFilter ? 'Nenhuma matrícula com esses filtros' : 'Nenhuma matrícula registrada'}
           </p>
           {!anyFilter && (
-            <p className="text-[12px] text-white/20 max-w-[340px] text-center">
+            <p className="text-[12px] text-ink-faint max-w-[340px] text-center">
               As fichas aparecem aqui conforme os pagamentos são confirmados ou a
               equipe cadastra alunos manualmente.
             </p>
@@ -282,13 +282,13 @@ export default function MatriculasPage() {
               <div className="px-4 py-3 flex items-center gap-3 flex-wrap"
                 style={{ background: BG_CARD2, borderBottom: `1px solid ${BORDER2}` }}>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-[#EDEDED] truncate">{g.name}</p>
+                  <p className="text-[13px] font-semibold text-ink truncate">{g.name}</p>
                   {g.key !== '__sem_turma__' && (
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="text-[11px] text-white/35 flex items-center gap-1 tabular-nums">
+                      <span className="text-[11px] text-ink-mute flex items-center gap-1 tabular-nums">
                         <Clock className="w-2.5 h-2.5" /> {g.schedule}
                       </span>
-                      <span className="text-[11px] text-white/35 flex items-center gap-1">
+                      <span className="text-[11px] text-ink-mute flex items-center gap-1">
                         <User className="w-2.5 h-2.5" /> {g.teacher}
                       </span>
                     </div>
@@ -303,7 +303,7 @@ export default function MatriculasPage() {
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
                       {['Aluno', 'Início', 'Status', 'Pagamento', 'Mensalidade', ''].map(h => (
-                        <th key={h} className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-white/25">
+                        <th key={h} className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
                           {h}
                         </th>
                       ))}
@@ -318,13 +318,13 @@ export default function MatriculasPage() {
                         <tr key={s.id} className="hover:bg-white/[0.02] transition-colors"
                           style={{ borderBottom: `1px solid ${BORDER2}` }}>
                           <td className="px-4 py-2.5">
-                            <p className="text-[12.5px] text-[#EDEDED] truncate">{s.student_name}</p>
+                            <p className="text-[12.5px] text-ink truncate">{s.student_name}</p>
                             {s.responsible_name && (
-                              <p className="text-[10.5px] text-white/25 truncate">{s.responsible_name}</p>
+                              <p className="text-[10.5px] text-ink-faint truncate">{s.responsible_name}</p>
                             )}
                           </td>
                           <td className="px-4 py-2.5">
-                            <p className="text-[12px] text-white/45 tabular-nums">{fmtDate(s.start_date)}</p>
+                            <p className="text-[12px] text-ink-sub tabular-nums">{fmtDate(s.start_date)}</p>
                           </td>
                           <td className="px-4 py-2.5">
                             <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
@@ -337,13 +337,13 @@ export default function MatriculasPage() {
                               <PayIcon className="w-3 h-3 shrink-0" /> {pay.label}
                             </span>
                             {s.lead?.paid_at && (
-                              <p className="text-[10px] text-white/20 tabular-nums mt-0.5">
+                              <p className="text-[10px] text-ink-faint tabular-nums mt-0.5">
                                 {fmtDate(s.lead.paid_at)}
                               </p>
                             )}
                           </td>
                           <td className="px-4 py-2.5">
-                            <p className="text-[12px] text-white/45 tabular-nums">
+                            <p className="text-[12px] text-ink-sub tabular-nums">
                               {s.monthly_fee != null ? `¥ ${s.monthly_fee.toLocaleString('ja-JP')}` : '—'}
                             </p>
                           </td>
@@ -386,8 +386,8 @@ function Stat({ label, value, color, hint }: {
   return (
     <div className="rounded-xl px-3.5 py-3" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
       <p className="text-[19px] font-semibold tabular-nums" style={{ color }}>{value}</p>
-      <p className="text-[11px] text-white/40 mt-0.5">{label}</p>
-      {hint && <p className="text-[10px] text-white/20 mt-0.5 leading-snug">{hint}</p>}
+      <p className="text-[11px] text-ink-mute mt-0.5">{label}</p>
+      {hint && <p className="text-[10px] text-ink-faint mt-0.5 leading-snug">{hint}</p>}
     </div>
   )
 }
@@ -399,10 +399,10 @@ function GroupCount({ rows, capacity }: { rows: Student[]; capacity: number | nu
   if (capacity == null) {
     return (
       <div className="flex items-center gap-1.5 shrink-0">
-        <Users className="w-3.5 h-3.5 text-white/20" />
-        <p className="text-[12px] text-white/50 tabular-nums">
+        <Users className="w-3.5 h-3.5 text-ink-faint" />
+        <p className="text-[12px] text-ink-sub tabular-nums">
           {active} ativo{active !== 1 ? 's' : ''}
-          {rows.length !== active && <span className="text-white/25"> · {rows.length} no total</span>}
+          {rows.length !== active && <span className="text-ink-faint"> · {rows.length} no total</span>}
         </p>
       </div>
     )
@@ -411,9 +411,9 @@ function GroupCount({ rows, capacity }: { rows: Student[]; capacity: number | nu
   const tone = full ? '#F87171' : active / capacity >= 0.8 ? '#FCD34D' : '#34D399'
   return (
     <div className="flex items-center gap-1.5 shrink-0">
-      <Users className="w-3.5 h-3.5 text-white/20" />
+      <Users className="w-3.5 h-3.5 text-ink-faint" />
       <p className="text-[12px] font-medium tabular-nums" style={{ color: tone }}>
-        {active}<span className="text-white/25"> / {capacity} vagas</span>
+        {active}<span className="text-ink-faint"> / {capacity} vagas</span>
       </p>
       {full && (
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"

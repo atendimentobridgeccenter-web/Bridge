@@ -103,7 +103,7 @@ function InteractionCard({
                   {interaction.product_name}
                 </span>
               ) : (
-                <span className="text-[12px] text-white/25 italic">Produto removido</span>
+                <span className="text-[12px] text-ink-faint italic">Produto removido</span>
               )}
 
               {/* Qualified badge */}
@@ -132,12 +132,12 @@ function InteractionCard({
               )}
             </div>
 
-            <p className="text-[11px] text-white/30 whitespace-nowrap">{fmtDate(interaction.created_at)}</p>
+            <p className="text-[11px] text-ink-mute whitespace-nowrap">{fmtDate(interaction.created_at)}</p>
           </div>
 
           {/* Purchase stripe session */}
           {purchase?.stripe_session_id && (
-            <p className="text-[10px] font-mono text-white/20 mt-1.5 truncate">
+            <p className="text-[10px] font-mono text-ink-faint mt-1.5 truncate">
               Session: {purchase.stripe_session_id}
             </p>
           )}
@@ -147,13 +147,13 @@ function InteractionCard({
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               {interaction.utm_source && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded"
-                  style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.35)' }}>
+                  style={{ background: 'rgba(var(--tint), 0.04)', color: 'rgba(var(--tint), 0.35)' }}>
                   {interaction.utm_source}
                   {interaction.utm_medium && ` / ${interaction.utm_medium}`}
                 </span>
               )}
               {interaction.utm_campaign && (
-                <span className="text-[10px] text-white/20">{interaction.utm_campaign}</span>
+                <span className="text-[10px] text-ink-faint">{interaction.utm_campaign}</span>
               )}
             </div>
           )}
@@ -163,7 +163,7 @@ function InteractionCard({
         {entries.length > 0 && (
           <button
             onClick={() => setExpanded(e => !e)}
-            className="shrink-0 flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors mt-0.5"
+            className="shrink-0 flex items-center gap-1 text-[11px] text-ink-mute hover:text-ink-sub transition-colors mt-0.5"
           >
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {expanded ? 'Ocultar' : `${entries.length} resposta${entries.length !== 1 ? 's' : ''}`}
@@ -178,10 +178,10 @@ function InteractionCard({
             {entries.map(([nodeId, answer]) => (
               <div key={nodeId} className="rounded-lg px-3 py-2.5"
                 style={{ background: BG_CARD2, border: `1px solid ${BORDER2}` }}>
-                <p className="text-[9px] font-semibold uppercase tracking-wider text-white/25 mb-0.5">
+                <p className="text-[9px] font-semibold uppercase tracking-wider text-ink-faint mb-0.5">
                   {resolveTitle(nodeId, interaction.product_nodes)}
                 </p>
-                <p className="text-[12px] text-[#EDEDED] break-words">{answer}</p>
+                <p className="text-[12px] text-ink break-words">{answer}</p>
               </div>
             ))}
           </div>
@@ -199,10 +199,10 @@ function InfoRow({ icon: Icon, label, value }: {
   if (!value) return null
   return (
     <div className="flex items-start gap-3">
-      <Icon className="w-3.5 h-3.5 text-white/25 mt-0.5 shrink-0" />
+      <Icon className="w-3.5 h-3.5 text-ink-faint mt-0.5 shrink-0" />
       <div className="min-w-0">
-        <p className="text-[9px] text-white/25 uppercase tracking-wider">{label}</p>
-        <p className="text-[13px] text-[#EDEDED] mt-0.5 break-words">{value}</p>
+        <p className="text-[9px] text-ink-faint uppercase tracking-wider">{label}</p>
+        <p className="text-[13px] text-ink mt-0.5 break-words">{value}</p>
       </div>
     </div>
   )
@@ -224,7 +224,7 @@ export default function LeadProfilePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: BG_PAGE }}>
-        <RefreshCw className="w-5 h-5 text-white/20 animate-spin" />
+        <RefreshCw className="w-5 h-5 text-ink-faint animate-spin" />
       </div>
     )
   }
@@ -232,9 +232,9 @@ export default function LeadProfilePage() {
   if (error || !profile || !primary) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ background: BG_PAGE }}>
-        <p className="text-[14px] text-white/30">Lead não encontrado.</p>
+        <p className="text-[14px] text-ink-mute">Lead não encontrado.</p>
         <button onClick={() => navigate('/admin/leads')}
-          className="text-[12px] text-white/40 hover:text-white/70 transition-colors flex items-center gap-1.5">
+          className="text-[12px] text-ink-mute hover:text-ink transition-colors flex items-center gap-1.5">
           <ArrowLeft className="w-3.5 h-3.5" /> Voltar para Leads
         </button>
       </div>
@@ -259,14 +259,14 @@ export default function LeadProfilePage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('/admin/leads')}
-            className="flex items-center gap-2 text-[13px] text-white/40 hover:text-white/70 transition-colors"
+            className="flex items-center gap-2 text-[13px] text-ink-mute hover:text-ink transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Leads
           </button>
           <button
             onClick={() => refetch()}
-            className="flex items-center gap-1.5 text-[11px] text-white/25 hover:text-white/50 transition-colors"
+            className="flex items-center gap-1.5 text-[11px] text-ink-faint hover:text-ink-sub transition-colors"
           >
             <RefreshCw className="w-3 h-3" /> Atualizar
           </button>
@@ -280,17 +280,17 @@ export default function LeadProfilePage() {
             {initials_}
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-[20px] font-bold text-[#EDEDED] tracking-tight truncate">
-              {name || <span className="text-white/25 font-normal">Sem nome</span>}
+            <h1 className="text-[20px] font-bold text-ink tracking-tight truncate">
+              {name || <span className="text-ink-faint font-normal">Sem nome</span>}
             </h1>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
               {primary.email && (
-                <span className="flex items-center gap-1 text-[12px] text-white/45">
+                <span className="flex items-center gap-1 text-[12px] text-ink-sub">
                   <Mail className="w-3 h-3" /> {primary.email}
                 </span>
               )}
               {primary.phone && (
-                <span className="flex items-center gap-1 text-[12px] text-white/45">
+                <span className="flex items-center gap-1 text-[12px] text-ink-sub">
                   <Phone className="w-3 h-3" /> {primary.phone}
                 </span>
               )}
@@ -315,7 +315,7 @@ export default function LeadProfilePage() {
                 {purchases.length} compra{purchases.length !== 1 ? 's' : ''}
               </span>
             )}
-            <span className="text-[11px] text-white/25">
+            <span className="text-[11px] text-ink-faint">
               {fmtDateShort(primary.created_at)}
             </span>
           </div>
@@ -341,7 +341,7 @@ export default function LeadProfilePage() {
             {/* Contact card */}
             <div className="rounded-xl p-4 flex flex-col gap-3"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Contato</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Contato</p>
               <InfoRow icon={User}     label="Nome"     value={primary.name} />
               <InfoRow icon={Mail}     label="E-mail"   value={primary.email} />
               <InfoRow icon={Phone}    label="Telefone" value={primary.phone} />
@@ -362,7 +362,7 @@ export default function LeadProfilePage() {
             {hasUtm && (
               <div className="rounded-xl p-4 flex flex-col gap-3"
                 style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Origem</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Origem</p>
                 <InfoRow icon={ExternalLink} label="Fonte (utm_source)"     value={primary.utm_source} />
                 <InfoRow icon={ExternalLink} label="Meio (utm_medium)"      value={primary.utm_medium} />
                 <InfoRow icon={ExternalLink} label="Campanha (utm_campaign)"value={primary.utm_campaign} />
@@ -376,7 +376,7 @@ export default function LeadProfilePage() {
             {purchases.length > 0 && (
               <div className="rounded-xl p-4 flex flex-col gap-3"
                 style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
                   Compras confirmadas ({purchases.length})
                 </p>
                 {purchases.map(p => {
@@ -390,9 +390,9 @@ export default function LeadProfilePage() {
                           style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}>
                           {p.product_name}
                         </span>
-                        <p className="text-[11px] text-white/35 mt-1">{fmtDateShort(p.purchased_at)}</p>
+                        <p className="text-[11px] text-ink-mute mt-1">{fmtDateShort(p.purchased_at)}</p>
                         {p.stripe_session_id && (
-                          <p className="text-[9px] font-mono text-white/15 mt-0.5 truncate">{p.stripe_session_id}</p>
+                          <p className="text-[9px] font-mono text-ink-ghost mt-0.5 truncate">{p.stripe_session_id}</p>
                         )}
                       </div>
                     </div>
@@ -406,24 +406,24 @@ export default function LeadProfilePage() {
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="text-center">
                 <p className="text-[22px] font-bold text-[#E8521A]">{interactions.length}</p>
-                <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">Interações</p>
+                <p className="text-[9px] text-ink-faint uppercase tracking-wider mt-0.5">Interações</p>
               </div>
               <div className="text-center">
                 <p className="text-[22px] font-bold text-emerald-400">{purchases.length}</p>
-                <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">Compras</p>
+                <p className="text-[9px] text-ink-faint uppercase tracking-wider mt-0.5">Compras</p>
               </div>
               <div className="text-center">
                 <p className="text-[22px] font-bold text-[#C4B5FD]">
                   {new Set(interactions.map(i => i.product_id).filter(Boolean)).size}
                 </p>
-                <p className="text-[9px] text-white/25 uppercase tracking-wider mt-0.5">Produtos</p>
+                <p className="text-[9px] text-ink-faint uppercase tracking-wider mt-0.5">Produtos</p>
               </div>
             </div>
 
             {/* Pipeline steps */}
             <div className="rounded-xl p-4 flex flex-col gap-3"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25">Pipeline</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint">Pipeline</p>
               <div className="flex flex-col gap-1">
                 {STAGES.map((s, idx) => {
                   const currentIdx = STAGES.findIndex(x => x.value === (currentStage?.stage ?? 'novo'))
@@ -433,13 +433,13 @@ export default function LeadProfilePage() {
                     <div key={s.value} className="flex items-center gap-2.5">
                       <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
                         style={{
-                          background: active ? s.bg : done ? 'rgba(255,255,255,0.06)' : 'transparent',
-                          border: `1px solid ${active ? s.border : done ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)'}`,
+                          background: active ? s.bg : done ? 'rgba(var(--tint), 0.06)' : 'transparent',
+                          border: `1px solid ${active ? s.border : done ? 'rgba(var(--tint), 0.1)' : 'rgba(var(--tint), 0.06)'}`,
                         }}>
-                        {done && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'block' }} />}
+                        {done && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(var(--tint), 0.25)', display: 'block' }} />}
                         {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'block' }} />}
                       </div>
-                      <span className="text-[12px]" style={{ color: active ? s.color : done ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)' }}>
+                      <span className="text-[12px]" style={{ color: active ? s.color : done ? 'rgba(var(--tint), 0.35)' : 'rgba(var(--tint), 0.2)' }}>
                         {s.label}
                       </span>
                     </div>
@@ -449,8 +449,8 @@ export default function LeadProfilePage() {
 
               {/* History */}
               {stageHistory.length > 0 && (
-                <div className="flex flex-col gap-1.5 mt-1 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="text-[9px] font-semibold uppercase tracking-widest text-white/20">Histórico</p>
+                <div className="flex flex-col gap-1.5 mt-1 pt-3" style={{ borderTop: '1px solid rgba(var(--tint), 0.05)' }}>
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-ink-faint">Histórico</p>
                   {stageHistory.map(h => {
                     const def = stageOf(h.stage)
                     return (
@@ -458,8 +458,8 @@ export default function LeadProfilePage() {
                         <span className="mt-0.5 inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: def.color }} />
                         <div className="min-w-0">
                           <p className="text-[11px]" style={{ color: def.color }}>{def.label}</p>
-                          {h.note && <p className="text-[10px] text-white/30 truncate">{h.note}</p>}
-                          <p className="text-[9px] text-white/20">{fmtDate(h.changed_at)}</p>
+                          {h.note && <p className="text-[10px] text-ink-mute truncate">{h.note}</p>}
+                          <p className="text-[9px] text-ink-faint">{fmtDate(h.changed_at)}</p>
                         </div>
                       </div>
                     )
@@ -472,17 +472,17 @@ export default function LeadProfilePage() {
           {/* Right column — Timeline */}
           <div className="lg:col-span-2 flex flex-col gap-3">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-faint">
                 Histórico de interações ({interactions.length})
               </p>
-              <p className="text-[10px] text-white/20">
+              <p className="text-[10px] text-ink-faint">
                 Cruzado por {[primary.email && 'e-mail', primary.phone && 'telefone'].filter(Boolean).join(' e ')}
               </p>
             </div>
 
             {interactions.length === 0 ? (
               <div className="rounded-xl p-8 text-center" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-                <p className="text-[13px] text-white/25">Nenhuma interação encontrada.</p>
+                <p className="text-[13px] text-ink-faint">Nenhuma interação encontrada.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -515,11 +515,11 @@ export default function LeadProfilePage() {
                       </span>
                       <span className="text-[10px] font-semibold text-emerald-400">Compra confirmada</span>
                     </div>
-                    <p className="text-[11px] text-white/30 mt-1">
+                    <p className="text-[11px] text-ink-mute mt-1">
                       {fmtDateShort(p.purchased_at)} · sem formulário de captação associado
                     </p>
                   </div>
-                  <p className="text-[11px] text-white/25 shrink-0">{fmtDateShort(p.purchased_at)}</p>
+                  <p className="text-[11px] text-ink-faint shrink-0">{fmtDateShort(p.purchased_at)}</p>
                 </div>
               )
             })}

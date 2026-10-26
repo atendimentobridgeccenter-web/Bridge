@@ -22,7 +22,7 @@ const STATUS: Record<string, { label: string; color: string }> = {
   cancelado: { label: 'Cancelado', color: '#F87171' },
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 
 function focusBorder(e: React.FocusEvent<HTMLElement>) {
@@ -121,7 +121,7 @@ function GradeForm({ studentId, classId, teacherId, row, onClose }: {
           </p>
         )}
         <button onClick={onClose}
-          className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-white/45 hover:text-white/80 hover:bg-white/5 transition-all ml-auto">
+          className="px-3 py-1.5 rounded-lg text-[11.5px] font-medium text-ink-sub hover:text-ink hover:bg-tint/5 transition-all ml-auto">
           Cancelar
         </button>
         <button onClick={save} disabled={saving}
@@ -163,17 +163,17 @@ function StudentPanel({ student, classId, teacherId }: {
           {student.student_name.trim().charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[12.5px] font-medium text-[#EDEDED] truncate">{student.student_name}</p>
+          <p className="text-[12.5px] font-medium text-ink truncate">{student.student_name}</p>
           <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
             {student.responsible_name && (
-              <span className="text-[10.5px] text-white/25 truncate">{student.responsible_name}</span>
+              <span className="text-[10.5px] text-ink-faint truncate">{student.responsible_name}</span>
             )}
             {student.phone_responsible && (
-              <span className="text-[10.5px] text-white/25 flex items-center gap-1 tabular-nums">
+              <span className="text-[10.5px] text-ink-faint flex items-center gap-1 tabular-nums">
                 <Phone className="w-2.5 h-2.5" /> {student.phone_responsible}
               </span>
             )}
-            <span className="text-[10.5px] text-white/20 tabular-nums">
+            <span className="text-[10.5px] text-ink-faint tabular-nums">
               desde {fmtShort(student.start_date)}
             </span>
           </div>
@@ -193,7 +193,7 @@ function StudentPanel({ student, classId, teacherId }: {
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-2.5" style={{ background: BG_CARD2 }}>
           <div className="flex items-center justify-between gap-2 pt-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/25">Notas</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">Notas</p>
             {!form && (
               <button onClick={() => setForm({ row: null })}
                 className="px-2.5 py-1 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all"
@@ -212,10 +212,10 @@ function StudentPanel({ student, classId, teacherId }: {
 
           {grades.isLoading ? (
             <div className="py-4 flex justify-center">
-              <Loader2 className="w-4 h-4 animate-spin text-white/20" />
+              <Loader2 className="w-4 h-4 animate-spin text-ink-faint" />
             </div>
           ) : rows.length === 0 && !form ? (
-            <p className="text-[11.5px] text-white/25 py-2">Nenhuma nota lançada.</p>
+            <p className="text-[11.5px] text-ink-faint py-2">Nenhuma nota lançada.</p>
           ) : (
             rows.map(g => {
               const pct = g.score != null && g.max_score ? (g.score / g.max_score) * 100 : null
@@ -224,19 +224,19 @@ function StudentPanel({ student, classId, teacherId }: {
                 <div key={g.id} className="group rounded-lg px-3 py-2.5 flex items-start gap-3"
                   style={{ background: BG_CARD, border: `1px solid ${BORDER2}` }}>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[12px] text-[#EDEDED] truncate">{g.title}</p>
-                    <p className="text-[10.5px] text-white/25 tabular-nums mt-0.5">{fmtShort(g.assessed_on)}</p>
-                    {g.note && <p className="text-[11px] text-white/40 mt-1 whitespace-pre-wrap">{g.note}</p>}
+                    <p className="text-[12px] text-ink truncate">{g.title}</p>
+                    <p className="text-[10.5px] text-ink-faint tabular-nums mt-0.5">{fmtShort(g.assessed_on)}</p>
+                    {g.note && <p className="text-[11px] text-ink-mute mt-1 whitespace-pre-wrap">{g.note}</p>}
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-[13px] font-semibold tabular-nums" style={{ color: tone }}>
                       {g.score ?? '—'}
-                      {g.max_score != null && <span className="text-[10px] text-white/25"> / {g.max_score}</span>}
+                      {g.max_score != null && <span className="text-[10px] text-ink-faint"> / {g.max_score}</span>}
                     </p>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => setForm({ row: g })} title="Editar"
-                      className="p-1.5 rounded-lg text-white/30 hover:text-white/80 hover:bg-white/6 transition-all">
+                      className="p-1.5 rounded-lg text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
                       <Pencil className="w-3 h-3" />
                     </button>
                     <DeleteButton onConfirm={() => del.mutate(g.id)} />
@@ -269,7 +269,7 @@ export default function ProfessorClassPage() {
   if (classes.isLoading || students.isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-5 h-5 animate-spin text-white/20" />
+        <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
       </div>
     )
   }
@@ -279,11 +279,11 @@ export default function ProfessorClassPage() {
   if (!row) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <AlertCircle className="w-9 h-9 text-white/10" />
-        <p className="text-[13px] text-white/35">Turma não encontrada entre as suas</p>
+        <AlertCircle className="w-9 h-9 text-ink-ghost" />
+        <p className="text-[13px] text-ink-mute">Turma não encontrada entre as suas</p>
         <button onClick={() => navigate('/professor')}
           className="text-[12px] px-3 py-1.5 rounded-lg transition-all"
-          style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.55)' }}>
+          style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.55)' }}>
           Voltar
         </button>
       </div>
@@ -295,29 +295,29 @@ export default function ProfessorClassPage() {
   return (
     <div className="flex flex-col gap-5 max-w-[900px] mx-auto">
       <button onClick={() => navigate('/professor')}
-        className="flex items-center gap-1.5 text-[12px] text-white/35 hover:text-white/70 transition-colors w-fit">
+        className="flex items-center gap-1.5 text-[12px] text-ink-mute hover:text-ink transition-colors w-fit">
         <ArrowLeft className="w-3.5 h-3.5" /> Minhas turmas
       </button>
 
       <div>
-        <h1 className="text-[19px] font-semibold text-[#EDEDED]">{row.name}</h1>
+        <h1 className="text-[19px] font-semibold text-ink">{row.name}</h1>
         <div className="flex items-center gap-4 mt-1.5 flex-wrap">
-          <span className="text-[12px] text-white/45 flex items-center gap-1.5 tabular-nums">
-            <Clock className="w-3.5 h-3.5 text-white/25" /> {formatSchedule(row.sessions)}
+          <span className="text-[12px] text-ink-sub flex items-center gap-1.5 tabular-nums">
+            <Clock className="w-3.5 h-3.5 text-ink-faint" /> {formatSchedule(row.sessions)}
           </span>
-          <span className="text-[12px] text-white/45 flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5 text-white/25" /> {row.teacher?.name ?? '—'}
+          <span className="text-[12px] text-ink-sub flex items-center gap-1.5">
+            <User className="w-3.5 h-3.5 text-ink-faint" /> {row.teacher?.name ?? '—'}
           </span>
           {(row.modality || row.unit) && (
-            <span className="text-[12px] text-white/45 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-white/25" />
+            <span className="text-[12px] text-ink-sub flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-ink-faint" />
               {[row.modality === 'online' ? 'Online' : row.modality === 'presencial' ? 'Presencial' : null, row.unit]
                 .filter(Boolean).join(' · ')}
             </span>
           )}
-          <span className="text-[12px] text-white/45 flex items-center gap-1.5 tabular-nums">
-            <Users className="w-3.5 h-3.5 text-white/25" />
-            {active.length}{row.capacity != null && <span className="text-white/25">/{row.capacity}</span>}
+          <span className="text-[12px] text-ink-sub flex items-center gap-1.5 tabular-nums">
+            <Users className="w-3.5 h-3.5 text-ink-faint" />
+            {active.length}{row.capacity != null && <span className="text-ink-faint">/{row.capacity}</span>}
           </span>
         </div>
         <div className="flex items-center gap-4 mt-2 flex-wrap">
@@ -341,14 +341,14 @@ export default function ProfessorClassPage() {
       <div className="rounded-2xl overflow-hidden" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
         <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: `1px solid ${BORDER2}` }}>
           <GraduationCap className="w-3.5 h-3.5" style={{ color: ACCENT }} />
-          <p className="text-[12px] font-semibold text-[#EDEDED]">Alunos</p>
-          <p className="text-[11px] text-white/25">· clique para ver e lançar notas</p>
+          <p className="text-[12px] font-semibold text-ink">Alunos</p>
+          <p className="text-[11px] text-ink-faint">· clique para ver e lançar notas</p>
         </div>
 
         {rows.length === 0 ? (
           <div className="py-14 flex flex-col items-center gap-2">
-            <Users className="w-7 h-7 text-white/8" />
-            <p className="text-[12.5px] text-white/30">Nenhum aluno nesta turma</p>
+            <Users className="w-7 h-7 text-ink-ghost" />
+            <p className="text-[12.5px] text-ink-mute">Nenhum aluno nesta turma</p>
           </div>
         ) : (
           rows.map(s => (

@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
-import { BG_PAGE, BG_CARD, BG_INPUT, BORDER, ACCENT } from '@/lib/theme'
+import { ACCENT, BG_CARD, BG_INPUT, BG_PAGE, BORDER } from '@/lib/theme'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -41,15 +41,15 @@ function displayName(user: SupabaseUser | null): string {
 function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
     <div className="mb-6">
-      <h2 className="text-[15px] font-bold text-[#EDEDED]">{title}</h2>
-      {description && <p className="text-[13px] text-white/30 mt-0.5">{description}</p>}
+      <h2 className="text-[15px] font-bold text-ink">{title}</h2>
+      {description && <p className="text-[13px] text-ink-mute mt-0.5">{description}</p>}
     </div>
   )
 }
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-[12px] font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
+    <label className="block text-[12px] font-semibold text-ink-mute mb-1.5 uppercase tracking-wider">
       {children}
     </label>
   )
@@ -66,7 +66,7 @@ function TextInput({
 }) {
   return (
     <div className="relative">
-      {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20 pointer-events-none" />}
+      {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-faint pointer-events-none" />}
       <input
         type="text"
         value={value}
@@ -74,7 +74,7 @@ function TextInput({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          'w-full rounded-xl px-4 py-2.5 text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all',
+          'w-full rounded-xl px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all',
           Icon && 'pl-10',
           disabled && 'opacity-40 cursor-not-allowed',
         )}
@@ -92,13 +92,13 @@ function PasswordInput({ value, onChange, placeholder }: {
   const [show, setShow] = useState(false)
   return (
     <div className="relative">
-      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20 pointer-events-none" />
+      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-faint pointer-events-none" />
       <input
         type={show ? 'text' : 'password'}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl pl-10 pr-10 py-2.5 text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all"
+        className="w-full rounded-xl pl-10 pr-10 py-2.5 text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all"
         style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}
         onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(232,82,26,0.4)' }}
         onBlur={e  => { (e.target as HTMLInputElement).style.borderColor = BORDER }}
@@ -106,7 +106,7 @@ function PasswordInput({ value, onChange, placeholder }: {
       <button
         type="button"
         onClick={() => setShow(s => !s)}
-        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/50 transition-colors"
+        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink-sub transition-colors"
       >
         {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
       </button>
@@ -143,15 +143,15 @@ function Toggle({ value, onChange, label, description }: {
   return (
     <div className="flex items-center justify-between py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
       <div className="flex-1 min-w-0 pr-6">
-        <p className="text-[13px] font-medium text-[#EDEDED]">{label}</p>
-        {description && <p className="text-[12px] text-white/30 mt-0.5">{description}</p>}
+        <p className="text-[13px] font-medium text-ink">{label}</p>
+        {description && <p className="text-[12px] text-ink-mute mt-0.5">{description}</p>}
       </div>
       <button
         role="switch"
         aria-checked={value}
         onClick={() => onChange(!value)}
         className="relative shrink-0 rounded-full transition-all duration-200"
-        style={{ width: 40, height: 22, background: value ? ACCENT : 'rgba(255,255,255,0.1)' }}
+        style={{ width: 40, height: 22, background: value ? ACCENT : 'rgba(var(--tint), 0.1)' }}
       >
         <span
           className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
@@ -238,19 +238,19 @@ function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => 
         <button
           onClick={() => fileRef.current?.click()}
           disabled={loading}
-          className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
+          className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-tint/10"
           style={{ background: '#2A2D38', border: `1px solid ${BORDER}` }}
         >
           {loading
-            ? <Loader2 className="w-3.5 h-3.5 text-white/40 animate-spin" />
-            : <Camera  className="w-3.5 h-3.5 text-white/60" />}
+            ? <Loader2 className="w-3.5 h-3.5 text-ink-mute animate-spin" />
+            : <Camera  className="w-3.5 h-3.5 text-ink-sub" />}
         </button>
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif"
           className="hidden" onChange={handleFile} />
       </div>
       <div>
-        <p className="text-[14px] font-semibold text-[#EDEDED]">{name || user.email}</p>
-        <p className="text-[12px] text-white/30 mt-0.5">{user.email}</p>
+        <p className="text-[14px] font-semibold text-ink">{name || user.email}</p>
+        <p className="text-[12px] text-ink-mute mt-0.5">{user.email}</p>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={loading}
@@ -259,7 +259,7 @@ function AvatarEditor({ user, onUpdate }: { user: SupabaseUser; onUpdate: () => 
         >
           {loading ? 'Enviando…' : 'Trocar foto'}
         </button>
-        <p className="text-[10px] text-white/20 mt-0.5">PNG, JPG ou WebP · máx. 3 MB</p>
+        <p className="text-[10px] text-ink-faint mt-0.5">PNG, JPG ou WebP · máx. 3 MB</p>
       </div>
     </div>
   )
@@ -298,7 +298,7 @@ function PerfilTab({ user, onRefresh }: { user: SupabaseUser; onRefresh: () => v
         <div>
           <Label>E-mail</Label>
           <TextInput value={user.email ?? ''} disabled icon={Mail} />
-          <p className="text-[11px] text-white/20 mt-1.5">
+          <p className="text-[11px] text-ink-faint mt-1.5">
             O e-mail é gerenciado pelo provedor de autenticação.
           </p>
         </div>
@@ -377,11 +377,11 @@ function NotificacoesTab() {
       />
       <div
         className="rounded-2xl px-5 max-w-lg"
-        style={{ background: '#13151A', border: `1px solid ${BORDER}` }}
+        style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
       >
         <div className="flex items-center gap-3 py-4" style={{ borderBottom: `1px solid ${BORDER}` }}>
-          <Bell className="w-4 h-4 text-white/25" />
-          <p className="text-[13px] font-semibold text-white/50">Preferências de e-mail</p>
+          <Bell className="w-4 h-4 text-ink-faint" />
+          <p className="text-[13px] font-semibold text-ink-sub">Preferências de e-mail</p>
         </div>
         {items.map(item => (
           <Toggle
@@ -454,12 +454,12 @@ function SegurancaTab({ user }: { user: SupabaseUser }) {
 
       {/* Account info card */}
       <div className="max-w-lg">
-        <p className="text-[12px] font-semibold uppercase tracking-widest text-white/25 mb-4">
+        <p className="text-[12px] font-semibold uppercase tracking-widest text-ink-faint mb-4">
           Informações da conta
         </p>
         <div
           className="rounded-2xl p-5 flex flex-col gap-4"
-          style={{ background: '#13151A', border: `1px solid ${BORDER}` }}
+          style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
         >
           {[
             { label: 'ID do usuário', value: user.id },
@@ -468,8 +468,8 @@ function SegurancaTab({ user }: { user: SupabaseUser }) {
             { label: 'Papel (role)',  value: (user.app_metadata?.role as string) ?? 'user' },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-start justify-between gap-4">
-              <span className="text-[12px] text-white/30 shrink-0">{label}</span>
-              <span className="text-[12px] text-[#EDEDED] text-right font-mono break-all">{value}</span>
+              <span className="text-[12px] text-ink-mute shrink-0">{label}</span>
+              <span className="text-[12px] text-ink text-right font-mono break-all">{value}</span>
             </div>
           ))}
         </div>
@@ -511,8 +511,8 @@ function CuponsTab() {
   const [saving,    setSaving]    = useState(false)
   const [form,      setForm]      = useState(BLANK_FORM)
 
-  const labelCls  = 'block text-[12px] font-semibold text-white/40 mb-1.5 uppercase tracking-wider'
-  const inputCls  = 'w-full rounded-xl px-4 py-2.5 text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+  const labelCls  = 'block text-[12px] font-semibold text-ink-mute mb-1.5 uppercase tracking-wider'
+  const inputCls  = 'w-full rounded-xl px-4 py-2.5 text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
   const inputSty  = { background: BG_INPUT, border: `1px solid ${BORDER}` }
   const focusBdr  = 'rgba(232,82,26,0.4)'
 
@@ -578,8 +578,8 @@ function CuponsTab() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-[15px] font-bold text-[#EDEDED]">Cupons de Desconto</h2>
-          <p className="text-[13px] text-white/30 mt-0.5">Gerenciar códigos aplicados no formulário de pagamento</p>
+          <h2 className="text-[15px] font-bold text-ink">Cupons de Desconto</h2>
+          <p className="text-[13px] text-ink-mute mt-0.5">Gerenciar códigos aplicados no formulário de pagamento</p>
         </div>
         {!creating && (
           <button
@@ -600,9 +600,9 @@ function CuponsTab() {
           className="mb-6 rounded-xl p-5 flex flex-col gap-4"
           style={{ background: 'rgba(232,82,26,0.05)', border: '1px solid rgba(232,82,26,0.15)' }}>
           <div className="flex items-center justify-between">
-            <p className="text-[13px] font-semibold text-[#EDEDED]">Novo Cupom</p>
+            <p className="text-[13px] font-semibold text-ink">Novo Cupom</p>
             <button type="button" onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
-              className="text-white/30 hover:text-white/70 transition-colors">
+              className="text-ink-mute hover:text-ink transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -708,7 +708,7 @@ function CuponsTab() {
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => { setCreating(false); setForm(BLANK_FORM) }}
-              className="px-4 py-2 rounded-xl text-[13px] font-medium text-white/40 hover:text-white/70 transition-colors">
+              className="px-4 py-2 rounded-xl text-[13px] font-medium text-ink-mute hover:text-ink transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={saving}
@@ -726,7 +726,7 @@ function CuponsTab() {
       {/* List */}
       {loading ? (
         <div className="flex items-center justify-center py-10">
-          <Loader2 className="w-5 h-5 animate-spin text-white/30" />
+          <Loader2 className="w-5 h-5 animate-spin text-ink-mute" />
         </div>
       ) : coupons.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
@@ -734,21 +734,21 @@ function CuponsTab() {
             style={{ background: 'rgba(232,82,26,0.08)', border: '1px solid rgba(232,82,26,0.15)' }}>
             <Tag className="w-5 h-5 text-[#E8521A]" />
           </div>
-          <p className="text-[13px] text-white/30">Nenhum cupom criado ainda.</p>
+          <p className="text-[13px] text-ink-mute">Nenhum cupom criado ainda.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
           {coupons.map(c => (
             <div key={c.id}
               className="flex items-center gap-4 px-4 py-3 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              style={{ background: 'rgba(var(--tint), 0.03)', border: '1px solid rgba(var(--tint), 0.06)' }}>
 
               {/* Code badge */}
               <span className="font-mono font-bold text-[13px] px-2.5 py-1 rounded-lg shrink-0"
                 style={{
-                  background: c.active ? 'rgba(232,82,26,0.1)' : 'rgba(255,255,255,0.05)',
-                  color:      c.active ? '#E8521A'              : 'rgba(255,255,255,0.3)',
-                  border:     `1px solid ${c.active ? 'rgba(232,82,26,0.2)' : 'rgba(255,255,255,0.08)'}`,
+                  background: c.active ? 'rgba(232,82,26,0.1)' : 'rgba(var(--tint), 0.05)',
+                  color:      c.active ? '#E8521A'              : 'rgba(var(--tint), 0.3)',
+                  border:     `1px solid ${c.active ? 'rgba(232,82,26,0.2)' : 'rgba(var(--tint), 0.08)'}`,
                 }}>
                 {c.code}
               </span>
@@ -756,24 +756,24 @@ function CuponsTab() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[13px] font-semibold text-[#EDEDED]">{discountLabel(c)}</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md text-white/40"
-                    style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <span className="text-[13px] font-semibold text-ink">{discountLabel(c)}</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-md text-ink-mute"
+                    style={{ background: 'rgba(var(--tint), 0.05)' }}>
                     {appliesToLabel(c.applies_to)}
                   </span>
                   {c.max_uses !== null && (
-                    <span className="text-[11px] text-white/30">
+                    <span className="text-[11px] text-ink-mute">
                       {c.uses_count}/{c.max_uses} usos
                     </span>
                   )}
                   {c.expires_at && (
-                    <span className="text-[11px] text-white/30">
+                    <span className="text-[11px] text-ink-mute">
                       Expira {new Date(c.expires_at).toLocaleDateString('pt-BR')}
                     </span>
                   )}
                 </div>
                 {c.description && (
-                  <p className="text-[11px] text-white/25 mt-0.5 truncate">{c.description}</p>
+                  <p className="text-[11px] text-ink-faint mt-0.5 truncate">{c.description}</p>
                 )}
               </div>
 
@@ -782,14 +782,14 @@ function CuponsTab() {
                 onClick={() => toggleActive(c)}
                 title={c.active ? 'Desativar' : 'Ativar'}
                 className="relative rounded-full transition-all duration-200 shrink-0"
-                style={{ width: 36, height: 20, background: c.active ? ACCENT : 'rgba(255,255,255,0.1)' }}>
+                style={{ width: 36, height: 20, background: c.active ? ACCENT : 'rgba(var(--tint), 0.1)' }}>
                 <span className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
                   style={{ width: 16, height: 16, transform: c.active ? 'translateX(16px)' : 'none' }} />
               </button>
 
               {/* Delete */}
               <button onClick={() => handleDelete(c.id)}
-                className="text-white/20 hover:text-red-400 transition-colors shrink-0">
+                className="text-ink-faint hover:text-red-400 transition-colors shrink-0">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -835,8 +835,8 @@ export default function SettingsPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">Configurações</h1>
-          <p className="text-[13px] text-white/30 mt-0.5">
+          <h1 className="text-xl font-bold text-ink tracking-tight">Configurações</h1>
+          <p className="text-[13px] text-ink-mute mt-0.5">
             Gerencie seu perfil, notificações e segurança
           </p>
         </div>
@@ -851,13 +851,13 @@ export default function SettingsPage() {
                 className={cn(
                   'flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium text-left transition-all',
                   tab === t.id
-                    ? 'text-[#EDEDED] bg-white/8'
-                    : 'text-white/35 hover:text-white/70 hover:bg-white/4',
+                    ? 'text-ink bg-tint/8'
+                    : 'text-ink-mute hover:text-ink hover:bg-tint/4',
                 )}
               >
                 <t.icon className={cn(
                   'w-4 h-4 shrink-0',
-                  tab === t.id ? 'text-[#E8521A]' : 'text-white/25',
+                  tab === t.id ? 'text-[#E8521A]' : 'text-ink-faint',
                 )} />
                 {t.label}
                 {tab === t.id && (

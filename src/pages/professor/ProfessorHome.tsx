@@ -53,7 +53,7 @@ export default function ProfessorHome() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-5 h-5 animate-spin text-white/20" />
+        <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
       </div>
     )
   }
@@ -62,11 +62,11 @@ export default function ProfessorHome() {
     <div className="flex flex-col gap-5 max-w-[1100px] mx-auto">
 
       <div>
-        <h1 className="text-[20px] font-semibold text-[#EDEDED] flex items-center gap-2">
+        <h1 className="text-[20px] font-semibold text-ink flex items-center gap-2">
           <CalendarDays className="w-5 h-5" style={{ color: ACCENT }} />
           Minhas turmas
         </h1>
-        <p className="text-[12.5px] text-white/35 mt-1">
+        <p className="text-[12.5px] text-ink-mute mt-1">
           {rows.length === 0
             ? 'Nenhuma turma ativa atribuída a você.'
             : `${rows.length} turma${rows.length !== 1 ? 's' : ''} ativa${rows.length !== 1 ? 's' : ''} · ${
@@ -85,7 +85,7 @@ export default function ProfessorHome() {
               {newcomers.length} aluno{newcomers.length !== 1 ? 's' : ''} novo
               {newcomers.length !== 1 ? 's' : ''} nos últimos {NOVO_POR_DIAS} dias
             </p>
-            <p className="text-[11.5px] text-white/40 mt-0.5">
+            <p className="text-[11.5px] text-ink-mute mt-0.5">
               {newcomers.map(s => s.student_name).join(' · ')}
             </p>
           </div>
@@ -94,9 +94,9 @@ export default function ProfessorHome() {
 
       {rows.length === 0 && ended.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <CalendarDays className="w-10 h-10 text-white/8" />
-          <p className="text-[13px] text-white/30">Nenhuma turma atribuída</p>
-          <p className="text-[12px] text-white/20 max-w-[320px] text-center">
+          <CalendarDays className="w-10 h-10 text-ink-ghost" />
+          <p className="text-[13px] text-ink-mute">Nenhuma turma atribuída</p>
+          <p className="text-[12px] text-ink-faint max-w-[320px] text-center">
             Quando a secretaria atribuir uma turma a você, ela aparece aqui.
           </p>
         </div>
@@ -112,7 +112,7 @@ export default function ProfessorHome() {
 
       {ended.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/25">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
             Turmas encerradas
           </p>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -139,7 +139,7 @@ function ClassCard({ row, students, onOpen }: {
   })
   return (
     <button onClick={onOpen}
-      className="group rounded-2xl overflow-hidden text-left transition-all hover:border-white/15"
+      className="group rounded-2xl overflow-hidden text-left transition-all hover:border-tint/15"
       style={{ background: BG_CARD, border: `1px solid ${BORDER}`, opacity: ended ? 0.6 : 1 }}>
 
       <div className="px-4 py-3.5 flex items-start gap-3" style={{ borderBottom: `1px solid ${BORDER2}` }}>
@@ -152,30 +152,30 @@ function ClassCard({ row, students, onOpen }: {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-[13.5px] font-semibold text-[#EDEDED] truncate">{row.name}</p>
+          <p className="text-[13.5px] font-semibold text-ink truncate">{row.name}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             {row.subject && (
-              <span className="text-[11px] text-white/40">{SUBJECT_LABEL[row.subject] ?? row.subject}</span>
+              <span className="text-[11px] text-ink-mute">{SUBJECT_LABEL[row.subject] ?? row.subject}</span>
             )}
             {row.jlpt_level && (
               <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
+                style={{ background: 'rgba(var(--tint), 0.06)', color: 'rgba(var(--tint), 0.5)' }}>
                 {row.jlpt_level}
               </span>
             )}
-            {ended && <span className="text-[10px] text-white/25">encerrada</span>}
+            {ended && <span className="text-[10px] text-ink-faint">encerrada</span>}
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-white/15 shrink-0 mt-1 group-hover:text-white/40 transition-colors" />
+        <ChevronRight className="w-4 h-4 text-ink-ghost shrink-0 mt-1 group-hover:text-ink-mute transition-colors" />
       </div>
 
       <div className="px-4 py-3 flex items-center gap-4 flex-wrap" style={{ background: BG_CARD2 }}>
-        <span className="text-[12px] text-white/55 flex items-center gap-1.5 tabular-nums">
-          <Clock className="w-3.5 h-3.5 text-white/25" /> {formatSchedule(row.sessions)}
+        <span className="text-[12px] text-ink-sub flex items-center gap-1.5 tabular-nums">
+          <Clock className="w-3.5 h-3.5 text-ink-faint" /> {formatSchedule(row.sessions)}
         </span>
         {(row.modality || row.unit) && (
-          <span className="text-[12px] text-white/55 flex items-center gap-1.5 min-w-0">
-            <MapPin className="w-3.5 h-3.5 text-white/25 shrink-0" />
+          <span className="text-[12px] text-ink-sub flex items-center gap-1.5 min-w-0">
+            <MapPin className="w-3.5 h-3.5 text-ink-faint shrink-0" />
             <span className="truncate">
               {[row.modality === 'online' ? 'Online' : row.modality === 'presencial' ? 'Presencial' : null, row.unit]
                 .filter(Boolean).join(' · ')}
@@ -184,20 +184,20 @@ function ClassCard({ row, students, onOpen }: {
         )}
         {row.meet_link && (
           <span onClick={e => { e.stopPropagation(); window.open(row.meet_link!, '_blank') }}
-            className="text-[11.5px] text-white/35 hover:text-white/70 flex items-center gap-1 transition-colors">
+            className="text-[11.5px] text-ink-mute hover:text-ink flex items-center gap-1 transition-colors">
             <Video className="w-3 h-3" /> Meet
           </span>
         )}
         {row.classroom_link && (
           <span onClick={e => { e.stopPropagation(); window.open(row.classroom_link!, '_blank') }}
-            className="text-[11.5px] text-white/35 hover:text-white/70 flex items-center gap-1 transition-colors">
+            className="text-[11.5px] text-ink-mute hover:text-ink flex items-center gap-1 transition-colors">
             <BookOpen className="w-3 h-3" /> Classroom
           </span>
         )}
-        <span className="ml-auto text-[12px] font-medium text-white/50 flex items-center gap-1.5 tabular-nums">
-          <Users className="w-3.5 h-3.5 text-white/25" />
+        <span className="ml-auto text-[12px] font-medium text-ink-sub flex items-center gap-1.5 tabular-nums">
+          <Users className="w-3.5 h-3.5 text-ink-faint" />
           {students.length}
-          {row.capacity != null && <span className="text-white/25">/{row.capacity}</span>}
+          {row.capacity != null && <span className="text-ink-faint">/{row.capacity}</span>}
         </span>
       </div>
     </button>

@@ -7,7 +7,7 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { supabase } from '@/lib/supabase'
-import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_PAGE, BORDER, INK_FAINT, INK_MUTE, INK_SUB } from '@/lib/theme'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -97,7 +97,7 @@ function AccessRow({
   return (
     <div
       className="flex items-center gap-4 px-5 py-3 group transition-all hover:bg-white/[0.018]"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
+      style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}
     >
       {/* Product badge */}
       <div
@@ -127,20 +127,20 @@ function AccessRow({
             </span>
           )}
         </div>
-        <p className="text-[11px] truncate" style={{ color: '#404252' }}>
+        <p className="text-[11px] truncate" style={{ color: INK_MUTE }}>
           {product?.name ?? 'Produto removido'}
           {access.stripe_session_id && (
-            <span className="ml-2" style={{ color: '#2E3042' }}>· {access.stripe_session_id.slice(0, 12)}…</span>
+            <span className="ml-2" style={{ color: INK_FAINT }}>· {access.stripe_session_id.slice(0, 12)}…</span>
           )}
         </p>
       </div>
 
       {/* Date */}
       <div className="text-right shrink-0 hidden sm:block">
-        <p className="text-[11.5px] tabular-nums" style={{ color: '#5A5C6A' }}>
+        <p className="text-[11.5px] tabular-nums" style={{ color: INK_SUB }}>
           {fmtDate(access.purchased_at)}
         </p>
-        <p className="text-[10px]" style={{ color: '#2E3042' }}>
+        <p className="text-[10px]" style={{ color: INK_FAINT }}>
           {days === 0 ? 'hoje' : `${days}d atrás`}
         </p>
       </div>
@@ -184,11 +184,11 @@ function AccessRow({
 function EmptyState({ query }: { query: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <KeyRound className="w-10 h-10 text-white/8" />
-      <p className="text-[13px]" style={{ color: '#2E3042' }}>
+      <KeyRound className="w-10 h-10 text-ink-ghost" />
+      <p className="text-[13px]" style={{ color: INK_FAINT }}>
         {query ? `Nenhum acesso encontrado para "${query}"` : 'Nenhum acesso registrado'}
       </p>
-      <p className="text-[11px]" style={{ color: '#1C1E28' }}>
+      <p className="text-[11px]" style={{ color: BG_CARD2 }}>
         Os acessos são criados automaticamente via Stripe ou manualmente aqui
       </p>
     </div>
@@ -244,14 +244,14 @@ export default function AcessosPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-[18px] font-bold text-[#DADCE6] tracking-tight">Acessos</h1>
-            <p className="text-[12px] mt-0.5" style={{ color: '#404252' }}>
+            <p className="text-[12px] mt-0.5" style={{ color: INK_MUTE }}>
               Quem tem acesso a cada produto da área de membros
             </p>
           </div>
           <button
             onClick={() => refetch()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer"
-            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: '#5A5C6A' }}
+            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: INK_SUB }}
           >
             <RefreshCw className={cn('w-3 h-3', isLoading && 'animate-spin')} />
             Atualizar
@@ -272,7 +272,7 @@ export default function AcessosPage() {
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: '#404252' }}>{item.label}</span>
+                <span className="text-[11px]" style={{ color: INK_MUTE }}>{item.label}</span>
                 <div className="w-6 h-6 rounded-md flex items-center justify-center"
                   style={{ background: `${item.color}16` }}>
                   <item.icon className="w-3 h-3" style={{ color: item.color }} />
@@ -305,12 +305,12 @@ export default function AcessosPage() {
                   >
                     <span
                       className="text-[11px] w-36 text-right shrink-0 truncate"
-                      style={{ color: productFilter === p.id ? '#DADCE6' : '#5A5C6A' }}
+                      style={{ color: productFilter === p.id ? '#DADCE6' : INK_SUB }}
                     >
                       {p.name}
                     </span>
                     <div className="flex-1 h-5 rounded overflow-hidden relative"
-                      style={{ background: 'rgba(255,255,255,0.04)' }}>
+                      style={{ background: 'rgba(var(--tint), 0.04)' }}>
                       <div
                         className="h-full rounded transition-all duration-500"
                         style={{
@@ -328,7 +328,7 @@ export default function AcessosPage() {
                       )}
                     </div>
                     <span className="text-[10px] shrink-0 w-6 text-right tabular-nums"
-                      style={{ color: '#404252' }}>
+                      style={{ color: INK_MUTE }}>
                       {count}
                     </span>
                   </button>
@@ -345,23 +345,23 @@ export default function AcessosPage() {
         >
           {/* Search */}
           <div className="flex items-center gap-3 px-4 py-3"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            style={{ borderBottom: '1px solid rgba(var(--tint), 0.04)' }}>
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: '#404252' }} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: INK_MUTE }} />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Buscar por user ID, produto ou sessão Stripe…"
                 className="w-full pl-8 pr-8 py-1.5 rounded-lg text-[12.5px] outline-none"
                 style={{
-                  background: '#0D0E12',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: BG_PAGE,
+                  border: '1px solid rgba(var(--tint), 0.06)',
                   color: '#DADCE6',
                 }}
               />
               {query && (
                 <button onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer">
-                  <X className="w-3 h-3" style={{ color: '#404252' }} />
+                  <X className="w-3 h-3" style={{ color: INK_MUTE }} />
                 </button>
               )}
             </div>
@@ -381,8 +381,8 @@ export default function AcessosPage() {
           {/* Count */}
           {!isLoading && (
             <div className="px-5 py-2.5 flex items-center justify-between"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-              <span className="text-[10.5px]" style={{ color: '#2E3042' }}>
+              style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}>
+              <span className="text-[10.5px]" style={{ color: INK_FAINT }}>
                 {filtered.length} acesso{filtered.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -393,11 +393,11 @@ export default function AcessosPage() {
             <div className="flex flex-col">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 px-5 py-3"
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                  <div className="w-8 h-8 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  style={{ borderBottom: '1px solid rgba(var(--tint), 0.03)' }}>
+                  <div className="w-8 h-8 rounded-lg animate-pulse" style={{ background: 'rgba(var(--tint), 0.04)' }} />
                   <div className="flex-1 flex flex-col gap-1.5">
-                    <div className="h-3 w-40 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-2 w-56 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.03)' }} />
+                    <div className="h-3 w-40 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.05)' }} />
+                    <div className="h-2 w-56 rounded animate-pulse" style={{ background: 'rgba(var(--tint), 0.03)' }} />
                   </div>
                 </div>
               ))}
@@ -426,10 +426,10 @@ export default function AcessosPage() {
           <Shield className="w-4 h-4 mt-0.5 shrink-0" style={{ color: '#60A5FA' }} />
           <div>
             <p className="text-[12px] font-semibold" style={{ color: '#60A5FA' }}>Sobre acessos manuais</p>
-            <p className="text-[11.5px] mt-1 leading-relaxed" style={{ color: '#404252' }}>
+            <p className="text-[11.5px] mt-1 leading-relaxed" style={{ color: INK_MUTE }}>
               Para conceder acesso manual (cortesia, bonificação), adicione um registro diretamente via Supabase
-              na tabela <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: '#9474FF' }}>user_access</code>{' '}
-              com o <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: '#9474FF' }}>user_id</code> e <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: '#9474FF' }}>product_id</code> correspondentes.
+              na tabela <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(var(--tint), 0.05)', color: '#9474FF' }}>user_access</code>{' '}
+              com o <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(var(--tint), 0.05)', color: '#9474FF' }}>user_id</code> e <code className="text-[10.5px] px-1 py-0.5 rounded" style={{ background: 'rgba(var(--tint), 0.05)', color: '#9474FF' }}>product_id</code> correspondentes.
               O acesso é refletido imediatamente na área de membros.
             </p>
           </div>

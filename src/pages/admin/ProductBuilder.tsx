@@ -125,7 +125,7 @@ export default function ProductBuilder() {
     <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
       {/* Header */}
       <header className="h-14 shrink-0 flex items-center gap-3 px-4 border-b border-zinc-800 bg-zinc-900">
-        <Link to="/admin/products" className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white">
+        <Link to="/admin/products" className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-ink">
           <ArrowLeft className="w-4 h-4" />
         </Link>
 
@@ -142,7 +142,7 @@ export default function ProductBuilder() {
               onClick={() => setTab(t.id)}
               className={cn(
                 'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                tab === t.id ? 'bg-zinc-700 text-white shadow' : 'text-zinc-400 hover:text-white',
+                tab === t.id ? 'bg-zinc-700 text-white shadow' : 'text-zinc-400 hover:text-ink',
               )}
             >
               {t.label}
@@ -160,7 +160,7 @@ export default function ProductBuilder() {
             onClick={saveNow}
             disabled={isSaving}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-zinc-400
-                       hover:text-white hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+                       hover:text-ink hover:bg-zinc-800 disabled:opacity-40 transition-colors"
           >
             <Save className="w-4 h-4" />
             {isSaving ? 'Salvando...' : 'Salvar'}

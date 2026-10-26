@@ -17,7 +17,7 @@ import { STAGES } from '@/lib/stageConfig'
 import type { LeadPatch } from '@/hooks/useLeads'
 import type { Lead } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
-import { BG_PAGE, BG_CARD, BG_INPUT, BG_DROP, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_DROP, BG_INPUT, BG_PAGE, BORDER } from '@/lib/theme'
 
 const PAGE_SIZE = 25
 
@@ -139,12 +139,12 @@ function SelectFilter({ value, onChange, placeholder, options }: {
     <div ref={ref} className="relative">
       <button onClick={() => setOpen(o => !o)}
         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] transition-all whitespace-nowrap"
-        style={{ background: BG_CARD, border: `1px solid ${open ? 'rgba(232,82,26,0.4)' : BORDER}`, color: selected ? '#EDEDED' : 'rgba(255,255,255,0.35)' }}>
-        <Package className="w-3.5 h-3.5 shrink-0 text-white/25" />
+        style={{ background: BG_CARD, border: `1px solid ${open ? 'rgba(232,82,26,0.4)' : BORDER}`, color: selected ? '#EDEDED' : 'rgba(var(--tint), 0.35)' }}>
+        <Package className="w-3.5 h-3.5 shrink-0 text-ink-faint" />
         <span className="truncate max-w-[160px]">{selected?.label ?? placeholder}</span>
         {value
-          ? <button onClick={e => { e.stopPropagation(); onChange('') }} className="ml-auto shrink-0 text-white/25 hover:text-white/60 transition-colors"><X className="w-3 h-3" /></button>
-          : <ChevronDown className="w-3.5 h-3.5 ml-auto shrink-0 text-white/25" />}
+          ? <button onClick={e => { e.stopPropagation(); onChange('') }} className="ml-auto shrink-0 text-ink-faint hover:text-ink-sub transition-colors"><X className="w-3 h-3" /></button>
+          : <ChevronDown className="w-3.5 h-3.5 ml-auto shrink-0 text-ink-faint" />}
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1.5 rounded-xl z-50 py-1.5 min-w-[200px]"
@@ -152,7 +152,7 @@ function SelectFilter({ value, onChange, placeholder, options }: {
           {options.map(opt => (
             <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
               className={cn('w-full flex items-center px-4 py-2 text-[12px] text-left transition-colors',
-                opt.value === value ? 'text-[#F0643A]' : 'text-white/60 hover:text-white/90 hover:bg-white/4')}>
+                opt.value === value ? 'text-[#F0643A]' : 'text-ink-sub hover:text-ink hover:bg-tint/4')}>
               {opt.label}
             </button>
           ))}
@@ -176,7 +176,7 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
     qualified: lead.qualified,
   })
 
-  const inputCls = 'w-full px-3.5 py-2.5 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+  const inputCls = 'w-full px-3.5 py-2.5 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
   const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 
   function onFocus(e: React.FocusEvent<HTMLInputElement>) {
@@ -212,38 +212,38 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
         style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
         onClick={onClose} />
       <div className="absolute top-0 right-0 h-full w-full max-w-[480px] flex flex-col"
-        style={{ background: '#16181F', borderLeft: `1px solid ${BORDER}` }}>
+        style={{ background: BG_CARD2, borderLeft: `1px solid ${BORDER}` }}>
         <div className="flex items-center justify-between px-6 py-5 shrink-0"
           style={{ borderBottom: `1px solid ${BORDER}` }}>
           <div>
-            <p className="text-[15px] font-bold text-[#EDEDED]">Editar Lead</p>
-            <p className="text-[12px] text-white/30 mt-0.5">{displayName(lead) || lead.email || lead.id.slice(0, 8)}</p>
+            <p className="text-[15px] font-bold text-ink">Editar Lead</p>
+            <p className="text-[12px] text-ink-mute mt-0.5">{displayName(lead) || lead.email || lead.id.slice(0, 8)}</p>
           </div>
           <button onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/6 transition-all">
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
           <div className="flex items-center justify-between px-4 py-3 rounded-xl"
-            style={{ background: '#13151A', border: `1px solid ${BORDER}` }}>
+            style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <div>
-              <p className="text-[13px] font-medium text-[#EDEDED]">Status de Qualificação</p>
-              <p className="text-[11px] text-white/30 mt-0.5">Afeta relatórios e automações</p>
+              <p className="text-[13px] font-medium text-ink">Status de Qualificação</p>
+              <p className="text-[11px] text-ink-mute mt-0.5">Afeta relatórios e automações</p>
             </div>
             <button
               onClick={() => setForm(f => ({ ...f, qualified: !f.qualified }))}
               className="relative rounded-full transition-all duration-200 shrink-0"
-              style={{ width: 40, height: 22, background: form.qualified ? '#34D399' : 'rgba(255,255,255,0.1)' }}>
+              style={{ width: 40, height: 22, background: form.qualified ? '#34D399' : 'rgba(var(--tint), 0.1)' }}>
               <span className="absolute top-0.5 left-0.5 rounded-full bg-white transition-transform duration-200"
                 style={{ width: 18, height: 18, transform: form.qualified ? 'translateX(18px)' : 'none' }} />
             </button>
           </div>
           {fields.map(({ key, label, placeholder, icon: Icon }) => (
             <div key={key}>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-white/30 mb-1.5">{label}</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-1.5">{label}</label>
               <div className="relative">
-                <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/20 pointer-events-none" />
+                <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-faint pointer-events-none" />
                 <input
                   className={inputCls} style={{ ...inputStyle, paddingLeft: '2.25rem' }}
                   value={(form[key] ?? '') as string}
@@ -257,7 +257,7 @@ function EditLeadDrawer({ lead, onClose }: { lead: Lead; onClose: () => void }) 
         </div>
         <div className="px-6 py-4 flex gap-3 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-ink-mute transition-all"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Cancelar
           </button>
@@ -297,16 +297,16 @@ function DeleteConfirm({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
           <div>
-            <p className="text-[14px] font-bold text-[#EDEDED]">Excluir lead?</p>
-            <p className="text-[12px] text-white/35 mt-0.5">Esta ação não pode ser desfeita.</p>
+            <p className="text-[14px] font-bold text-ink">Excluir lead?</p>
+            <p className="text-[12px] text-ink-mute mt-0.5">Esta ação não pode ser desfeita.</p>
           </div>
         </div>
-        <p className="text-[13px] text-white/50">
-          O lead <strong className="text-white/70">{displayName(lead) || lead.email || 'sem nome'}</strong> será permanentemente removido.
+        <p className="text-[13px] text-ink-sub">
+          O lead <strong className="text-ink">{displayName(lead) || lead.email || 'sem nome'}</strong> será permanentemente removido.
         </p>
         <div className="flex gap-3 mt-1">
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-ink-mute transition-all"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Cancelar
           </button>
@@ -335,7 +335,7 @@ function LeadRow({
 
   return (
     <tr className="group border-b transition-colors duration-100"
-      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      style={{ borderColor: 'rgba(var(--tint), 0.05)' }}
       onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = '#22242F' }}
       onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}>
 
@@ -347,12 +347,12 @@ function LeadRow({
             {(name || lead.email || '?')[0]?.toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[#EDEDED] truncate leading-tight">
-              {name || <span className="text-white/35 font-normal">—</span>}
+            <p className="text-[13px] font-semibold text-ink truncate leading-tight">
+              {name || <span className="text-ink-mute font-normal">—</span>}
             </p>
             {studentName && (
-              <p className="flex items-center gap-1 text-[11px] text-white/35 truncate mt-0.5">
-                <GraduationCap className="w-3 h-3 shrink-0 text-white/20" />
+              <p className="flex items-center gap-1 text-[11px] text-ink-mute truncate mt-0.5">
+                <GraduationCap className="w-3 h-3 shrink-0 text-ink-faint" />
                 {studentName}
               </p>
             )}
@@ -363,7 +363,7 @@ function LeadRow({
       {/* Ano Escolar */}
       <td className="px-5 py-3.5">
         <span
-          className="text-[12px] text-white/45 truncate block max-w-[140px]"
+          className="text-[12px] text-ink-sub truncate block max-w-[140px]"
           title={displaySchoolYear(lead) || undefined}
         >
           {displaySchoolYear(lead) || '—'}
@@ -372,12 +372,12 @@ function LeadRow({
 
       {/* Email */}
       <td className="px-5 py-3.5">
-        <span className="text-[12px] text-white/45 truncate block max-w-[180px]">{lead.email ?? '—'}</span>
+        <span className="text-[12px] text-ink-sub truncate block max-w-[180px]">{lead.email ?? '—'}</span>
       </td>
 
       {/* Telefone */}
       <td className="px-5 py-3.5">
-        <span className="text-[12px] text-white/45">{lead.phone ?? '—'}</span>
+        <span className="text-[12px] text-ink-sub">{lead.phone ?? '—'}</span>
       </td>
 
       {/* Produto */}
@@ -387,7 +387,7 @@ function LeadRow({
             style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}` }}>
             {lead.product_name}
           </span>
-        ) : <span className="text-[12px] text-white/20">—</span>}
+        ) : <span className="text-[12px] text-ink-faint">—</span>}
       </td>
 
       {/* Status */}
@@ -407,25 +407,25 @@ function LeadRow({
 
       {/* Data */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/40">{fmtDateShort(lead.created_at)}</p>
-        <p className="text-[10px] text-white/20 mt-0.5">{timeAgo(lead.created_at)}</p>
+        <p className="text-[12px] text-ink-mute">{fmtDateShort(lead.created_at)}</p>
+        <p className="text-[10px] text-ink-faint mt-0.5">{timeAgo(lead.created_at)}</p>
       </td>
 
       {/* Ações */}
       <td className="px-4 py-3.5" style={{ width: 100 }}>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all justify-end">
           <button onClick={onView}
-            className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/80 hover:bg-white/6"
+            className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-ink hover:bg-tint/6"
             title="Ver detalhes">
             <Eye className="w-3.5 h-3.5" />
           </button>
           <button onClick={onEdit}
-            className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-[#93C5FD] hover:bg-blue-500/10"
+            className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-[#93C5FD] hover:bg-blue-500/10"
             title="Editar">
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button onClick={onDelete}
-            className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-red-400 hover:bg-red-500/10"
+            className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-red-400 hover:bg-red-500/10"
             title="Excluir">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -442,7 +442,7 @@ function StatChip({ value, label, color }: { value: number; label: string; color
     <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
       style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
       <span className="text-[18px] font-bold tabular-nums" style={{ color }}>{value}</span>
-      <span className="text-[11px] text-white/35">{label}</span>
+      <span className="text-[11px] text-ink-mute">{label}</span>
     </div>
   )
 }
@@ -552,21 +552,21 @@ export default function LeadsPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">Leads CRM</h1>
-              <p className="text-[13px] text-white/30 mt-0.5">Leads capturados pelos formulários de produtos</p>
+              <h1 className="text-xl font-bold text-ink tracking-tight">Leads CRM</h1>
+              <p className="text-[13px] text-ink-mute mt-0.5">Leads capturados pelos formulários de produtos</p>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={exportCSV}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.45)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)' }}
+                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.45)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.18)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER }}>
                 <Download className="w-3.5 h-3.5" /> Exportar CSV
               </button>
               <button onClick={refresh}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.45)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.18)' }}
+                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.45)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(var(--tint), 0.18)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER }}>
                 <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
                 Atualizar
@@ -587,12 +587,12 @@ export default function LeadsPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1 min-w-[200px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <Search className="w-4 h-4 text-white/25 shrink-0" />
+              <Search className="w-4 h-4 text-ink-faint shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nome, aluno, e-mail ou telefone…"
-                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-white/70 placeholder:text-white/25" />
+                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-ink placeholder:text-ink-faint" />
               {search && (
-                <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/60 transition-colors">
+                <button onClick={() => setSearch('')} className="text-ink-faint hover:text-ink-sub transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -613,7 +613,7 @@ export default function LeadsPage() {
                   className="px-3 py-2 text-[12px] font-medium transition-all"
                   style={qualFilter === opt.value
                     ? { background: 'rgba(232,82,26,0.15)', color: '#F0643A' }
-                    : { color: 'rgba(255,255,255,0.35)' }}>
+                    : { color: 'rgba(var(--tint), 0.35)' }}>
                   {opt.label}
                 </button>
               ))}
@@ -633,7 +633,7 @@ export default function LeadsPage() {
                   className="px-3 py-2 text-[12px] font-medium transition-all"
                   style={paymentFilter === opt.value
                     ? { background: opt.value === 'confirmed' ? 'rgba(52,211,153,0.15)' : opt.value === 'pending' ? 'rgba(251,191,36,0.12)' : 'rgba(232,82,26,0.15)', color: opt.value === 'confirmed' ? '#34D399' : opt.value === 'pending' ? '#FBBF24' : '#F0643A' }
-                    : { color: 'rgba(255,255,255,0.35)' }}>
+                    : { color: 'rgba(var(--tint), 0.35)' }}>
                   {opt.label}
                 </button>
               ))}
@@ -646,10 +646,10 @@ export default function LeadsPage() {
             <button
               onClick={() => setStageFilter('all')}
               className={cn('px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all',
-                stageFilter === 'all' ? 'text-[#EDEDED]' : 'text-white/35 hover:text-white/60')}
+                stageFilter === 'all' ? 'text-ink' : 'text-ink-mute hover:text-ink-sub')}
               style={{
-                background: stageFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                border: `1px solid ${stageFilter === 'all' ? 'rgba(255,255,255,0.15)' : 'transparent'}`,
+                background: stageFilter === 'all' ? 'rgba(var(--tint), 0.08)' : 'transparent',
+                border: `1px solid ${stageFilter === 'all' ? 'rgba(var(--tint), 0.15)' : 'transparent'}`,
               }}>
               Todos os estágios
             </button>
@@ -661,7 +661,7 @@ export default function LeadsPage() {
                   className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
                   style={{
                     background: active ? s.bg : 'transparent',
-                    color:      active ? s.color : 'rgba(255,255,255,0.35)',
+                    color:      active ? s.color : 'rgba(var(--tint), 0.35)',
                     border:     `1px solid ${active ? s.border : 'transparent'}`,
                   }}>
                   {s.label}
@@ -671,7 +671,7 @@ export default function LeadsPage() {
             {(stageFilter !== 'all' || qualFilter !== 'all' || paymentFilter !== 'all' || search || productId) && (
               <button
                 onClick={() => { setStageFilter('all'); setQualFilter('all'); setPaymentFilter('all'); setSearch(''); setProductId('') }}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-white/25 hover:text-white/60 flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-ink-faint hover:text-ink-sub flex items-center gap-1"
                 style={{ border: '1px solid transparent' }}>
                 <X className="w-3 h-3" /> Limpar filtros
               </button>
@@ -696,15 +696,15 @@ export default function LeadsPage() {
             <div className="rounded-2xl flex flex-col items-center justify-center py-20 gap-4"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
-                <User className="w-5 h-5 text-white/20" />
+                style={{ background: 'rgba(var(--tint), 0.04)', border: `1px solid ${BORDER}` }}>
+                <User className="w-5 h-5 text-ink-faint" />
               </div>
               <div className="text-center">
-                <p className="text-[14px] font-medium text-white/40">
+                <p className="text-[14px] font-medium text-ink-mute">
                   {search || productId ? 'Nenhum lead encontrado' : 'Nenhum lead ainda'}
                 </p>
                 {(search || productId) && (
-                  <p className="text-[12px] text-white/20 mt-1">
+                  <p className="text-[12px] text-ink-faint mt-1">
                     <button className="text-[#E8521A] hover:underline"
                       onClick={() => { setSearch(''); setProductId('') }}>
                       Limpar filtros
@@ -719,10 +719,10 @@ export default function LeadsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <tr style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
                       {['Nome / Aluno', 'Ano Escolar', 'E-mail', 'Telefone', 'Produto', 'Status', 'Data', ''].map((h, i) => (
                         <th key={i} className="text-left px-5 py-3.5 text-[11px] font-semibold uppercase tracking-wider"
-                          style={{ color: 'rgba(255,255,255,0.28)' }}>{h}</th>
+                          style={{ color: 'rgba(var(--tint), 0.28)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -742,15 +742,15 @@ export default function LeadsPage() {
 
               {/* Pagination footer */}
               <div className="px-5 py-3 flex items-center justify-between"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-[11px] text-white/25">
+                style={{ borderTop: '1px solid rgba(var(--tint), 0.05)' }}>
+                <p className="text-[11px] text-ink-faint">
                   {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length} lead{filtered.length !== 1 ? 's' : ''}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                    className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-ink hover:bg-tint/6 disabled:opacity-25 disabled:pointer-events-none">
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
                   <div className="flex items-center gap-1">
@@ -763,14 +763,14 @@ export default function LeadsPage() {
                       }, [])
                       .map((p, i) =>
                         p === '…'
-                          ? <span key={`ellipsis-${i}`} className="px-1 text-[11px] text-white/20">…</span>
+                          ? <span key={`ellipsis-${i}`} className="px-1 text-[11px] text-ink-faint">…</span>
                           : <button
                               key={p}
                               onClick={() => setPage(p as number)}
                               className={cn('w-7 h-7 rounded-lg text-[11px] font-medium transition-all')}
                               style={safePage === p
                                 ? { background: 'rgba(232,82,26,0.2)', color: '#F0643A' }
-                                : { color: 'rgba(255,255,255,0.35)' }}>
+                                : { color: 'rgba(var(--tint), 0.35)' }}>
                               {p}
                             </button>
                       )
@@ -779,11 +779,11 @@ export default function LeadsPage() {
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={safePage === totalPages}
-                    className="p-1.5 rounded-lg transition-colors text-white/30 hover:text-white/70 hover:bg-white/6 disabled:opacity-25 disabled:pointer-events-none">
+                    className="p-1.5 rounded-lg transition-colors text-ink-mute hover:text-ink hover:bg-tint/6 disabled:opacity-25 disabled:pointer-events-none">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <p className="text-[10px] text-white/15">
+                <p className="text-[10px] text-ink-ghost">
                   {isFetching ? 'Atualizando…' : 'Dados em tempo real'}
                 </p>
               </div>

@@ -111,7 +111,7 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
           'w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-left transition-all',
           open
             ? 'border border-[#E8521A]/50 bg-[#0D0E12]'
-            : 'border border-white/7 bg-[#0D0E12] hover:border-white/15',
+            : 'border border-tint/7 bg-[#0D0E12] hover:border-tint/15',
         )}
       >
         {selected ? (
@@ -124,7 +124,7 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
             )}>
               {selected.livemode ? 'LIVE' : 'TEST'}
             </span>
-            <span className="flex-1 text-[#EDEDED] truncate font-medium">
+            <span className="flex-1 text-ink truncate font-medium">
               {selected.nickname ?? selected.productName}
             </span>
             <span className="text-[#E8521A] font-bold font-mono shrink-0">
@@ -133,11 +133,11 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
           </>
         ) : (
           <>
-            <Zap className="w-3.5 h-3.5 text-white/20 shrink-0" />
-            <span className="flex-1 text-white/30">{placeholder}</span>
+            <Zap className="w-3.5 h-3.5 text-ink-faint shrink-0" />
+            <span className="flex-1 text-ink-mute">{placeholder}</span>
           </>
         )}
-        <ChevronDown className={cn('w-3.5 h-3.5 text-white/25 shrink-0 transition-transform', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3.5 h-3.5 text-ink-faint shrink-0 transition-transform', open && 'rotate-180')} />
       </button>
 
       {/* Dropdown */}
@@ -146,24 +146,24 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
           className="absolute z-50 w-full mt-1.5 rounded-xl overflow-hidden shadow-2xl"
           style={{
             background: '#16181F',
-            border: '1px solid rgba(255,255,255,0.09)',
+            border: '1px solid rgba(var(--tint), 0.09)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
           }}
         >
           {/* Search bar */}
-          <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <Search className="w-3.5 h-3.5 text-white/25 shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-2.5" style={{ borderBottom: '1px solid rgba(var(--tint), 0.06)' }}>
+            <Search className="w-3.5 h-3.5 text-ink-faint shrink-0" />
             <input
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder="Buscar por produto ou price ID..."
-              className="flex-1 bg-transparent text-[13px] text-[#EDEDED] placeholder:text-white/25 outline-none"
+              className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-faint outline-none"
             />
-            {loading && <RefreshCw className="w-3.5 h-3.5 text-white/25 animate-spin shrink-0" />}
+            {loading && <RefreshCw className="w-3.5 h-3.5 text-ink-faint animate-spin shrink-0" />}
             {query && (
               <button onClick={() => setQuery('')}>
-                <X className="w-3.5 h-3.5 text-white/25 hover:text-white/60" />
+                <X className="w-3.5 h-3.5 text-ink-faint hover:text-ink-sub" />
               </button>
             )}
           </div>
@@ -175,18 +175,18 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
                 <p className="text-[12px] text-red-400 mb-3">{error}</p>
                 <button
                   onClick={fetchPrices}
-                  className="text-[11px] text-white/40 hover:text-white/70 flex items-center gap-1.5 mx-auto"
+                  className="text-[11px] text-ink-mute hover:text-ink flex items-center gap-1.5 mx-auto"
                 >
                   <RefreshCw className="w-3 h-3" /> Tentar novamente
                 </button>
               </div>
             ) : loading ? (
               <div className="flex items-center justify-center gap-2 py-8">
-                <RefreshCw className="w-4 h-4 text-white/30 animate-spin" />
-                <span className="text-[12px] text-white/30">Buscando preços no Stripe…</span>
+                <RefreshCw className="w-4 h-4 text-ink-mute animate-spin" />
+                <span className="text-[12px] text-ink-mute">Buscando preços no Stripe…</span>
               </div>
             ) : filtered.length === 0 ? (
-              <p className="text-[12px] text-white/30 text-center py-6">
+              <p className="text-[12px] text-ink-mute text-center py-6">
                 {query ? 'Nenhum preço encontrado.' : 'Nenhum preço ativo no Stripe.'}
               </p>
             ) : (
@@ -199,22 +199,22 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
                     'w-full flex items-center gap-3 px-3 py-3 text-left transition-colors',
                     value === price.priceId
                       ? 'bg-[#E8521A]/8'
-                      : 'hover:bg-white/3',
+                      : 'hover:bg-tint/3',
                   )}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                  style={{ borderBottom: '1px solid rgba(var(--tint), 0.04)' }}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium text-[#EDEDED] truncate">
+                      <span className="text-[13px] font-medium text-ink truncate">
                         {price.nickname ?? price.productName}
                       </span>
                       {price.nickname && (
-                        <span className="text-[10px] text-white/25 truncate hidden sm:inline">
+                        <span className="text-[10px] text-ink-faint truncate hidden sm:inline">
                           {price.productName}
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] font-mono text-white/25 mt-0.5">{price.priceId}</p>
+                    <p className="text-[10px] font-mono text-ink-faint mt-0.5">{price.priceId}</p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -238,12 +238,12 @@ export default function StripePricePicker({ value, onChange, placeholder = 'Sele
           {prices.length > 0 && (
             <div
               className="flex items-center justify-between px-3 py-2"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ borderTop: '1px solid rgba(var(--tint), 0.06)' }}
             >
-              <span className="text-[10px] text-white/20">{prices.length} preço{prices.length !== 1 ? 's' : ''} encontrado{prices.length !== 1 ? 's' : ''}</span>
+              <span className="text-[10px] text-ink-faint">{prices.length} preço{prices.length !== 1 ? 's' : ''} encontrado{prices.length !== 1 ? 's' : ''}</span>
               <button
                 onClick={fetchPrices}
-                className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                className="flex items-center gap-1 text-[10px] text-ink-faint hover:text-ink-sub transition-colors"
               >
                 <RefreshCw className="w-2.5 h-2.5" /> Atualizar
               </button>

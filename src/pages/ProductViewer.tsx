@@ -66,7 +66,7 @@ export default function ProductViewer() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-6">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-white/6
+          <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-tint/6
                           flex items-center justify-center mx-auto mb-6">
             <Lock className="w-7 h-7 text-zinc-500" />
           </div>
@@ -92,14 +92,14 @@ export default function ProductViewer() {
     <div className="flex flex-col h-screen bg-zinc-950 text-white overflow-hidden">
       {/* Top bar */}
       <header className="h-12 shrink-0 flex items-center gap-3 px-5
-                         border-b border-white/6 bg-zinc-900/80 backdrop-blur-sm">
+                         border-b border-tint/6 bg-zinc-900/80 backdrop-blur-sm">
         <Link
           to="/my-products"
-          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <div className="w-px h-4 bg-white/8" />
+        <div className="w-px h-4 bg-tint/8" />
         <span className="text-sm font-semibold text-white truncate">{product?.name}</span>
         {lesson && (
           <>
