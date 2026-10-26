@@ -4,8 +4,9 @@ import { Bell, Search, Settings, LogOut, User, Package, Users, X, ChevronRight }
 import { supabase } from '@/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import Sidebar from './Sidebar'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
-import { BG_PAGE, BORDER, BG_DROP } from '@/lib/theme'
+import { BG_DROP, BG_PAGE, BORDER, INK_MUTE } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -133,11 +134,11 @@ function SearchModal({ onClose }: { onClose: () => void }) {
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Buscar produtos, leads…"
-            className="flex-1 bg-transparent outline-none text-[14px] text-[#12131A] placeholder:text-[#8A8FA0]"
+            className="flex-1 bg-transparent outline-none text-[14px] text-ink placeholder:text-[#8A8FA0]"
           />
           {loading && <div className="w-4 h-4 rounded-full border-2 border-[#C7CBD6] border-t-[#E8521A] animate-spin shrink-0" />}
           <button onClick={onClose}
-            className="p-1 rounded-md text-[#9CA1B0] hover:text-[#565D6C] transition-colors shrink-0">
+            className="p-1 rounded-md text-[#9CA1B0] hover:text-ink-sub transition-colors shrink-0">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -161,7 +162,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                     : <Users   className="w-3.5 h-3.5" style={{ color: '#93C5FD' }} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#12131A] truncate">{r.label}</p>
+                  <p className="text-[13px] font-medium text-ink truncate">{r.label}</p>
                   <p className="text-[11px] text-[#7C8294] truncate">{r.sub}</p>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-[#B7BBC6] shrink-0" />
@@ -234,8 +235,8 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       style={{ background: BG_DROP, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <p className="text-[13px] font-semibold text-[#12131A]">Notificações</p>
-        <button onClick={onClose} className="text-[#9CA1B0] hover:text-[#565D6C] transition-colors">
+        <p className="text-[13px] font-semibold text-ink">Notificações</p>
+        <button onClick={onClose} className="text-[#9CA1B0] hover:text-ink-sub transition-colors">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -265,7 +266,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
                   <Users className="w-3.5 h-3.5" style={{ color: item.qualified ? '#34D399' : '#F87171' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-[#12131A] truncate">
+                  <p className="text-[12px] font-medium text-ink truncate">
                     {item.name || item.email || 'Novo lead'}
                     {isNew && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#E8521A] align-middle" />}
                   </p>
@@ -324,7 +325,7 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[#12131A] truncate">{name || 'Usuário'}</p>
+            <p className="text-[13px] font-semibold text-ink truncate">{name || 'Usuário'}</p>
             <p className="text-[11px] text-[#7C8294] truncate">{user?.email}</p>
           </div>
         </div>
@@ -333,12 +334,12 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
       {/* Actions */}
       <div className="py-1.5">
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-[#12131A] hover:bg-[#EEF0F5] transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-ink hover:bg-[#EEF0F5] transition-all text-left">
           <Settings className="w-4 h-4 shrink-0" />
           Configurações
         </button>
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-[#12131A] hover:bg-[#EEF0F5] transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-ink hover:bg-[#EEF0F5] transition-all text-left">
           <User className="w-4 h-4 shrink-0" />
           Perfil
         </button>
@@ -406,9 +407,9 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[13px]">
-          <span style={{ color: '#52525B' }}>Bridge HUB</span>
+          <span style={{ color: INK_MUTE }}>Bridge HUB</span>
           <span style={{ color: '#3F3F46' }}>/</span>
-          <span className="text-[#12131A] font-bold tracking-tight">{title}</span>
+          <span className="text-ink font-bold tracking-tight">{title}</span>
         </div>
 
         <div className="flex-1" />
@@ -419,17 +420,19 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
           style={{
             background: 'rgba(15,23,42,0.04)',
             border: `1px solid ${BORDER}`,
-            color: '#52525B',
+            color: INK_MUTE,
           }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(15,23,42,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER; (e.currentTarget as HTMLButtonElement).style.color = '#52525B' }}>
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER; (e.currentTarget as HTMLButtonElement).style.color = INK_MUTE }}>
           <Search className="w-3.5 h-3.5" />
           <span>Buscar...</span>
           <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(15,23,42,0.06)', color: '#52525B' }}>
+            style={{ background: 'rgba(15,23,42,0.06)', color: INK_MUTE }}>
             ⌘K
           </span>
         </button>
+
+        <ThemeToggle />
 
         {/* Notifications */}
         <div ref={notifRef} className="relative">
@@ -437,11 +440,11 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
             onClick={() => { setNotifOpen(o => !o); setProfileOpen(false) }}
             className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all"
             style={{
-              color:      notifOpen ? '#EDEDED'    : '#52525B',
+              color:      notifOpen ? '#EDEDED'    : INK_MUTE,
               background: notifOpen ? 'rgba(15,23,42,0.07)' : 'transparent',
             }}
             onMouseEnter={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(15,23,42,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}}
-            onMouseLeave={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#52525B' }}}>
+            onMouseLeave={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = INK_MUTE }}}>
             <Bell className="w-4 h-4" />
             {unread > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full flex items-center justify-center text-[7px] font-bold text-white"
@@ -478,6 +481,10 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
 
 export default function AdminLayout() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  // Única rota de tela cheia: o editor de formulário tem canvas próprio e
+  // gerencia a própria altura.
+  const fullBleed = pathname.endsWith('/edit')
   const [ready, setReady] = useState(false)
   const [user,  setUser]  = useState<SupabaseUser | null>(null)
 
@@ -512,7 +519,18 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar user={user} />
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          {/* A medianiz e a largura máxima ficam aqui, e não em cada página.
+              O redesign havia movido isso para dentro das telas, e só a
+              Dashboard recebeu o invólucro — as outras ficaram coladas na
+              borda. Centralizar impede que a próxima tela esqueça.
+              O editor de formulário é tela cheia e por isso fica de fora. */}
+          {fullBleed ? (
+            <Outlet />
+          ) : (
+            <div className="max-w-7xl w-full mx-auto px-5 py-6 sm:px-8 sm:py-8">
+              <Outlet />
+            </div>
+          )}
         </main>
       </div>
     </div>

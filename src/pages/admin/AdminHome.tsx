@@ -149,7 +149,7 @@ function StatCard({ label, value, sub, accent, icon: Icon, loading }: {
       </div>
 
       <div>
-        <p className="text-[26px] font-bold tabular-nums tracking-tight text-[#12131A] leading-none">
+        <p className="text-[26px] font-bold tabular-nums tracking-tight text-ink leading-none">
           {loading ? <span className="text-[#C7CBD6]">—</span> : value}
         </p>
         {sub && <p className="text-[11px] text-[#8A8FA0] mt-1.5">{sub}</p>}
@@ -244,7 +244,7 @@ function UTMList({ sources, total, loading }: {
       {sources.map(({ source, count }) => (
         <div key={source}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-medium text-[#12131A] truncate">{source}</span>
+            <span className="text-[11px] font-medium text-ink truncate">{source}</span>
             <span className="text-[11px] text-[#6B7280] ml-3 shrink-0 tabular-nums">{count}</span>
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(15,23,42,0.06)' }}>
@@ -336,7 +336,7 @@ export default function AdminHome() {
 
   return (
     <div className="flex flex-col min-h-full" style={{ background: BG_PAGE }}>
-      <div className="max-w-7xl w-full mx-auto px-8 py-8 flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
 
         {/* ── Header — gradient hero, the one bold element on the page ── */}
         <div
@@ -345,19 +345,19 @@ export default function AdminHome() {
         >
           <div
             className="absolute -right-10 -top-16 w-56 h-56 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.08)' }}
+            style={{ background: 'rgba(var(--tint), 0.08)' }}
           />
           <div
             className="absolute right-16 -bottom-20 w-40 h-40 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.06)' }}
+            style={{ background: 'rgba(var(--tint), 0.06)' }}
           />
           <div className="relative z-10">
             <h1 className="text-xl font-bold tracking-tight text-white">{greeting(user)}</h1>
-            <p className="text-[13px] text-white/70 mt-0.5 capitalize">{today}</p>
+            <p className="text-[13px] text-ink mt-0.5 capitalize">{today}</p>
           </div>
           <button onClick={refresh}
             className="relative z-10 flex items-center gap-2 px-4 py-2 text-[12px] font-semibold text-white transition-all shrink-0"
-            style={{ background: 'rgba(255,255,255,0.16)', borderRadius: 999 }}>
+            style={{ background: 'rgba(var(--tint), 0.16)', borderRadius: 999 }}>
             <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
             Atualizar
           </button>
@@ -383,7 +383,7 @@ export default function AdminHome() {
                   <span className="text-[12.5px] font-medium text-[#1D1F29]">
                     <strong className="tabular-nums" style={{ color: '#60A5FA' }}>{todayLeads}</strong> lead{todayLeads !== 1 ? 's' : ''} hoje
                   </span>
-                  <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
+                  <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-ink-sub transition-colors" />
                 </Link>
               )}
               {(() => {
@@ -395,7 +395,7 @@ export default function AdminHome() {
                     <span className="text-[12.5px] font-medium text-[#1D1F29]">
                       <strong className="tabular-nums" style={{ color: '#FCD34D' }}>{pending}</strong> pagamento{pending !== 1 ? 's' : ''} pendente{pending !== 1 ? 's' : ''}
                     </span>
-                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
+                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-ink-sub transition-colors" />
                   </Link>
                 ) : null
               })()}
@@ -408,7 +408,7 @@ export default function AdminHome() {
                     <span className="text-[12.5px] font-medium text-[#1D1F29]">
                       <strong className="tabular-nums" style={{ color: '#F87171' }}>{stale}</strong> lead{stale !== 1 ? 's' : ''} sem contato há +3 dias
                     </span>
-                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
+                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-ink-sub transition-colors" />
                   </Link>
                 ) : null
               })()}
@@ -458,11 +458,11 @@ export default function AdminHome() {
           <div className="lg:col-span-3 p-5" style={{ background: BG_CARD, boxShadow: SHADOW_CARD, borderRadius: 18 }}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[13px] font-bold tracking-tight text-[#12131A]">Leads — últimos 30 dias</p>
+                <p className="text-[13px] font-bold tracking-tight text-ink">Leads — últimos 30 dias</p>
                 <p className="text-[11px] text-[#8A8FA0] mt-0.5">{leads.length} lead{leads.length !== 1 ? 's' : ''} no total</p>
               </div>
               <Link to="/admin/leads"
-                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-ink-mute transition-colors">
                 Ver todos <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -472,11 +472,11 @@ export default function AdminHome() {
           <div className="lg:col-span-2 p-5" style={{ background: BG_CARD, boxShadow: SHADOW_CARD, borderRadius: 18 }}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[13px] font-bold tracking-tight text-[#12131A]">Pipeline de Contatos</p>
+                <p className="text-[13px] font-bold tracking-tight text-ink">Pipeline de Contatos</p>
                 <p className="text-[11px] text-[#8A8FA0] mt-0.5">{totalContacts} contato{totalContacts !== 1 ? 's' : ''} únicos</p>
               </div>
               <Link to="/admin/contatos"
-                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-ink-mute transition-colors">
                 Ver CRM <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -490,9 +490,9 @@ export default function AdminHome() {
           {/* Activity feed */}
           <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-[#12131A]">Atividade Recente</p>
+              <p className="text-[13px] font-semibold text-ink">Atividade Recente</p>
               <Link to="/admin/leads"
-                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-ink-mute transition-colors">
                 Leads <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -522,7 +522,7 @@ export default function AdminHome() {
                     style={{ borderBottom: i < activityItems.length - 1 ? '1px solid rgba(15,23,42,0.04)' : 'none' }}>
                     <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ background: item.color }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#12131A] truncate">{item.text}</p>
+                      <p className="text-[12px] font-medium text-ink truncate">{item.text}</p>
                       <p className="text-[10px] text-[#7C8294] mt-0.5 truncate">{item.sub}</p>
                     </div>
                     <span className="text-[10px] text-[#9CA1B0] shrink-0 mt-0.5">{item.time}</span>
@@ -537,16 +537,16 @@ export default function AdminHome() {
 
             {/* UTM breakdown */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[13px] font-semibold text-[#12131A] mb-4">Origem dos Leads</p>
+              <p className="text-[13px] font-semibold text-ink mb-4">Origem dos Leads</p>
               <UTMList sources={utmSources} total={leads.length} loading={isLoading} />
             </div>
 
             {/* Students */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[13px] font-semibold text-[#12131A]">Alunos</p>
+                <p className="text-[13px] font-semibold text-ink">Alunos</p>
                 <Link to="/admin/alunos"
-                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
+                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-ink-mute transition-colors">
                   Gerenciar <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -598,7 +598,7 @@ export default function AdminHome() {
                     className="group flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-[#F1F2F7]">
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#12131A] truncate">{item.label}</p>
+                      <p className="text-[12px] font-medium text-ink truncate">{item.label}</p>
                       <p className="text-[10px] text-[#8A8FA0]">{isLoading ? '…' : item.sub}</p>
                     </div>
                     <ArrowUpRight className="w-3 h-3 text-[#B7BBC6] group-hover:text-[#6B7280] transition-colors shrink-0" />
@@ -610,9 +610,9 @@ export default function AdminHome() {
             {/* Products */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[13px] font-semibold text-[#12131A]">Produtos</p>
+                <p className="text-[13px] font-semibold text-ink">Produtos</p>
                 <Link to="/admin/products"
-                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
+                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-ink-mute transition-colors">
                   Ver todos <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -640,7 +640,7 @@ export default function AdminHome() {
                           {p.name[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-medium text-[#12131A] truncate group-hover:text-[#E8521A] transition-colors">
+                          <p className="text-[12px] font-medium text-ink truncate group-hover:text-[#E8521A] transition-colors">
                             {p.name}
                           </p>
                         </div>
