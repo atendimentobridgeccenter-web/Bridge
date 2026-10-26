@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/cn'
-import { ACCENT, BG_SIDEBAR, BORDER2 } from '@/lib/theme'
+import { ACCENT, BG_SIDEBAR, SIDEBAR_BORDER } from '@/lib/theme'
 
 // ── Bridge logo ───────────────────────────────────────────────
 
@@ -88,10 +88,10 @@ function NavItem({
     >
       {({ isActive }) => (
         <>
-          {/* Active left bar */}
-          {isActive && !collapsed && (
+          {/* Active signal rule — the system's recurring marker, not a rounded nub */}
+          {isActive && (
             <span
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full"
+              className="absolute left-0 top-0 bottom-0 w-[2px]"
               style={{ background: ACCENT }}
             />
           )}
@@ -150,7 +150,7 @@ export default function Sidebar() {
       style={{
         width:       collapsed ? 60 : 216,
         background:  BG_SIDEBAR,
-        borderRight: `1px solid ${BORDER2}`,
+        borderRight: `1px solid ${SIDEBAR_BORDER}`,
         transition:  'width 200ms cubic-bezier(.4,0,.2,1)',
       }}
     >
@@ -158,7 +158,7 @@ export default function Sidebar() {
       <div
         className="flex items-center gap-2.5 relative"
         style={{
-          borderBottom: `1px solid ${BORDER2}`,
+          borderBottom: `1px solid ${SIDEBAR_BORDER}`,
           minHeight: 52,
           paddingLeft:  px,
           paddingRight: px,
@@ -173,7 +173,7 @@ export default function Sidebar() {
 
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] font-semibold text-[#DADCE6] leading-none truncate">Bridge HUB</p>
+            <p className="text-[12.5px] font-bold tracking-tight text-[#DADCE6] leading-none truncate">Bridge HUB</p>
             <p className="text-[9.5px] mt-0.5 leading-none truncate" style={{ color: '#404252' }}>
               Motor de Lançamentos
             </p>
@@ -239,7 +239,7 @@ export default function Sidebar() {
       <div
         className="py-2.5"
         style={{
-          borderTop:    `1px solid ${BORDER2}`,
+          borderTop:    `1px solid ${SIDEBAR_BORDER}`,
           paddingLeft:  px,
           paddingRight: px,
         }}

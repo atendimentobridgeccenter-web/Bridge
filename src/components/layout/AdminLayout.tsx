@@ -127,17 +127,17 @@ function SearchModal({ onClose }: { onClose: () => void }) {
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3.5"
           style={{ borderBottom: results.length ? `1px solid ${BORDER}` : 'none' }}>
-          <Search className="w-4 h-4 text-white/30 shrink-0" />
+          <Search className="w-4 h-4 text-[#7C8294] shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Buscar produtos, leads…"
-            className="flex-1 bg-transparent outline-none text-[14px] text-[#EDEDED] placeholder:text-white/25"
+            className="flex-1 bg-transparent outline-none text-[14px] text-[#12131A] placeholder:text-[#8A8FA0]"
           />
-          {loading && <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white/60 animate-spin shrink-0" />}
+          {loading && <div className="w-4 h-4 rounded-full border-2 border-[#C7CBD6] border-t-[#E8521A] animate-spin shrink-0" />}
           <button onClick={onClose}
-            className="p-1 rounded-md text-white/20 hover:text-white/50 transition-colors shrink-0">
+            className="p-1 rounded-md text-[#9CA1B0] hover:text-[#565D6C] transition-colors shrink-0">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -150,7 +150,7 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                 onClick={() => { navigate(r.href); onClose() }}
                 onMouseEnter={() => setActive(i)}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                style={{ background: i === active ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
+                style={{ background: i === active ? 'rgba(15,23,42,0.05)' : 'transparent' }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                   style={{
                     background: r.type === 'product' ? 'rgba(232,82,26,0.1)' : 'rgba(96,165,250,0.1)',
@@ -161,10 +161,10 @@ function SearchModal({ onClose }: { onClose: () => void }) {
                     : <Users   className="w-3.5 h-3.5" style={{ color: '#93C5FD' }} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#EDEDED] truncate">{r.label}</p>
-                  <p className="text-[11px] text-white/30 truncate">{r.sub}</p>
+                  <p className="text-[13px] font-medium text-[#12131A] truncate">{r.label}</p>
+                  <p className="text-[11px] text-[#7C8294] truncate">{r.sub}</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-white/15 shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-[#B7BBC6] shrink-0" />
               </button>
             ))}
           </div>
@@ -172,14 +172,14 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 
         {query.trim() && !loading && results.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-[13px] text-white/25">Nenhum resultado para "<span className="text-white/40">{query}</span>"</p>
+            <p className="text-[13px] text-[#8A8FA0]">Nenhum resultado para "<span className="text-[#6B7280]">{query}</span>"</p>
           </div>
         )}
 
         {!query.trim() && (
           <div className="px-4 py-3 flex items-center gap-4">
-            <span className="text-[11px] text-white/20">Dica:</span>
-            <span className="text-[11px] text-white/20">↑↓ navegar · Enter abrir · Esc fechar</span>
+            <span className="text-[11px] text-[#9CA1B0]">Dica:</span>
+            <span className="text-[11px] text-[#9CA1B0]">↑↓ navegar · Enter abrir · Esc fechar</span>
           </div>
         )}
       </div>
@@ -234,8 +234,8 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       style={{ background: BG_DROP, border: `1px solid ${BORDER}` }}>
       <div className="flex items-center justify-between px-4 py-3"
         style={{ borderBottom: `1px solid ${BORDER}` }}>
-        <p className="text-[13px] font-semibold text-[#EDEDED]">Notificações</p>
-        <button onClick={onClose} className="text-white/20 hover:text-white/50 transition-colors">
+        <p className="text-[13px] font-semibold text-[#12131A]">Notificações</p>
+        <button onClick={onClose} className="text-[#9CA1B0] hover:text-[#565D6C] transition-colors">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -243,12 +243,12 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       <div className="max-h-[400px] overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-10">
-            <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white/60 animate-spin" />
+            <div className="w-4 h-4 rounded-full border-2 border-[#C7CBD6] border-t-[#E8521A] animate-spin" />
           </div>
         ) : items.length === 0 ? (
           <div className="py-10 text-center">
-            <Bell className="w-7 h-7 text-white/10 mx-auto mb-2" />
-            <p className="text-[12px] text-white/25">Sem notificações ainda</p>
+            <Bell className="w-7 h-7 text-[#D7D9E0] mx-auto mb-2" />
+            <p className="text-[12px] text-[#8A8FA0]">Sem notificações ainda</p>
           </div>
         ) : (
           items.map(item => {
@@ -256,7 +256,7 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
             return (
               <div key={item.id}
                 className="flex items-start gap-3 px-4 py-3 transition-colors cursor-default"
-                style={{ borderBottom: `1px solid rgba(255,255,255,0.04)`, background: isNew ? 'rgba(232,82,26,0.03)' : 'transparent' }}>
+                style={{ borderBottom: `1px solid rgba(15,23,42,0.04)`, background: isNew ? 'rgba(232,82,26,0.03)' : 'transparent' }}>
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
                   style={{
                     background: item.qualified ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
@@ -265,11 +265,11 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
                   <Users className="w-3.5 h-3.5" style={{ color: item.qualified ? '#34D399' : '#F87171' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-[#EDEDED] truncate">
+                  <p className="text-[12px] font-medium text-[#12131A] truncate">
                     {item.name || item.email || 'Novo lead'}
                     {isNew && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#E8521A] align-middle" />}
                   </p>
-                  <p className="text-[11px] text-white/30 truncate mt-0.5">
+                  <p className="text-[11px] text-[#7C8294] truncate mt-0.5">
                     {item.product_name ? `${item.product_name} · ` : ''}{fmtAgo(item.created_at)}
                   </p>
                 </div>
@@ -324,8 +324,8 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[#EDEDED] truncate">{name || 'Usuário'}</p>
-            <p className="text-[11px] text-white/30 truncate">{user?.email}</p>
+            <p className="text-[13px] font-semibold text-[#12131A] truncate">{name || 'Usuário'}</p>
+            <p className="text-[11px] text-[#7C8294] truncate">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -333,12 +333,12 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
       {/* Actions */}
       <div className="py-1.5">
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-white/55 hover:text-[#EDEDED] hover:bg-white/5 transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-[#12131A] hover:bg-[#EEF0F5] transition-all text-left">
           <Settings className="w-4 h-4 shrink-0" />
           Configurações
         </button>
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-white/55 hover:text-[#EDEDED] hover:bg-white/5 transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-[#12131A] hover:bg-[#EEF0F5] transition-all text-left">
           <User className="w-4 h-4 shrink-0" />
           Perfil
         </button>
@@ -408,7 +408,7 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
         <div className="flex items-center gap-2 text-[13px]">
           <span style={{ color: '#52525B' }}>Bridge HUB</span>
           <span style={{ color: '#3F3F46' }}>/</span>
-          <span className="text-[#EDEDED] font-medium">{title}</span>
+          <span className="text-[#12131A] font-bold tracking-tight">{title}</span>
         </div>
 
         <div className="flex-1" />
@@ -417,16 +417,16 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
         <button onClick={() => setSearchOpen(true)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] transition-all"
           style={{
-            background: 'rgba(255,255,255,0.04)',
+            background: 'rgba(15,23,42,0.04)',
             border: `1px solid ${BORDER}`,
             color: '#52525B',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(15,23,42,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER; (e.currentTarget as HTMLButtonElement).style.color = '#52525B' }}>
           <Search className="w-3.5 h-3.5" />
           <span>Buscar...</span>
           <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(255,255,255,0.06)', color: '#52525B' }}>
+            style={{ background: 'rgba(15,23,42,0.06)', color: '#52525B' }}>
             ⌘K
           </span>
         </button>
@@ -438,9 +438,9 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
             className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all"
             style={{
               color:      notifOpen ? '#EDEDED'    : '#52525B',
-              background: notifOpen ? 'rgba(255,255,255,0.07)' : 'transparent',
+              background: notifOpen ? 'rgba(15,23,42,0.07)' : 'transparent',
             }}
-            onMouseEnter={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}}
+            onMouseEnter={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(15,23,42,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}}
             onMouseLeave={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#52525B' }}}>
             <Bell className="w-4 h-4" />
             {unread > 0 && (

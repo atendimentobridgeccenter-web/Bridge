@@ -8,10 +8,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        base:        '#0B0C10',
-        surface:     '#14151B',
-        'surface-2': '#191B22',
-        'surface-3': '#1C1E27',
+        base:        '#F5F6FA',
+        surface:     '#FFFFFF',
+        'surface-2': '#F7F8FC',
+        'surface-3': '#F0F1F6',
       },
       opacity: {
         '2':  '0.02',
@@ -28,7 +28,8 @@ export default {
         '35': '0.35',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
     },
   },

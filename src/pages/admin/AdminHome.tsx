@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 import { cn } from '@/lib/cn'
 import { STAGES } from '@/lib/stageConfig'
-import { BG_PAGE, BG_CARD, BORDER } from '@/lib/theme'
+import { BG_PAGE, BG_CARD, BORDER, SHADOW_CARD, ACCENT_GRADIENT } from '@/lib/theme'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -136,19 +136,23 @@ function StatCard({ label, value, sub, accent, icon: Icon, loading }: {
   icon: React.ElementType; loading: boolean
 }) {
   return (
-    <div className="flex flex-col gap-4 p-5 rounded-2xl" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+    <div
+      className="flex flex-col gap-4 p-5"
+      style={{ background: BG_CARD, boxShadow: SHADOW_CARD, borderRadius: 18 }}
+    >
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-medium text-white/35">{label}</span>
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ background: accent ? `${accent}18` : 'rgba(255,255,255,0.04)' }}>
-          <Icon className="w-3.5 h-3.5" style={{ color: accent ?? '#52525B' }} />
+        <span className="text-[12px] font-medium text-[#7C8294]">{label}</span>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: accent ? `${accent}16` : 'rgba(15,23,42,0.05)' }}>
+          <Icon className="w-3.5 h-3.5" style={{ color: accent ?? '#7C8294' }} />
         </div>
       </div>
+
       <div>
-        <p className="text-[26px] font-bold text-[#EDEDED] tracking-tight leading-none">
-          {loading ? <span className="text-white/15">—</span> : value}
+        <p className="text-[26px] font-bold tabular-nums tracking-tight text-[#12131A] leading-none">
+          {loading ? <span className="text-[#C7CBD6]">—</span> : value}
         </p>
-        {sub && <p className="text-[11px] text-white/25 mt-1.5">{sub}</p>}
+        {sub && <p className="text-[11px] text-[#8A8FA0] mt-1.5">{sub}</p>}
       </div>
     </div>
   )
@@ -159,7 +163,7 @@ function LeadsChart({ data, loading }: { data: { label: string; total: number }[
     <div className="flex items-end gap-0.5 h-20">
       {Array.from({ length: 30 }).map((_, i) => (
         <div key={i} className="flex-1 rounded-sm animate-pulse"
-          style={{ height: `${20 + ((i * 37) % 60)}%`, background: 'rgba(255,255,255,0.04)' }} />
+          style={{ height: `${20 + ((i * 37) % 60)}%`, background: 'rgba(15,23,42,0.04)' }} />
       ))}
     </div>
   )
@@ -171,7 +175,7 @@ function LeadsChart({ data, loading }: { data: { label: string; total: number }[
           <div className="w-full rounded-sm transition-all"
             style={{
               height: d.total > 0 ? `${Math.max((d.total / max) * 100, 6)}%` : '2px',
-              background: d.total > 0 ? 'rgba(232,82,26,0.45)' : 'rgba(255,255,255,0.04)',
+              background: d.total > 0 ? 'rgba(232,82,26,0.45)' : 'rgba(15,23,42,0.04)',
             }} />
         </div>
       ))}
@@ -185,7 +189,7 @@ function PipelineFunnel({ dist, total, loading }: {
   if (loading) return (
     <div className="flex flex-col gap-2.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="h-7 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        <div key={i} className="h-7 rounded-lg animate-pulse" style={{ background: 'rgba(15,23,42,0.04)' }} />
       ))}
     </div>
   )
@@ -197,22 +201,23 @@ function PipelineFunnel({ dist, total, loading }: {
           <span className="text-[10px] font-semibold w-16 text-right shrink-0" style={{ color: s.color }}>
             {s.label}
           </span>
-          <div className="flex-1 h-6 rounded-lg overflow-hidden relative"
-            style={{ background: 'rgba(255,255,255,0.04)' }}>
-            <div className="h-full rounded-lg transition-all duration-700"
+          <div className="flex-1 h-6 overflow-hidden relative"
+            style={{ background: 'rgba(15,23,42,0.04)', borderRadius: 3 }}>
+            <div className="h-full transition-all duration-700"
               style={{
                 width: s.count > 0 ? `${Math.max((s.count / maxCount) * 100, 5)}%` : '0%',
                 background: s.bg,
                 borderRight: s.count > 0 ? `2px solid ${s.color}` : 'none',
+                borderRadius: 3,
               }} />
             {s.count > 0 && (
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold"
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold font-mono tabular-nums"
                 style={{ color: s.color }}>
                 {s.count}
               </span>
             )}
           </div>
-          <span className="text-[10px] text-white/25 w-8 text-right shrink-0">
+          <span className="text-[10px] font-mono tabular-nums text-[#8A8FA0] w-8 text-right shrink-0">
             {total > 0 ? `${Math.round(s.count / total * 100)}%` : '—'}
           </span>
         </div>
@@ -227,22 +232,22 @@ function UTMList({ sources, total, loading }: {
   if (loading) return (
     <div className="flex flex-col gap-3">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-8 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+        <div key={i} className="h-8 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.04)' }} />
       ))}
     </div>
   )
   if (sources.length === 0) return (
-    <p className="text-[12px] text-white/25 py-4 text-center">Sem dados UTM ainda</p>
+    <p className="text-[12px] text-[#8A8FA0] py-4 text-center">Sem dados UTM ainda</p>
   )
   return (
     <div className="flex flex-col gap-3">
       {sources.map(({ source, count }) => (
         <div key={source}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-medium text-[#EDEDED] truncate">{source}</span>
-            <span className="text-[11px] text-white/40 ml-3 shrink-0 tabular-nums">{count}</span>
+            <span className="text-[11px] font-medium text-[#12131A] truncate">{source}</span>
+            <span className="text-[11px] text-[#6B7280] ml-3 shrink-0 tabular-nums">{count}</span>
           </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(15,23,42,0.06)' }}>
             <div className="h-full rounded-full"
               style={{ width: `${Math.round(count / total * 100)}%`, background: '#E8521A' }} />
           </div>
@@ -254,7 +259,7 @@ function UTMList({ sources, total, loading }: {
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   published: { bg: 'rgba(52,211,153,0.08)',  color: '#34D399', label: 'Publicado' },
-  draft:     { bg: 'rgba(255,255,255,0.05)', color: '#71717A', label: 'Rascunho'  },
+  draft:     { bg: 'rgba(15,23,42,0.05)', color: '#71717A', label: 'Rascunho'  },
   archived:  { bg: 'rgba(239,68,68,0.08)',   color: '#F87171', label: 'Arquivado' },
 }
 
@@ -333,15 +338,26 @@ export default function AdminHome() {
     <div className="flex flex-col min-h-full" style={{ background: BG_PAGE }}>
       <div className="max-w-7xl w-full mx-auto px-8 py-8 flex flex-col gap-6">
 
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-[#EDEDED] tracking-tight">{greeting(user)}</h1>
-            <p className="text-[13px] text-white/30 mt-0.5 capitalize">{today}</p>
+        {/* ── Header — gradient hero, the one bold element on the page ── */}
+        <div
+          className="flex items-center justify-between gap-4 px-6 py-5 overflow-hidden relative"
+          style={{ background: ACCENT_GRADIENT, borderRadius: 20 }}
+        >
+          <div
+            className="absolute -right-10 -top-16 w-56 h-56 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
+          />
+          <div
+            className="absolute right-16 -bottom-20 w-40 h-40 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.06)' }}
+          />
+          <div className="relative z-10">
+            <h1 className="text-xl font-bold tracking-tight text-white">{greeting(user)}</h1>
+            <p className="text-[13px] text-white/70 mt-0.5 capitalize">{today}</p>
           </div>
           <button onClick={refresh}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all"
-            style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.35)' }}>
+            className="relative z-10 flex items-center gap-2 px-4 py-2 text-[12px] font-semibold text-white transition-all shrink-0"
+            style={{ background: 'rgba(255,255,255,0.16)', borderRadius: 999 }}>
             <RefreshCw className={cn('w-3.5 h-3.5', isFetching && 'animate-spin')} />
             Atualizar
           </button>
@@ -350,8 +366,8 @@ export default function AdminHome() {
         {/* ── Hoje — fila de ação ── */}
         {!isLoading && (todayLeads > 0 || leads.filter(l => !l.qualified && isWithinDays(l.created_at, 1)).length > 0) && (
           <div
-            className="rounded-2xl p-4 flex flex-col gap-3"
-            style={{ background: 'rgba(96,165,250,0.04)', border: '1px solid rgba(96,165,250,0.12)' }}
+            className="p-4 flex flex-col gap-3"
+            style={{ background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.16)', borderRadius: 16 }}
           >
             <div className="flex items-center gap-2">
               <Zap className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
@@ -361,38 +377,38 @@ export default function AdminHome() {
             </div>
             <div className="flex flex-wrap gap-3">
               {todayLeads > 0 && (
-                <Link to="/admin/pessoas" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                <Link to="/admin/pessoas" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-[#F1F2F7]"
                   style={{ border: '1px solid rgba(96,165,250,0.12)' }}>
                   <Users className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
-                  <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                  <span className="text-[12.5px] font-medium text-[#1D1F29]">
                     <strong className="tabular-nums" style={{ color: '#60A5FA' }}>{todayLeads}</strong> lead{todayLeads !== 1 ? 's' : ''} hoje
                   </span>
-                  <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                  <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
                 </Link>
               )}
               {(() => {
                 const pending = leads.filter(l => l.payment_status === 'pending').length
                 return pending > 0 ? (
-                  <Link to="/admin/financeiro" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                  <Link to="/admin/financeiro" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-[#F1F2F7]"
                     style={{ border: '1px solid rgba(251,191,36,0.15)' }}>
                     <Clock className="w-3.5 h-3.5" style={{ color: '#FCD34D' }} />
-                    <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                    <span className="text-[12.5px] font-medium text-[#1D1F29]">
                       <strong className="tabular-nums" style={{ color: '#FCD34D' }}>{pending}</strong> pagamento{pending !== 1 ? 's' : ''} pendente{pending !== 1 ? 's' : ''}
                     </span>
-                    <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
                   </Link>
                 ) : null
               })()}
               {(() => {
                 const stale = leads.filter(l => !l.qualified && !isWithinDays(l.created_at, 3)).length
                 return stale > 0 ? (
-                  <Link to="/admin/pessoas?journey=lead" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-white/4"
+                  <Link to="/admin/pessoas?journey=lead" className="group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all hover:bg-[#F1F2F7]"
                     style={{ border: '1px solid rgba(239,68,68,0.15)' }}>
                     <Activity className="w-3.5 h-3.5" style={{ color: '#F87171' }} />
-                    <span className="text-[12.5px] font-medium text-[#DADCE6]">
+                    <span className="text-[12.5px] font-medium text-[#1D1F29]">
                       <strong className="tabular-nums" style={{ color: '#F87171' }}>{stale}</strong> lead{stale !== 1 ? 's' : ''} sem contato há +3 dias
                     </span>
-                    <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/50 transition-colors" />
+                    <ChevronRight className="w-3 h-3 text-[#9CA1B0] group-hover:text-[#565D6C] transition-colors" />
                   </Link>
                 ) : null
               })()}
@@ -439,28 +455,28 @@ export default function AdminHome() {
         {/* ── Chart + Pipeline ── */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-          <div className="lg:col-span-3 rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+          <div className="lg:col-span-3 p-5" style={{ background: BG_CARD, boxShadow: SHADOW_CARD, borderRadius: 18 }}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[13px] font-semibold text-[#EDEDED]">Leads — últimos 30 dias</p>
-                <p className="text-[11px] text-white/25 mt-0.5">{leads.length} lead{leads.length !== 1 ? 's' : ''} no total</p>
+                <p className="text-[13px] font-bold tracking-tight text-[#12131A]">Leads — últimos 30 dias</p>
+                <p className="text-[11px] text-[#8A8FA0] mt-0.5">{leads.length} lead{leads.length !== 1 ? 's' : ''} no total</p>
               </div>
               <Link to="/admin/leads"
-                className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
                 Ver todos <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
             <LeadsChart data={chartData} loading={isLoading} />
           </div>
 
-          <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
+          <div className="lg:col-span-2 p-5" style={{ background: BG_CARD, boxShadow: SHADOW_CARD, borderRadius: 18 }}>
             <div className="flex items-center justify-between mb-5">
               <div>
-                <p className="text-[13px] font-semibold text-[#EDEDED]">Pipeline de Contatos</p>
-                <p className="text-[11px] text-white/25 mt-0.5">{totalContacts} contato{totalContacts !== 1 ? 's' : ''} únicos</p>
+                <p className="text-[13px] font-bold tracking-tight text-[#12131A]">Pipeline de Contatos</p>
+                <p className="text-[11px] text-[#8A8FA0] mt-0.5">{totalContacts} contato{totalContacts !== 1 ? 's' : ''} únicos</p>
               </div>
               <Link to="/admin/contatos"
-                className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
                 Ver CRM <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -474,9 +490,9 @@ export default function AdminHome() {
           {/* Activity feed */}
           <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-[#EDEDED]">Atividade Recente</p>
+              <p className="text-[13px] font-semibold text-[#12131A]">Atividade Recente</p>
               <Link to="/admin/leads"
-                className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
                 Leads <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
@@ -484,32 +500,32 @@ export default function AdminHome() {
               <div>
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="flex items-center gap-3 py-2.5"
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                    style={{ borderBottom: '1px solid rgba(15,23,42,0.04)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'rgba(15,23,42,0.1)' }} />
                     <div className="flex-1 flex flex-col gap-1.5">
-                      <div className="h-3 w-40 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                      <div className="h-2 w-24 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                      <div className="h-3 w-40 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.06)' }} />
+                      <div className="h-2 w-24 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.04)' }} />
                     </div>
-                    <div className="w-10 h-2 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <div className="w-10 h-2 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.04)' }} />
                   </div>
                 ))}
               </div>
             ) : activityItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Activity className="w-8 h-8 text-white/10" />
-                <p className="text-[12px] text-white/25">Nenhuma atividade ainda</p>
+                <Activity className="w-8 h-8 text-[#D7D9E0]" />
+                <p className="text-[12px] text-[#8A8FA0]">Nenhuma atividade ainda</p>
               </div>
             ) : (
               <div>
                 {activityItems.map((item, i) => (
                   <div key={i} className="flex items-start gap-3 py-2.5"
-                    style={{ borderBottom: i < activityItems.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                    style={{ borderBottom: i < activityItems.length - 1 ? '1px solid rgba(15,23,42,0.04)' : 'none' }}>
                     <div className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ background: item.color }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#EDEDED] truncate">{item.text}</p>
-                      <p className="text-[10px] text-white/30 mt-0.5 truncate">{item.sub}</p>
+                      <p className="text-[12px] font-medium text-[#12131A] truncate">{item.text}</p>
+                      <p className="text-[10px] text-[#7C8294] mt-0.5 truncate">{item.sub}</p>
                     </div>
-                    <span className="text-[10px] text-white/20 shrink-0 mt-0.5">{item.time}</span>
+                    <span className="text-[10px] text-[#9CA1B0] shrink-0 mt-0.5">{item.time}</span>
                   </div>
                 ))}
               </div>
@@ -521,23 +537,23 @@ export default function AdminHome() {
 
             {/* UTM breakdown */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[13px] font-semibold text-[#EDEDED] mb-4">Origem dos Leads</p>
+              <p className="text-[13px] font-semibold text-[#12131A] mb-4">Origem dos Leads</p>
               <UTMList sources={utmSources} total={leads.length} loading={isLoading} />
             </div>
 
             {/* Students */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[13px] font-semibold text-[#EDEDED]">Alunos</p>
+                <p className="text-[13px] font-semibold text-[#12131A]">Alunos</p>
                 <Link to="/admin/alunos"
-                  className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
                   Gerenciar <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
               {isLoading ? (
                 <div className="flex flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="h-9 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                    <div key={i} className="h-9 rounded-lg animate-pulse" style={{ background: 'rgba(15,23,42,0.04)' }} />
                   ))}
                 </div>
               ) : (
@@ -557,8 +573,8 @@ export default function AdminHome() {
                   </div>
                   {monthlyRevenue > 0 && (
                     <div className="mt-3 pt-3 flex items-center justify-between"
-                      style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span className="text-[11px] text-white/30">Receita estimada</span>
+                      style={{ borderTop: '1px solid rgba(15,23,42,0.06)' }}>
+                      <span className="text-[11px] text-[#7C8294]">Receita estimada</span>
                       <span className="text-[13px] font-semibold" style={{ color: '#FB923C' }}>
                         {fmtBRL(monthlyRevenue)}/mês
                       </span>
@@ -570,7 +586,7 @@ export default function AdminHome() {
 
             {/* Quick links */}
             <div className="rounded-2xl p-4" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-3">Acesso rápido</p>
+              <p className="text-[10px] font-semibold text-[#8A8FA0] uppercase tracking-widest mb-3">Acesso rápido</p>
               <div className="flex flex-col gap-1">
                 {[
                   { to: '/admin/leads',    label: 'Leads CRM',  sub: `${leads.length} leads`,        color: '#60A5FA' },
@@ -579,13 +595,13 @@ export default function AdminHome() {
                   { to: '/admin/products', label: 'Produtos',   sub: `${activeProducts} publicados`,  color: '#FB923C' },
                 ].map(item => (
                   <Link key={item.to} to={item.to}
-                    className="group flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-white/4">
+                    className="group flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-[#F1F2F7]">
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#EDEDED] truncate">{item.label}</p>
-                      <p className="text-[10px] text-white/25">{isLoading ? '…' : item.sub}</p>
+                      <p className="text-[12px] font-medium text-[#12131A] truncate">{item.label}</p>
+                      <p className="text-[10px] text-[#8A8FA0]">{isLoading ? '…' : item.sub}</p>
                     </div>
-                    <ArrowUpRight className="w-3 h-3 text-white/15 group-hover:text-white/40 transition-colors shrink-0" />
+                    <ArrowUpRight className="w-3 h-3 text-[#B7BBC6] group-hover:text-[#6B7280] transition-colors shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -594,9 +610,9 @@ export default function AdminHome() {
             {/* Products */}
             <div className="rounded-2xl p-5" style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[13px] font-semibold text-[#EDEDED]">Produtos</p>
+                <p className="text-[13px] font-semibold text-[#12131A]">Produtos</p>
                 <Link to="/admin/products"
-                  className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/60 transition-colors">
+                  className="flex items-center gap-1 text-[11px] text-[#7C8294] hover:text-[#454B59] transition-colors">
                   Ver todos <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -604,13 +620,13 @@ export default function AdminHome() {
                 <div className="flex flex-col gap-2 pt-1">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className="flex items-center gap-3 py-2">
-                      <div className="w-7 h-7 rounded-lg animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                      <div className="flex-1 h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                      <div className="w-7 h-7 rounded-lg animate-pulse" style={{ background: 'rgba(15,23,42,0.05)' }} />
+                      <div className="flex-1 h-3 rounded animate-pulse" style={{ background: 'rgba(15,23,42,0.05)' }} />
                     </div>
                   ))}
                 </div>
               ) : recentProds.length === 0 ? (
-                <p className="text-[12px] text-white/25 py-4 text-center">Nenhum produto ainda</p>
+                <p className="text-[12px] text-[#8A8FA0] py-4 text-center">Nenhum produto ainda</p>
               ) : (
                 <div>
                   {recentProds.map((p, idx) => {
@@ -618,13 +634,13 @@ export default function AdminHome() {
                     return (
                       <Link key={p.id} to={`/admin/products/${p.id}`}
                         className="group flex items-center gap-3 py-2.5 transition-colors"
-                        style={{ borderBottom: idx < recentProds.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        style={{ borderBottom: idx < recentProds.length - 1 ? '1px solid rgba(15,23,42,0.04)' : 'none' }}>
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0 text-white"
                           style={{ background: 'linear-gradient(135deg, rgba(232,82,26,0.5), rgba(194,63,18,0.5))' }}>
                           {p.name[0].toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-medium text-[#EDEDED] truncate group-hover:text-white transition-colors">
+                          <p className="text-[12px] font-medium text-[#12131A] truncate group-hover:text-[#E8521A] transition-colors">
                             {p.name}
                           </p>
                         </div>
@@ -655,7 +671,7 @@ export default function AdminHome() {
                 <p className="text-[22px] font-bold tabular-nums" style={{ color: item.color }}>
                   {isLoading ? '—' : item.value}
                 </p>
-                <p className="text-[11px] text-white/35 mt-0.5">{item.label}</p>
+                <p className="text-[11px] text-[#737A8C] mt-0.5">{item.label}</p>
               </div>
               {i < arr.length - 1 && (
                 <div className="w-px h-8" style={{ background: 'rgba(232,82,26,0.2)' }} />
@@ -664,7 +680,7 @@ export default function AdminHome() {
           ))}
         </div>
 
-        <p className="text-[11px] text-white/15 text-center pb-2">
+        <p className="text-[11px] text-[#B7BBC6] text-center pb-2">
           Bridge HUB · Dados em tempo real
         </p>
       </div>
