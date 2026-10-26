@@ -16,7 +16,7 @@ import type {
   JlptLevel, PaymentMethod, CancelReason,
 } from '@/hooks/useStudents'
 import { useClasses, formatSchedule } from '@/hooks/useClasses'
-import { BG_PAGE, BG_CARD2, BG_CARD, BG_INPUT, BORDER2, BORDER } from '@/lib/theme'
+import { BG_CARD, BG_CARD2, BG_INPUT, BG_PAGE, BORDER, BORDER2, DANGER, INK_FAINT, INK_MUTE, INK_SUB } from '@/lib/theme'
 
 // ── Config ────────────────────────────────────────────────────
 
@@ -112,15 +112,15 @@ function DonutChart({ data }: { data: { label: string; count: number; color: str
           />
         ))}
         <text x={cx} y={cy - 6} textAnchor="middle" fill="#EDEDED" fontSize={22} fontWeight="700">{total}</text>
-        <text x={cx} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize={10}>cancelamentos</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fill="rgba(var(--tint), 0.3)" fontSize={10}>cancelamentos</text>
       </svg>
 
       <div className="flex flex-col gap-2">
         {slices.map((s, i) => (
           <div key={i} className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />
-            <span className="text-[12px] text-white/55">{s.label}</span>
-            <span className="text-[12px] font-semibold text-white/70 ml-auto pl-4">{s.count}</span>
+            <span className="text-[12px] text-ink-sub">{s.label}</span>
+            <span className="text-[12px] font-semibold text-ink ml-auto pl-4">{s.count}</span>
           </div>
         ))}
       </div>
@@ -133,7 +133,7 @@ function DonutChart({ data }: { data: { label: string; count: number; color: str
 function DrawerSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/25 border-b pb-2"
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-faint border-b pb-2"
         style={{ borderColor: BORDER2 }}>
         {title}
       </p>
@@ -149,14 +149,14 @@ function InheritedRow({ icon: Icon, value, href }: {
 }) {
   return (
     <div className="flex items-center gap-2 min-w-0">
-      <Icon className="w-3 h-3 text-white/25 shrink-0" />
+      <Icon className="w-3 h-3 text-ink-faint shrink-0" />
       {href ? (
         <a href={href} target="_blank" rel="noreferrer"
-          className="text-[12px] text-white/45 hover:text-white/75 transition-colors truncate">
+          className="text-[12px] text-ink-sub hover:text-ink transition-colors truncate">
           {value}
         </a>
       ) : (
-        <p className="text-[12px] text-white/45 truncate">{value}</p>
+        <p className="text-[12px] text-ink-sub truncate">{value}</p>
       )}
     </div>
   )
@@ -165,13 +165,13 @@ function InheritedRow({ icon: Icon, value, href }: {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-white/30">{label}</label>
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{label}</label>
       {children}
     </div>
   )
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-[#EDEDED] placeholder:text-white/20 outline-none transition-all'
+const inputCls = 'w-full px-3 py-2 rounded-xl text-[13px] text-ink placeholder:text-ink-faint outline-none transition-all'
 const inputStyle = { background: BG_INPUT, border: `1px solid ${BORDER}` }
 const selectCls = inputCls + ' appearance-none cursor-pointer'
 
@@ -220,6 +220,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
   // apagaria o vínculo sem avisar.
   const { data: allClasses = [] } = useClasses()
 
+  const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState<StudentPatch & { student_name: string }>(
     student
       ? {
@@ -265,13 +266,24 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
   const classOptions  = allClasses.filter(c => c.status === 'ativa' || c.id === form.class_id)
 
   async function save() {
-    if (!form.student_name.trim()) return
-    if (isEdit && student) {
-      await updateMutation.mutateAsync({ id: student.id, patch: form })
-    } else {
-      await createMutation.mutateAsync(form)
+    setError(null)
+    if (!form.student_name.trim()) {
+      setError('Informe o nome do aluno.')
+      return
     }
-    onClose()
+    try {
+      if (isEdit && student) {
+        await updateMutation.mutateAsync({ id: student.id, patch: form })
+      } else {
+        await createMutation.mutateAsync(form)
+      }
+      onClose()
+    } catch (e) {
+      // Sem este bloco a promise rejeitava sem tratamento: o painel ficava
+      // aberto, nada era salvo e nenhuma mensagem aparecia — o usuário via
+      // apenas "não funciona".
+      setError(e instanceof Error ? e.message : 'Não foi possível salvar a ficha.')
+    }
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
@@ -287,15 +299,15 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
         <div className="flex items-center justify-between px-6 py-5 shrink-0"
           style={{ borderBottom: `1px solid ${BORDER}` }}>
           <div>
-            <p className="text-[15px] font-bold text-[#EDEDED]">
+            <p className="text-[15px] font-bold text-ink">
               {isEdit ? 'Editar Aluno' : 'Novo Aluno'}
             </p>
             {isEdit && (
-              <p className="text-[12px] text-white/30 mt-0.5">{student?.student_name}</p>
+              <p className="text-[12px] text-ink-mute mt-0.5">{student?.student_name}</p>
             )}
           </div>
           <button onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/6 transition-all">
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-mute hover:text-ink hover:bg-tint/6 transition-all">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -396,7 +408,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
                       className="flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all"
                       style={form.jlpt_level === lv
                         ? { background: 'rgba(232,82,26,0.2)', color: '#F0643A', border: '1px solid rgba(232,82,26,0.4)' }
-                        : { background: BG_INPUT, color: 'rgba(255,255,255,0.35)', border: `1px solid ${BORDER}` }}>
+                        : { background: BG_INPUT, color: 'rgba(var(--tint), 0.35)', border: `1px solid ${BORDER}` }}>
                       {lv}
                     </button>
                   ))}
@@ -440,7 +452,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
                 ))}
               </select>
               {classOptions.length === 0 && (
-                <p className="text-[11px] text-white/30">
+                <p className="text-[11px] text-ink-mute">
                   Nenhuma turma ativa cadastrada — crie em Turmas.
                 </p>
               )}
@@ -449,7 +461,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
             {selectedClass && (
               <div className="rounded-xl px-3.5 py-3 flex flex-col gap-2"
                 style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
-                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/25">
+                <p className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-faint">
                   Herdado da turma
                 </p>
                 <div className="flex flex-col gap-1.5">
@@ -469,7 +481,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
                     <InheritedRow icon={BookOpen} value={selectedClass.classroom_link} href={selectedClass.classroom_link} />
                   )}
                 </div>
-                <p className="text-[11px] text-white/25 leading-relaxed">
+                <p className="text-[11px] text-ink-faint leading-relaxed">
                   Para mudar horário, professor ou links, edite a turma — a alteração
                   vale para todos os alunos dela.
                 </p>
@@ -534,7 +546,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[12px] font-semibold transition-all"
                     style={form.status === s
                       ? { background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }
-                      : { background: BG_INPUT, color: 'rgba(255,255,255,0.35)', border: `1px solid ${BORDER}` }}>
+                      : { background: BG_INPUT, color: 'rgba(var(--tint), 0.35)', border: `1px solid ${BORDER}` }}>
                     <Icon className="w-3.5 h-3.5" /> {cfg.label}
                   </button>
                 )
@@ -594,9 +606,15 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 flex gap-3 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
+        <div className="px-6 py-4 flex flex-col gap-3 shrink-0" style={{ borderTop: `1px solid ${BORDER}` }}>
+          {error && (
+            <p className="text-[12px] flex items-start gap-1.5" style={{ color: DANGER }}>
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {error}
+            </p>
+          )}
+          <div className="flex gap-3">
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40 transition-all"
+            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-ink-mute transition-all"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Cancelar
           </button>
@@ -606,6 +624,7 @@ function StudentDrawer({ student, onClose }: { student: Student | null; onClose:
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isEdit ? 'Salvar alterações' : 'Cadastrar aluno'}
           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -632,16 +651,16 @@ function DeleteConfirm({ student, onClose }: { student: Student; onClose: () => 
             <AlertTriangle className="w-5 h-5 text-red-400" />
           </div>
           <div>
-            <p className="text-[14px] font-bold text-[#EDEDED]">Excluir aluno?</p>
-            <p className="text-[12px] text-white/35 mt-0.5">Esta ação não pode ser desfeita.</p>
+            <p className="text-[14px] font-bold text-ink">Excluir aluno?</p>
+            <p className="text-[12px] text-ink-mute mt-0.5">Esta ação não pode ser desfeita.</p>
           </div>
         </div>
-        <p className="text-[13px] text-white/50">
-          <strong className="text-white/70">{student.student_name}</strong> será removido permanentemente.
+        <p className="text-[13px] text-ink-sub">
+          <strong className="text-ink">{student.student_name}</strong> será removido permanentemente.
         </p>
         <div className="flex gap-3">
           <button onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-white/40"
+            className="flex-1 px-4 py-2.5 rounded-xl text-[13px] font-medium text-ink-mute"
             style={{ background: BG_INPUT, border: `1px solid ${BORDER}` }}>
             Cancelar
           </button>
@@ -675,7 +694,7 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
   return (
     <tr className="group border-b transition-colors duration-100"
       style={{ borderColor: BORDER2 }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#1A1C24' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BG_CARD2 }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
 
       {/* Aluno / Responsável */}
@@ -687,16 +706,16 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
           </div>
           <div className="min-w-0">
             <button onClick={onOpen}
-              className="text-[13px] font-semibold text-[#EDEDED] truncate leading-tight text-left hover:underline decoration-white/30 underline-offset-2 max-w-full">
+              className="text-[13px] font-semibold text-ink truncate leading-tight text-left hover:underline decoration-white/30 underline-offset-2 max-w-full">
               {student.student_name}
             </button>
             {student.responsible_name && (
-              <p className="text-[11px] text-white/35 truncate mt-0.5 flex items-center gap-1">
+              <p className="text-[11px] text-ink-mute truncate mt-0.5 flex items-center gap-1">
                 <User className="w-2.5 h-2.5 shrink-0" /> {student.responsible_name}
               </p>
             )}
             {(student.phone_responsible ?? student.phone_student) && (
-              <p className="text-[11px] text-white/30 truncate mt-0.5 flex items-center gap-1 tabular-nums">
+              <p className="text-[11px] text-ink-mute truncate mt-0.5 flex items-center gap-1 tabular-nums">
                 <Phone className="w-2.5 h-2.5 shrink-0" />
                 {student.phone_responsible ?? student.phone_student}
               </p>
@@ -709,26 +728,26 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
       <td className="px-5 py-3.5">
         {subjectLabel ? (
           <div>
-            <p className="text-[12px] font-medium text-[#EDEDED]">{subjectLabel}</p>
-            {levelLabel && <p className="text-[10px] text-white/35 mt-0.5">{levelLabel}</p>}
+            <p className="text-[12px] font-medium text-ink">{subjectLabel}</p>
+            {levelLabel && <p className="text-[10px] text-ink-mute mt-0.5">{levelLabel}</p>}
           </div>
-        ) : <span className="text-[12px] text-white/20">—</span>}
+        ) : <span className="text-[12px] text-ink-faint">—</span>}
       </td>
 
       {/* Professor */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/45 truncate max-w-[130px]">
+        <p className="text-[12px] text-ink-sub truncate max-w-[130px]">
           {student.class?.teacher?.name ?? '—'}
         </p>
       </td>
 
       {/* Horário */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/45 tabular-nums">
+        <p className="text-[12px] text-ink-sub tabular-nums">
           {student.class ? formatSchedule(student.class.sessions) : '—'}
         </p>
         {student.class && (
-          <p className="text-[10px] text-white/25 truncate max-w-[130px] mt-0.5">
+          <p className="text-[10px] text-ink-faint truncate max-w-[130px] mt-0.5">
             {student.class.name}
           </p>
         )}
@@ -736,9 +755,9 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
 
       {/* Mensalidade */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] font-semibold text-[#EDEDED] tabular-nums">{fmtCurrency(student.monthly_fee)}</p>
+        <p className="text-[12px] font-semibold text-ink tabular-nums">{fmtCurrency(student.monthly_fee)}</p>
         {student.payment_method && (
-          <p className="text-[10px] text-white/25 mt-0.5 capitalize">
+          <p className="text-[10px] text-ink-faint mt-0.5 capitalize">
             {student.payment_method === 'deposito' ? 'Depósito' : student.payment_method === 'dinheiro' ? 'Dinheiro' : 'Stripe'}
           </p>
         )}
@@ -752,7 +771,7 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
 
       {/* Início */}
       <td className="px-5 py-3.5">
-        <p className="text-[12px] text-white/40">{fmtDate(student.start_date)}</p>
+        <p className="text-[12px] text-ink-mute">{fmtDate(student.start_date)}</p>
       </td>
 
       {/* Status */}
@@ -762,12 +781,12 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
           <Icon className="w-3 h-3" /> {cfg.label}
         </span>
         {student.status === 'cancelado' && student.cancel_reason && (
-          <p className="text-[10px] text-white/25 mt-1">
+          <p className="text-[10px] text-ink-faint mt-1">
             {CANCEL_REASON_LABEL[student.cancel_reason]}
           </p>
         )}
         {student.status === 'trancado' && student.lock_end && (
-          <p className="text-[10px] text-white/25 mt-1">até {fmtDate(student.lock_end)}</p>
+          <p className="text-[10px] text-ink-faint mt-1">até {fmtDate(student.lock_end)}</p>
         )}
       </td>
 
@@ -775,24 +794,24 @@ function StudentRow({ student, onOpen, onEdit, onDelete }: {
       <td className="px-4 py-3.5" style={{ width: 88 }}>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all justify-end">
           <button onClick={onOpen}
-            className="p-1.5 rounded-lg text-white/30 hover:text-[#E8521A] hover:bg-orange-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-ink-mute hover:text-[#E8521A] hover:bg-orange-500/10 transition-colors"
             title="Ver histórico">
             <Eye className="w-3.5 h-3.5" />
           </button>
           <button onClick={onEdit}
-            className="p-1.5 rounded-lg text-white/30 hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-ink-mute hover:text-[#93C5FD] hover:bg-blue-500/10 transition-colors"
             title="Editar">
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           {student.termo_url && (
             <a href={student.termo_url} target="_blank" rel="noopener noreferrer"
-              className="p-1.5 rounded-lg text-white/30 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+              className="p-1.5 rounded-lg text-ink-mute hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
               title="Termo de Adesão">
               <FileText className="w-3.5 h-3.5" />
             </a>
           )}
           <button onClick={onDelete}
-            className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-ink-mute hover:text-red-400 hover:bg-red-500/10 transition-colors"
             title="Excluir">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -848,8 +867,8 @@ function TurmasView({
 
   if (groups.length === 0) return (
     <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <GraduationCap className="w-10 h-10 text-white/8" />
-      <p className="text-[13px]" style={{ color: '#2E3042' }}>Nenhuma turma encontrada</p>
+      <GraduationCap className="w-10 h-10 text-ink-ghost" />
+      <p className="text-[13px]" style={{ color: INK_FAINT }}>Nenhuma turma encontrada</p>
     </div>
   )
 
@@ -865,10 +884,10 @@ function TurmasView({
           <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${BORDER2}` }}>
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-[#EDEDED] truncate">
+                <p className="text-[13px] font-semibold text-ink truncate">
                   {group.name}
                 </p>
-                <p className="text-[11px] mt-0.5 truncate tabular-nums" style={{ color: '#404252' }}>
+                <p className="text-[11px] mt-0.5 truncate tabular-nums" style={{ color: INK_MUTE }}>
                   {group.schedule} · {group.teacher}
                 </p>
               </div>
@@ -882,7 +901,7 @@ function TurmasView({
               >
                 {group.students.length}
                 {group.capacity != null && (
-                  <span className="text-white/25 font-medium">/{group.capacity}</span>
+                  <span className="text-ink-faint font-medium">/{group.capacity}</span>
                 )}
               </div>
             </div>
@@ -908,11 +927,11 @@ function TurmasView({
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-medium text-[#DADCE6] truncate">{s.student_name}</p>
                     {s.jlpt_level && (
-                      <p className="text-[10.5px]" style={{ color: '#404252' }}>{s.jlpt_level}</p>
+                      <p className="text-[10.5px]" style={{ color: INK_MUTE }}>{s.jlpt_level}</p>
                     )}
                   </div>
                   {s.monthly_fee != null && (
-                    <p className="text-[11px] tabular-nums shrink-0" style={{ color: '#5A5C6A' }}>
+                    <p className="text-[11px] tabular-nums shrink-0" style={{ color: INK_SUB }}>
                       {new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(s.monthly_fee)}
                     </p>
                   )}
@@ -1020,8 +1039,8 @@ export default function StudentsPage() {
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-[20px] font-bold text-[#EDEDED] tracking-tight">Alunos</h1>
-              <p className="text-[13px] text-white/30 mt-0.5">Cadastro e controle de alunos</p>
+              <h1 className="text-[20px] font-bold text-ink tracking-tight">Alunos</h1>
+              <p className="text-[13px] text-ink-mute mt-0.5">Cadastro e controle de alunos</p>
             </div>
             <div className="flex items-center gap-2">
               {/* View toggle */}
@@ -1032,8 +1051,8 @@ export default function StudentsPage() {
                   title="Vista em lista"
                   className="flex items-center justify-center px-2.5 py-2 transition-all cursor-pointer"
                   style={view === 'lista'
-                    ? { background: 'rgba(255,255,255,0.07)', color: '#EDEDED' }
-                    : { color: 'rgba(255,255,255,0.3)' }}>
+                    ? { background: 'rgba(var(--tint), 0.07)', color: '#EDEDED' }
+                    : { color: 'rgba(var(--tint), 0.3)' }}>
                   <List className="w-3.5 h-3.5" />
                 </button>
                 <button
@@ -1041,14 +1060,14 @@ export default function StudentsPage() {
                   title="Vista por turmas"
                   className="flex items-center justify-center px-2.5 py-2 transition-all cursor-pointer"
                   style={view === 'turmas'
-                    ? { background: 'rgba(255,255,255,0.07)', color: '#34D399' }
-                    : { color: 'rgba(255,255,255,0.3)' }}>
+                    ? { background: 'rgba(var(--tint), 0.07)', color: '#34D399' }
+                    : { color: 'rgba(var(--tint), 0.3)' }}>
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
               </div>
               <button onClick={exportCSV}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-medium transition-all cursor-pointer"
-                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.45)' }}>
+                style={{ background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.45)' }}>
                 <Download className="w-3.5 h-3.5" /> Exportar CSV
               </button>
               <button
@@ -1073,14 +1092,14 @@ export default function StudentsPage() {
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all"
                   style={active
                     ? { background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }
-                    : { background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.4)' }}>
+                    : { background: BG_CARD, border: `1px solid ${BORDER}`, color: 'rgba(var(--tint), 0.4)' }}>
                   <Icon className="w-3.5 h-3.5" />
                   {cfg.label}
                   <span className={cn(
                     'ml-1 px-1.5 py-0.5 rounded-md text-[11px] font-bold tabular-nums',
-                    active ? '' : 'text-white/30'
+                    active ? '' : 'text-ink-mute'
                   )}
-                    style={active ? { background: 'rgba(0,0,0,0.2)', color: cfg.color } : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}>
+                    style={active ? { background: 'rgba(0,0,0,0.2)', color: cfg.color } : { background: 'rgba(var(--tint), 0.06)', color: 'rgba(var(--tint), 0.3)' }}>
                     {counts[s]}
                   </span>
                 </button>
@@ -1089,7 +1108,7 @@ export default function StudentsPage() {
 
             {/* Refresh */}
             <button onClick={() => refetch()}
-              className="p-2 rounded-xl text-white/25 hover:text-white/60 hover:bg-white/5 transition-all ml-auto"
+              className="p-2 rounded-xl text-ink-faint hover:text-ink-sub hover:bg-tint/5 transition-all ml-auto"
               title="Atualizar">
               <RefreshCw className={cn('w-4 h-4', isFetching && 'animate-spin')} />
             </button>
@@ -1099,7 +1118,7 @@ export default function StudentsPage() {
           {statusTab === 'cancelado' && cancelChart.length > 0 && (
             <div className="rounded-2xl p-6 flex flex-col gap-4"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/25">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-faint">
                 Motivos de Cancelamento
               </p>
               <DonutChart data={cancelChart} />
@@ -1110,15 +1129,15 @@ export default function StudentsPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1 min-w-[220px]"
               style={{ background: BG_CARD, border: `1px solid ${BORDER}` }}>
-              <Search className="w-4 h-4 text-white/25 shrink-0" />
+              <Search className="w-4 h-4 text-ink-faint shrink-0" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar por nome do aluno ou responsável…"
-                className="flex-1 bg-transparent outline-none text-[13px] text-white/70 placeholder:text-white/25"
+                className="flex-1 bg-transparent outline-none text-[13px] text-ink placeholder:text-ink-faint"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="text-white/25 hover:text-white/60 transition-colors">
+                <button onClick={() => setSearch('')} className="text-ink-faint hover:text-ink-sub transition-colors">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -1131,16 +1150,16 @@ export default function StudentsPage() {
                 onClick={() => setSortBy('nome')}
                 className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all"
                 style={sortBy === 'nome'
-                  ? { background: 'rgba(255,255,255,0.07)', color: '#EDEDED' }
-                  : { color: 'rgba(255,255,255,0.35)' }}>
+                  ? { background: 'rgba(var(--tint), 0.07)', color: '#EDEDED' }
+                  : { color: 'rgba(var(--tint), 0.35)' }}>
                 <ArrowUpDown className="w-3 h-3" /> Nome
               </button>
               <button
                 onClick={() => setSortBy('inicio')}
                 className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium transition-all"
                 style={sortBy === 'inicio'
-                  ? { background: 'rgba(255,255,255,0.07)', color: '#EDEDED' }
-                  : { color: 'rgba(255,255,255,0.35)' }}>
+                  ? { background: 'rgba(var(--tint), 0.07)', color: '#EDEDED' }
+                  : { color: 'rgba(var(--tint), 0.35)' }}>
                 <Calendar className="w-3 h-3" /> Data de Início
               </button>
             </div>
@@ -1164,11 +1183,11 @@ export default function StudentsPage() {
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
-                  <GraduationCap className="w-5 h-5 text-white/20" />
+                  style={{ background: 'rgba(var(--tint), 0.04)', border: `1px solid ${BORDER}` }}>
+                  <GraduationCap className="w-5 h-5 text-ink-faint" />
                 </div>
                 <div className="text-center">
-                  <p className="text-[14px] font-medium text-white/40">
+                  <p className="text-[14px] font-medium text-ink-mute">
                     {search ? 'Nenhum aluno encontrado' : `Nenhum aluno ${STATUS_CONFIG[statusTab].label.toLowerCase()}`}
                   </p>
                   {!search && statusTab === 'ativo' && (
@@ -1184,10 +1203,10 @@ export default function StudentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <tr style={{ borderBottom: '1px solid rgba(var(--tint), 0.05)' }}>
                       {['Aluno / Responsável', 'Matéria', 'Professor', 'Horário', 'Mensalidade', 'Início', 'Status', ''].map((h, i) => (
                         <th key={i} className="text-left px-5 py-3.5 text-[10px] font-semibold uppercase tracking-wider"
-                          style={{ color: 'rgba(255,255,255,0.25)' }}>{h}</th>
+                          style={{ color: 'rgba(var(--tint), 0.25)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1205,11 +1224,11 @@ export default function StudentsPage() {
                 </table>
 
                 <div className="px-5 py-3 flex items-center justify-between"
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="text-[11px] text-white/25">
+                  style={{ borderTop: '1px solid rgba(var(--tint), 0.05)' }}>
+                  <p className="text-[11px] text-ink-faint">
                     {filtered.length} aluno{filtered.length !== 1 ? 's' : ''} {STATUS_CONFIG[statusTab].label.toLowerCase()}{search ? ` · filtro: "${search}"` : ''}
                   </p>
-                  <p className="text-[10px] text-white/15">
+                  <p className="text-[10px] text-ink-ghost">
                     {isFetching ? 'Atualizando…' : 'Dados em tempo real'}
                   </p>
                 </div>
