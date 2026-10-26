@@ -7,29 +7,160 @@
    Paleta: claro, cards brancos com sombra suave, rail escuro.
 ───────────────────────────────────────────────────────────── */
 
-/* ── CSS Variables globais ───────────────────────────────────*/
+/* ── Tokens ──────────────────────────────────────────────────
+   Três estados de tema: a escolha explícita grava data-theme no <html>;
+   sem escolha, vale a preferência do sistema. Por isso cada token nasce
+   no :root puro (claro) e é redefinido em DOIS blocos — o da media query,
+   protegido contra a escolha "claro", e o do data-theme="dark", para o
+   seletor vencer nos dois sentidos.
+───────────────────────────────────────────────────────────── */
 :root {
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces */
+  /* Superfícies */
   --bg-base:      #F5F6FA;
   --bg-surface:   #FFFFFF;
   --bg-surface-2: #F7F8FC;
+  --bg-input:     #F3F4F8;
+  --bg-drop:      #FFFFFF;
 
-  /* Borders */
+  /* Rail de navegação — escuro nos dois temas, ancora a marca.
+     Por isso o texto sobre ele tem tokens próprios: usar --ink aqui daria
+     texto escuro sobre fundo escuro no tema claro. */
+  --bg-sidebar:     #0E0F13;
+  --sidebar-border: rgba(255,255,255,0.07);
+  --rail-ink:       #F2F3F7;
+  --rail-ink-sub:   rgba(255,255,255,0.62);
+  --rail-ink-mute:  rgba(255,255,255,0.40);
+  --rail-ink-faint: rgba(255,255,255,0.24);
+
+  /* Bordas */
   --border:        rgba(15, 23, 42, 0.08);
+  --border-2:      rgba(15, 23, 42, 0.06);
   --border-hover:  rgba(15, 23, 42, 0.16);
   --border-focus:  rgba(232, 82, 26, 0.5);
 
-  /* Text */
-  --text-primary:   #12131A;
-  --text-secondary: #5B6170;
-  --text-disabled:  #B4B8C4;
+  /* Texto — do mais forte ao decorativo */
+  --ink:       #12131A;
+  --ink-sub:   #5B6170;
+  --ink-mute:  #8A90A0;
+  --ink-faint: #B4B8C4;
+  --ink-ghost: rgba(15, 23, 42, 0.10);
 
-  /* Accent */
-  --accent:        #E8521A;
-  --accent-dim:    rgba(232, 82, 26, 0.12);
+  /* Acento */
+  --accent:          #E8521A;
+  --accent-dim:      rgba(232, 82, 26, 0.12);
+  --accent-gradient: linear-gradient(135deg, #FF7A3D 0%, #D6450F 100%);
+
+  /* Sombras */
+  --shadow-card: 0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -10px rgba(15,23,42,0.12);
+  --shadow-pop:  0 4px 10px rgba(15,23,42,0.06), 0 20px 40px -12px rgba(15,23,42,0.18);
+
+  /* Semânticas */
+  --success:    #0F9D66;
+  --success-bg: rgba(16,185,129,0.12);
+  --warning:    #B45309;
+  --warning-bg: rgba(245,158,11,0.14);
+  --danger:     #DC2626;
+  --danger-bg:  rgba(239,68,68,0.12);
+  --info:       #4F46E5;
+  --info-bg:    rgba(99,102,241,0.12);
+
+  /* Tinta de camada: usada em rgba(var(--tint), X) para fundos sutis, bordas
+     e texto apagado. No claro é quase-preto, no escuro é branco — assim o
+     mesmo alpha funciona nos dois temas sem reescrever cada chamada. */
+  --tint: 15, 23, 42;
+
+  /* Trilho da barra de rolagem */
+  --scroll-thumb:       rgba(15, 23, 42, 0.14);
+  --scroll-thumb-hover: rgba(15, 23, 42, 0.24);
+}
+
+/* Paleta escura. Repetida nos dois seletores de propósito: um cobre quem
+   não escolheu e usa sistema escuro, o outro cobre a escolha explícita. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-base:      #0D0E12;
+    --bg-surface:   #14161C;
+    --bg-surface-2: #1A1D24;
+    --bg-input:     #11131A;
+    --bg-drop:      #1A1D24;
+
+    --bg-sidebar:     #090A0D;
+    --sidebar-border: rgba(255,255,255,0.06);
+
+    --border:       rgba(255, 255, 255, 0.09);
+    --border-2:     rgba(255, 255, 255, 0.06);
+    --border-hover: rgba(255, 255, 255, 0.18);
+
+    --ink:       #ECEEF3;
+    --ink-sub:   #9BA1AF;
+    --ink-mute:  #767C8A;
+    --ink-faint: #555B68;
+    --ink-ghost: rgba(255, 255, 255, 0.10);
+
+    /* Sombra não lê sobre escuro: o relevo passa a vir da borda */
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-pop:  0 8px 24px -6px rgba(0,0,0,0.6);
+
+    /* Semânticas clareadas para manter contraste sobre superfície escura */
+    --success:    #34D399;
+    --success-bg: rgba(52,211,153,0.14);
+    --warning:    #FBBF24;
+    --warning-bg: rgba(251,191,36,0.14);
+    --danger:     #F87171;
+    --danger-bg:  rgba(248,113,113,0.14);
+    --info:       #818CF8;
+    --info-bg:    rgba(129,140,248,0.14);
+
+    --tint: 255, 255, 255;
+
+    --scroll-thumb:       rgba(255, 255, 255, 0.14);
+    --scroll-thumb-hover: rgba(255, 255, 255, 0.26);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg-base:      #0D0E12;
+  --bg-surface:   #14161C;
+  --bg-surface-2: #1A1D24;
+  --bg-input:     #11131A;
+  --bg-drop:      #1A1D24;
+
+  --bg-sidebar:     #090A0D;
+  --sidebar-border: rgba(255,255,255,0.06);
+
+  --border:       rgba(255, 255, 255, 0.09);
+  --border-2:     rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.18);
+
+  --ink:       #ECEEF3;
+  --ink-sub:   #9BA1AF;
+  --ink-mute:  #767C8A;
+  --ink-faint: #555B68;
+  --ink-ghost: rgba(255, 255, 255, 0.10);
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-pop:  0 8px 24px -6px rgba(0,0,0,0.6);
+
+  --success:    #34D399;
+  --success-bg: rgba(52,211,153,0.14);
+  --warning:    #FBBF24;
+  --warning-bg: rgba(251,191,36,0.14);
+  --danger:     #F87171;
+  --danger-bg:  rgba(248,113,113,0.14);
+  --info:       #818CF8;
+  --info-bg:    rgba(129,140,248,0.14);
+
+  --tint: 255, 255, 255;
+
+  --scroll-thumb:       rgba(255, 255, 255, 0.14);
+  --scroll-thumb-hover: rgba(255, 255, 255, 0.26);
+
+  color-scheme: dark;
 }
 
 /* ── Reset ───────────────────────────────────────────────────*/
@@ -40,7 +171,6 @@
 }
 
 html {
-  color-scheme: light;
   font-family: var(--font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased;
@@ -52,18 +182,18 @@ html, body, #root {
   height: 100%;
   width: 100%;
   background: var(--bg-base);
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────*/
 ::-webkit-scrollbar          { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track    { background: transparent; }
 ::-webkit-scrollbar-thumb    {
-  background: rgba(15, 23, 42, 0.14);
+  background: var(--scroll-thumb);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.24);
+  background: var(--scroll-thumb-hover);
 }
 
 /* ── Focus ring ──────────────────────────────────────────────*/
@@ -75,7 +205,7 @@ html, body, #root {
 /* ── Selection ───────────────────────────────────────────────*/
 ::selection {
   background: rgba(232, 82, 26, 0.18);
-  color: #12131A;
+  color: var(--ink);
 }
 
 /* ── Utilities ───────────────────────────────────────────────*/
@@ -89,7 +219,7 @@ html, body, #root {
 }
 
 .glass-ultra {
-  background: rgba(255, 255, 255, 0.86);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
@@ -97,7 +227,7 @@ html, body, #root {
 
 /* Gradient text — usado com a marca sobre fundo claro */
 .gradient-text {
-  background: linear-gradient(135deg, #12131A 0%, #E8521A 100%);
+  background: linear-gradient(135deg, var(--ink) 0%, var(--accent) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -111,9 +241,9 @@ html, body, #root {
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(15,23,42,0.045) 25%,
-    rgba(15,23,42,0.09) 50%,
-    rgba(15,23,42,0.045) 75%
+    var(--border-2) 25%,
+    var(--border) 50%,
+    var(--border-2) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.8s infinite;
