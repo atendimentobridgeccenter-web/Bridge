@@ -55,10 +55,18 @@ function displayStudentName(lead: Lead): string {
 function displaySchoolYear(lead: Lead): string {
   const nodes   = (lead.product_form_nodes ?? []) as FormNode[]
   const answers = lead.answers ?? {}
-  const node = nodes.find(n =>
-    /ano.escolar|série|serie|turma|grade|school.year|ano.letivo|nivel|nível/i.test(n.title ?? '')
+  // Preferência: campo explicitamente mapeado para a coluna "ano letivo" da
+  // ficha do aluno (mapsTo), que é a fonte confiável. Só cai no regex sobre o
+  // título (legado, formulários antigos sem mapsTo configurado) se nenhum nó
+  // tiver esse mapeamento — e mesmo assim, de forma mais restrita, para não
+  // confundir com perguntas de texto livre como "Nível de japonês".
+  const mapped = nodes.find(n => n.mapsTo === 'school_year')
+  if (mapped) return answers[mapped.id] ?? ''
+
+  const fallback = nodes.find(n =>
+    /ano.escolar|ano.letivo|série escolar|serie escolar|^série$|^serie$|^turma$|school.year/i.test(n.title ?? '')
   )
-  return node ? (answers[node.id] ?? '') : ''
+  return fallback ? (answers[fallback.id] ?? '') : ''
 }
 
 // ── Payment badge ─────────────────────────────────────────────
@@ -354,7 +362,12 @@ function LeadRow({
 
       {/* Ano Escolar */}
       <td className="px-5 py-3.5">
-        <span className="text-[12px] text-white/45">{displaySchoolYear(lead) || '—'}</span>
+        <span
+          className="text-[12px] text-white/45 truncate block max-w-[140px]"
+          title={displaySchoolYear(lead) || undefined}
+        >
+          {displaySchoolYear(lead) || '—'}
+        </span>
       </td>
 
       {/* Email */}
