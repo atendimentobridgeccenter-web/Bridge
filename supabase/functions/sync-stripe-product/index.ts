@@ -37,6 +37,10 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 )
 
+// Usadas só para validar o JWT de quem chama (padrão de provision-teacher-access).
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')      ?? ''
+const ANON_KEY     = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+
 // ── CORS ──────────────────────────────────────────────────────
 
 const CORS = {
@@ -57,6 +61,22 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
   try {
+    // ── 0. Só admin autenticado ─────────────────────────────────
+    // Antes de ler o corpo e de tocar no banco ou no Stripe.
+    const authHeader = req.headers.get('Authorization') ?? ''
+    if (!authHeader.startsWith('Bearer ')) {
+      return json({ error: 'Autenticação obrigatória.' }, 401)
+    }
+
+    const caller = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user: callerUser }, error: authErr } = await caller.auth.getUser()
+    if (authErr || !callerUser) return json({ error: 'Sessão inválida.' }, 401)
+    if (callerUser.app_metadata?.role !== 'admin') {
+      return json({ error: 'Apenas administradores podem sincronizar produtos com o Stripe.' }, 403)
+    }
+
     // ── 1. Parse + validate ─────────────────────────────────────
     const {
       productId,
