@@ -2,20 +2,27 @@
 // Runtime: Deno
 //
 // Security model:
-//   1. Receive { productId, priceId?, priceIds?, email, name }
+//   1. Receive { productId, priceId?, priceIds?, email, name, lead? }
 //      - priceIds[] (array) is used by FormRunner (multi-item pricing engine)
 //      - priceId  (single) is used by QuizzRunner (single selection)
 //      Both formats are supported; priceIds takes precedence.
+//      - lead? is an optional, server-validated block (answers, utm_*, referrer).
+//      - Nenhum leadId é lido do corpo da requisição (OS-004): o id do lead
+//        nasce aqui, com a service_role, nunca no navegador.
 //   2. Load the product from DB using service role key (bypasses RLS)
 //   3. Build the set of ALLOWED price IDs server-side:
 //        a. product.price_id_stripe  (the main price)
 //        b. Every priceId in form_logic_config (FormSchema: allowed_price_ids)
 //        c. Every optionPrice in form_logic_config (FormNode: nodes[*].optionPrices)
 //   4. Reject with 403 if any submitted priceId is not in the allowed set.
-//   5. Retrieve the first Stripe Price to determine mode (payment vs subscription).
-//   6. Create Stripe Checkout Session — line_items reference Prices by ID only.
-//      No unit_amount is ever passed from the frontend.
-//   7. Return { url }.
+//   5. Criar o lead 'pending' em public.leads com a service_role — antes da
+//      sessão existir, para que todo pagamento tenha lead. Falha aqui → 500,
+//      sem criar a sessão.
+//   6. Retrieve the first Stripe Price to determine mode (payment vs subscription).
+//   7. Create Stripe Checkout Session — line_items reference Prices by ID only.
+//      No unit_amount is ever passed from the frontend. metadata.lead_id é o id
+//      do lead criado no passo 5 (nunca o do cliente).
+//   8. Return { url, leadId } — leadId é novo; quem só lê url continua igual.
 
 import Stripe from 'npm:stripe@14'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -50,6 +57,28 @@ interface FormNode {
   stripeCheckoutPriceId?: string
 }
 
+// Bloco opcional enviado pelo formulário ao criar a sessão. Só estes campos —
+// nenhum dado de pagamento, nenhum leadId (OS-004).
+interface LeadInput {
+  answers?:      Record<string, unknown>
+  utm_source?:   string
+  utm_medium?:   string
+  utm_campaign?: string
+  utm_term?:     string
+  utm_content?:  string
+  referrer?:     string
+}
+
+interface SanitizedLeadFields {
+  answers:      Record<string, unknown>
+  utm_source:   string | null
+  utm_medium:   string | null
+  utm_campaign: string | null
+  utm_term:     string | null
+  utm_content:  string | null
+  referrer:     string | null
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 
 const CORS = {
@@ -62,6 +91,46 @@ function json(body: unknown, status = 200): Response {
     status,
     headers: { ...CORS, 'Content-Type': 'application/json' },
   })
+}
+
+// String vazia (ou não-string) vira null antes de gravar — mesma regra do
+// front (src/lib/emptyToNull.ts), reimplementada aqui porque Edge Functions
+// (Deno) não importam de src/.
+function emptyToNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed === '' ? null : trimmed
+}
+
+function clipText(value: unknown, maxLength: number): string | null {
+  const s = emptyToNull(value)
+  return s ? s.slice(0, maxLength) : null
+}
+
+// Valida e limita o bloco opcional `lead` do corpo da requisição. Aceita só
+// os campos abaixo — nada de pagamento, nada de leadId do cliente (OS-004).
+function sanitizeLeadInput(lead: unknown): SanitizedLeadFields {
+  const l: LeadInput = (lead && typeof lead === 'object' && !Array.isArray(lead))
+    ? lead as LeadInput
+    : {}
+
+  const rawAnswers = (l.answers && typeof l.answers === 'object' && !Array.isArray(l.answers))
+    ? l.answers
+    : {}
+
+  // Limite de tamanho razoável: mesma exposição do INSERT público de hoje
+  // (qualquer um pode inserir um lead), só não a agrava com payloads enormes.
+  const answers = JSON.stringify(rawAnswers).length <= 20_000 ? rawAnswers : {}
+
+  return {
+    answers,
+    utm_source:   clipText(l.utm_source,   300),
+    utm_medium:   clipText(l.utm_medium,   300),
+    utm_campaign: clipText(l.utm_campaign, 300),
+    utm_term:     clipText(l.utm_term,     300),
+    utm_content:  clipText(l.utm_content,  300),
+    referrer:     clipText(l.referrer,     2000),
+  }
 }
 
 function buildAllowedPriceIds(product: {
@@ -122,14 +191,15 @@ Deno.serve(async (req: Request) => {
     // ── 1. Parse payload ────────────────────────────────────────
     // priceIds[] comes from FormRunner (multi-item pricing engine)
     // priceId (single) comes from QuizzRunner (single option selection)
-    const { productId, priceId, priceIds: priceIdsArr, email, name, successPath, leadId } = await req.json() as {
+    // Nenhum leadId é lido do cliente (OS-004) — nasce no passo 5, aqui no servidor.
+    const { productId, priceId, priceIds: priceIdsArr, email, name, successPath, lead } = await req.json() as {
       productId:    string
       priceId?:     string
       priceIds?:    string[]
       email?:       string
       name?:        string
       successPath?: string
-      leadId?:      string
+      lead?:        unknown
     }
 
     const resolvedPriceIds: string[] = priceIdsArr?.length
@@ -172,12 +242,40 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'One or more price IDs are not available for this product.' }, 403)
     }
 
-    // ── 4. Determine checkout mode from first price ─────────────
+    // ── 4. Criar o lead 'pending' no banco (service_role) ────────
+    // Sempre cria aqui — todo pagamento tem lead, e o id vem do servidor.
+    // Falha aqui → 500 e nenhuma sessão é criada (sem lead não há como
+    // confirmar o pagamento depois, no webhook da OS-003).
+    const leadFields = sanitizeLeadInput(lead)
+
+    const { data: leadRow, error: leadErr } = await supabaseAdmin
+      .from('leads')
+      .insert({
+        product_id:     productId,
+        email:          emptyToNull(email),
+        name:           emptyToNull(name),
+        payment_status: 'pending',
+        ...leadFields,
+      })
+      .select('id')
+      .single()
+
+    if (leadErr || !leadRow) {
+      console.error('[create-checkout-session] Failed to create lead:', {
+        productId,
+        error: leadErr?.message,
+      })
+      return json({ error: 'Failed to register lead — checkout not created.' }, 500)
+    }
+
+    const leadId = leadRow.id as string
+
+    // ── 5. Determine checkout mode from first price ─────────────
     const firstPrice = await stripe.prices.retrieve(resolvedPriceIds[0])
     const mode: 'payment' | 'subscription' =
       firstPrice.type === 'recurring' ? 'subscription' : 'payment'
 
-    // ── 5. Create Stripe Checkout Session ───────────────────────
+    // ── 6. Create Stripe Checkout Session ───────────────────────
     const siteUrl = Deno.env.get('SITE_URL') ?? req.headers.get('origin') ?? 'http://localhost:5173'
 
     // Use caller-supplied successPath (relative, e.g. /apply?product=slug&payment_done=1)
@@ -201,9 +299,9 @@ Deno.serve(async (req: Request) => {
 
       metadata: {
         product_id: productId,
-        lead_name:  name   ?? '',
-        lead_email: email  ?? '',
-        lead_id:    leadId ?? '',
+        lead_name:  name  ?? '',
+        lead_email: email ?? '',
+        lead_id:    leadId,
       },
 
       success_url: successUrl,
@@ -216,8 +314,9 @@ Deno.serve(async (req: Request) => {
       throw new Error('Stripe did not return a checkout URL.')
     }
 
-    // ── 6. Return URL + session ID ───────────────────────────────
-    return json({ url: session.url, sessionId: session.id })
+    // ── 7. Return URL + session ID + leadId ───────────────────────
+    // leadId é novo (OS-004); quem só lê `url` continua funcionando igual.
+    return json({ url: session.url, sessionId: session.id, leadId })
 
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error.'
