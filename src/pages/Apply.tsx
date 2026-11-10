@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import FormRunner from '@/form/FormRunner'
 import QuizzRunner from '@/components/form-builder/QuizzRunner'
 import type { TrackingConfig } from '@/components/form-builder/QuizzRunner'
-import type { Product, FormSchema } from '@/lib/types'
+import type { Product } from '@/lib/types'
 import type { FormNode } from '@/components/form-builder/FormBuilder'
 
 export default function Apply() {
   const [params]    = useSearchParams()
   // ?product=slug is the canonical param; ?form=slug kept for backward compat
   const productSlug = params.get('product') ?? params.get('form') ?? null
-  const fromSlug    = params.get('from') ?? undefined
 
   const utmParams = (() => {
     const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content']
@@ -86,9 +84,13 @@ export default function Apply() {
     )
   }
 
-  // ── Legacy format: FormSchema with steps ──────────────────────
-  if (Array.isArray((cfg as unknown as FormSchema)?.steps)) {
-    return <FormRunner product={product} fromSlug={fromSlug} />
+  // ── Legacy format: formulário antigo (removido na OS-009) ─────
+  if (Array.isArray((cfg as Record<string, unknown>)?.steps)) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-400">
+        <p>Este formulário não está mais disponível.</p>
+      </div>
+    )
   }
 
   return (
