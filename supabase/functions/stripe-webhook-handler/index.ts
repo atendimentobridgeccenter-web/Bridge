@@ -34,13 +34,25 @@
 //   5. Verificar produto no DB           → 422 se produto não existe
 //   6. Localizar ou criar Auth user      → 500 se falha (Stripe retenta)
 //   7. Gravar user_access (upsert)       → 500 se falha (Stripe retenta)
-//   8. Marcar evento como processado     → 200 se OK, 200 se PK conflict
-//   9. Actualizar lead (best-effort)     → fire-and-forget
+//   8. Confirmar o lead em public.leads  → 500 se falha, SEM marcar o evento (Stripe retenta)
+//   9. Marcar evento como processado     → 200 se OK, 200 se PK conflict
 //  10. Gerar magic link (best-effort)    → fire-and-forget
 //  11. Retornar 200
+//
+// NOTA (OS-008): o antigo STEP 10, que actualizava a tabela legada
+// `bridge_leads`, foi removido. `bridge_leads` é do fluxo antigo (FormRunner)
+// e está trancada para escrita (migration 033) — não há mais nenhum lead
+// activo nela para esta função actualizar.
+//
+// NOTA (OS-003): este endpoint concentra a confirmação do lead porque o
+// `stripe-webhook` e este `-handler` liam o mesmo STRIPE_WEBHOOK_SECRET do
+// projeto — mas cada endpoint do Stripe tem o seu próprio signing secret, então
+// na prática só um dos dois validava a assinatura. O `stripe-webhook` foi
+// marcado como descontinuado; esta função passou a ser a única fonte de
+// confirmação de pagamento do lado do servidor.
 
 import Stripe from 'npm:stripe@14'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
 // ── Environment secrets ───────────────────────────────────────────────────────
 // Lidos uma vez no cold-start. Se algum estiver ausente, a função falha com log
@@ -108,6 +120,141 @@ async function findUserByEmail(email: string): Promise<string | null> {
     u => u.email?.toLowerCase() === email.toLowerCase()
   )
   return match?.id ?? null
+}
+
+// Confirma o pagamento do lead em public.leads (OS-003). Nunca lança — toda
+// falha é capturada e reportada como { ok: false } para o caller decidir o
+// status HTTP. Três caminhos, nesta ordem:
+//   1. metadata.lead_id, se presente e existente.
+//   2. fallback: lead 'pending' mais recente com o mesmo email + product_id.
+//   3. nenhum lead existe → cria um já pago, com o nome disponível (`opts.name`;
+//      sem ele, a migration 022 grava "Sem nome — revisar" no rascunho do
+//      aluno). O pagamento existe, o lead não pode sumir: insere como
+//      'pending' e só então atualiza para 'confirmed', porque o gatilho da
+//      migration 022 só dispara em UPDATE, nunca em INSERT que já nasce
+//      confirmado.
+async function confirmLead(
+  supabaseAdmin: SupabaseClient,
+  opts: { leadId: string | null; email: string; name: string | null; productId: string; sessionId: string },
+): Promise<{ ok: boolean; leadId?: string }> {
+  const patch = {
+    payment_status:    'confirmed',
+    stripe_session_id: opts.sessionId,
+    paid_at:            new Date().toISOString(),
+  }
+
+  try {
+    // ── Caminho 1: lead_id explícito ────────────────────────────────────────
+    if (opts.leadId) {
+      const { data: updated, error: updErr } = await supabaseAdmin
+        .from('leads')
+        .update(patch)
+        .eq('id', opts.leadId)
+        .neq('payment_status', 'confirmed')
+        .select('id')
+
+      if (updErr) {
+        console.error('[webhook] confirmLead: update por lead_id falhou:', { leadId: opts.leadId, error: updErr.message })
+        return { ok: false }
+      }
+
+      if (updated && updated.length > 0) {
+        return { ok: true, leadId: updated[0].id }
+      }
+
+      // 0 linhas afetadas: ou já estava confirmed (idempotente, sucesso),
+      // ou o id não existe (dado estranho) — recheca antes de decidir.
+      const { data: existing, error: checkErr } = await supabaseAdmin
+        .from('leads')
+        .select('id')
+        .eq('id', opts.leadId)
+        .maybeSingle()
+
+      if (checkErr) {
+        console.error('[webhook] confirmLead: recheck por lead_id falhou:', { leadId: opts.leadId, error: checkErr.message })
+        return { ok: false }
+      }
+
+      if (existing) {
+        // Já confirmado por uma entrega anterior do mesmo evento — idempotente.
+        return { ok: true, leadId: existing.id }
+      }
+
+      console.warn('[webhook] confirmLead: lead_id não encontrado, tentando fallback por email+produto:', { leadId: opts.leadId })
+    }
+
+    // ── Caminho 2: fallback por email (case-insensitive) + produto ──────────
+    // `ilike` trata `%` e `_` como curingas do próprio operador — um e-mail com
+    // `_` (comum: joao_silva@…) casaria com qualquer outro e-mail que tenha
+    // qualquer caractere naquela posição, podendo atribuir o pagamento ao lead
+    // de outra pessoa. Escapamos antes de montar o padrão (Gate 2, OS-003).
+    const escapedEmail = opts.email.replace(/[\\%_]/g, c => '\\' + c)
+
+    const { data: candidate, error: findErr } = await supabaseAdmin
+      .from('leads')
+      .select('id')
+      .ilike('email', escapedEmail)
+      .eq('product_id', opts.productId)
+      .eq('payment_status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (findErr) {
+      console.error('[webhook] confirmLead: busca por email+produto falhou:', { email: opts.email, productId: opts.productId, error: findErr.message })
+      return { ok: false }
+    }
+
+    if (candidate) {
+      const { error: updErr2 } = await supabaseAdmin
+        .from('leads')
+        .update(patch)
+        .eq('id', candidate.id)
+        .neq('payment_status', 'confirmed')
+
+      if (updErr2) {
+        console.error('[webhook] confirmLead: update do fallback falhou:', { leadId: candidate.id, error: updErr2.message })
+        return { ok: false }
+      }
+      return { ok: true, leadId: candidate.id }
+    }
+
+    // ── Caminho 3: nenhum lead existe — cria um já pago ──────────────────────
+    const { data: created, error: createErr } = await supabaseAdmin
+      .from('leads')
+      .insert({
+        email:          opts.email,
+        name:           opts.name,
+        product_id:     opts.productId,
+        payment_status: 'pending',
+        qualified:      true,
+      })
+      .select('id')
+      .single()
+
+    if (createErr || !created) {
+      console.error('[webhook] confirmLead: criação do lead falhou:', { email: opts.email, productId: opts.productId, error: createErr?.message })
+      return { ok: false }
+    }
+
+    // UPDATE separado do INSERT de propósito: o gatilho da 022 só dispara em
+    // "after update of payment_status", não num insert que já nasce 'confirmed'.
+    const { error: confirmErr } = await supabaseAdmin
+      .from('leads')
+      .update(patch)
+      .eq('id', created.id)
+
+    if (confirmErr) {
+      console.error('[webhook] confirmLead: confirmação do lead recém-criado falhou:', { leadId: created.id, error: confirmErr.message })
+      return { ok: false }
+    }
+
+    console.log('[webhook] confirmLead: nenhum lead prévio — criado e confirmado:', { leadId: created.id, email: opts.email, productId: opts.productId })
+    return { ok: true, leadId: created.id }
+  } catch (err) {
+    console.error('[webhook] confirmLead: erro inesperado:', err)
+    return { ok: false }
+  }
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -184,6 +331,20 @@ Deno.serve(async (req: Request) => {
 
   const email     = session.customer_details?.email ?? session.customer_email ?? null
   const productId = session.metadata?.product_id ?? null
+
+  // lead_id, lead_email e lead_name vêm do create-checkout-session; '' conta
+  // como ausente (create-checkout-session sempre manda a chave, mesmo vazia).
+  const rawLeadId    = session.metadata?.lead_id ?? ''
+  const leadId       = rawLeadId.trim() !== '' ? rawLeadId.trim() : null
+  const rawLeadEmail = session.metadata?.lead_email ?? ''
+  const leadEmailRaw = rawLeadEmail.trim() !== '' ? rawLeadEmail.trim() : null
+  const rawLeadName  = session.metadata?.lead_name ?? ''
+  // Nome do lead (formulário) tem prioridade; senão o nome que o Stripe
+  // coletou no Checkout. Usado só se um lead novo precisar ser criado
+  // (caminho 3 do confirmLead) — string vazia conta como ausente.
+  const leadName     = rawLeadName.trim() !== ''
+    ? rawLeadName.trim()
+    : (session.customer_details?.name?.trim() || null)
 
   console.log('[webhook] Processing event:', {
     eventId,
@@ -324,6 +485,36 @@ Deno.serve(async (req: Request) => {
 
   console.log('[webhook] user_access granted:', { userId, productId, email, sessionId })
 
+  // ── STEP 8: Confirmar o lead em public.leads — ponto crítico ─────────────
+  // E-mail do lead (formulário) tem prioridade sobre o e-mail que o Stripe
+  // coletou no Checkout — podem ser pessoas diferentes (quem paga ≠ quem se
+  // inscreve). `email` já foi validado como não-nulo acima.
+  const leadEmail = leadEmailRaw ?? email
+
+  const leadResult = await confirmLead(supabaseAdmin, {
+    leadId,
+    email:     leadEmail,
+    name:      leadName,
+    productId,
+    sessionId,
+  })
+
+  if (!leadResult.ok) {
+    console.error('[webhook] CRITICAL: confirmLead FAILED — lead not confirmed:', {
+      eventId,
+      sessionId,
+      leadId,
+      email: leadEmail,
+      productId,
+      action: 'Stripe will retry — stripe_events NOT written yet, retry is safe. user_access já foi concedido.',
+    })
+    // Retorna 500 → Stripe re-tenta. stripe_events ainda não foi gravado, então
+    // o retry refaz este passo (user_access é idempotente via upsert).
+    return json({ error: 'Failed to confirm lead — will retry' }, 500)
+  }
+
+  console.log('[webhook] Lead confirmado em public.leads:', { leadId: leadResult.leadId, email: leadEmail, productId })
+
   // ── LAYER 2: Idempotência — MARK ─────────────────────────────────────────
   // Escrito SOMENTE APÓS o acesso ser concedido com sucesso.
   // Satisfaz a constraint: "Só grave como processado se o acesso foi garantido."
@@ -354,34 +545,6 @@ Deno.serve(async (req: Request) => {
       })
       // Retorna 200 mesmo assim — o cliente TEM acesso, não podemos causar mais retries
     }
-  }
-
-  // ── STEP 9: Actualizar lead (best-effort, fire-and-forget) ────────────────
-  // Localiza o lead mais recente não-completado para este email + produto
-  // e marca como concluído com o session ID do Stripe.
-
-  try {
-    const { data: leadRow } = await supabaseAdmin
-      .from('bridge_leads')
-      .select('id')
-      .eq('email', email)
-      .eq('product_id', productId)
-      .eq('completed', false)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (leadRow) {
-      await supabaseAdmin
-        .from('bridge_leads')
-        .update({ stripe_session_id: sessionId, completed: true })
-        .eq('id', leadRow.id)
-
-      console.log('[webhook] Lead updated:', { leadId: leadRow.id, sessionId })
-    }
-  } catch (leadErr) {
-    // Não-crítico — falha não afecta o acesso do utilizador
-    console.warn('[webhook] Lead update failed (non-critical):', leadErr)
   }
 
   // ── STEP 10: Gerar magic link de boas-vindas (best-effort) ───────────────
@@ -424,11 +587,9 @@ Deno.serve(async (req: Request) => {
       //   }),
       // })
 
-      console.log('[webhook] Magic link generated:', {
-        email,
-        productName: product.name,
-        link: linkData.properties.action_link,
-      })
+      // Nunca logar o action_link: é um link de login válido — qualquer um
+      // com acesso aos logs entraria direto na conta do aluno.
+      console.log('[webhook] Magic link gerado (não enviado):', { email })
     }
   } catch (magicLinkErr) {
     console.warn('[webhook] Magic link step threw (non-critical):', magicLinkErr)

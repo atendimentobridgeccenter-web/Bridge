@@ -1,10 +1,21 @@
 // Supabase Edge Function: stripe-webhook
 // Runtime: Deno
 //
+// ── DESCONTINUADA (OS-003, 2026-11-09) ───────────────────────────────────────
+// A confirmação do lead (payment_status = 'confirmed') passou inteira para o
+// `stripe-webhook-handler`. Motivo: os dois endpoints liam o mesmo secret do
+// projeto (STRIPE_WEBHOOK_SECRET), mas cada endpoint do Stripe tem o seu
+// próprio signing secret — então na prática só um dos dois validava a
+// assinatura, e a tela de Checkout já manda cadastrar só o `-handler`. Nenhum
+// comportamento deste arquivo muda; ele só deixa de ser necessário.
+// Ação pendente do Everton: remover este endpoint do painel do Stripe
+// (Developers → Webhooks) depois de confirmar que o `-handler` está recebendo
+// os eventos. Esta pasta não foi apagada nesta OS.
+//
 // Recebe eventos do Stripe e atualiza status de pagamento nos leads.
 // Evento tratado: checkout.session.completed
 //
-// Configuração necessária no painel do Stripe:
+// Configuração necessária no painel do Stripe (histórica — não usar mais):
 //   Developers → Webhooks → Add endpoint
 //   URL: https://hwiwijrdnmsgnhuortiq.supabase.co/functions/v1/stripe-webhook
 //   Event: checkout.session.completed
