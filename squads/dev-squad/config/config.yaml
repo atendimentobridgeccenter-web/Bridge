@@ -1,0 +1,38 @@
+squad:
+  id: dev-squad
+  version: "1.0.0"
+  quality_threshold: 7.0
+  language: "pt-BR"
+
+defaults:
+  entry_agent: dev-chief
+  review_agent: uncle-bob
+  quality_agent: subgerente
+  manager_agent: subgerente
+  audit_agent: subgerente
+
+hierarchy:
+  - "gerente (Everton)"
+  - subgerente
+  - dev-chief
+  - especialistas
+
+routing:
+  audit: subgerente
+  frontend: dan-abramov
+  performance_web: addy-osmani
+  backend: uncle-bob
+  architecture: sam-newman
+  devops_culture: gene-kim
+  infrastructure: kelsey-hightower
+  android: jake-wharton
+  ios: chris-lattner
+  testing: kent-dodds
+
+quality:
+  min_score: 7.0
+  veto_conditions:
+    - "Código sem tratamento de erros em operações críticas"
+    - "Deploy sem testes automatizados"
+    - "Credenciais hardcoded"
+    - "Race condition não tratada"

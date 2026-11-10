@@ -1,0 +1,62 @@
+name: dev-squad
+version: "1.0.0"
+short-title: "Dev Squad"
+description: "Squad de 10 engenheiros + subgerente/auditor do Bridge (sistema de gestão do Bridge Cultural Center): front-end React, performance, arquitetura, back-end Supabase, DevOps e qualidade."
+author: "Synkra AIOS"
+license: MIT
+slashPrefix: "dev-squad"
+
+aios:
+  minVersion: "4.0.0"
+  type: squad
+
+tags:
+  - development
+  - frontend
+  - backend
+  - devops
+  - mobile
+  - architecture
+  - clean-code
+  - cloud
+  - kubernetes
+  - react
+  - api
+  - testing
+  - audit
+
+components:
+  agents:
+    - subgerente.md
+    - dev-chief.md
+    - dan-abramov.md
+    - addy-osmani.md
+    - uncle-bob.md
+    - sam-newman.md
+    - kelsey-hightower.md
+    - gene-kim.md
+    - jake-wharton.md
+    - chris-lattner.md
+    - kent-dodds.md
+  tasks:
+    - auditar-sistema.md
+    - auditar-entrega.md
+    - relatorio-gerente.md
+    - priorizar.md
+    - build-feature.md
+    - code-review.md
+    - architect-system.md
+    - setup-cicd.md
+    - api-design.md
+    - mobile-feature.md
+    - optimize-performance.md
+    - review.md
+  workflows:
+    - wf-feature-development.yaml
+    - wf-tech-debt-sprint.yaml
+  checklists:
+    - output-quality.md
+    - auditoria-bridge.md
+
+config:
+  extends: extend

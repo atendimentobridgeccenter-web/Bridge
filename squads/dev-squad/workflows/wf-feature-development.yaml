@@ -1,0 +1,118 @@
+workflow:
+  id: wf-feature-development
+  name: "Pipeline de Desenvolvimento de Feature"
+  version: "1.0.0"
+  description: |
+    Workflow completo de desenvolvimento de feature — do requisito ao deploy.
+    Cobre análise de requisitos, design de arquitetura, implementação,
+    testes, code review e preparação para deploy.
+  trigger: "*feature-development"
+  entry_agent: dev-chief
+  estimated_duration: "1-4 hours"
+
+  type: sequential
+
+phases:
+  - id: phase_0
+    name: "Requirements & Triage"
+    agent: dev-chief
+    task: build-feature.md
+    description: "Entender o requisito, identificar especialistas e fazer triage da demanda."
+    outputs:
+      - triage_report: "markdown"
+      - specialist_routing: "list"
+    checkpoint:
+      gate: "Requisito entendido, especialistas definidos, ambiguidades resolvidas"
+      veto: "Feature ambígua ou sem requisitos funcionais claros"
+
+  - id: phase_1
+    name: "Architecture Design"
+    agent: sam-newman
+    task: architect-system.md
+    depends_on: [phase_0]
+    description: "Design da arquitetura da feature — componentes, interfaces e contratos."
+    outputs:
+      - architecture_spec: "markdown"
+      - component_design: "object"
+    checkpoint:
+      gate: "Arquitetura definida com responsabilidades claras e interfaces documentadas"
+      veto: "Arquitetura sem tratamento de erros ou com acoplamento excessivo"
+
+  - id: phase_2
+    name: "Implementation"
+    agent: dev-chief
+    task: build-feature.md
+    depends_on: [phase_1]
+    description: "Implementação da feature pelo especialista correto (FE/BE/Mobile) baseado no triage."
+    routing:
+      frontend: dan-abramov
+      backend: uncle-bob
+      mobile_android: jake-wharton
+      mobile_ios: chris-lattner
+      performance: addy-osmani
+    outputs:
+      - implemented_code: "code"
+      - error_handling: "boolean"
+    checkpoint:
+      gate: "Feature implementada, casos de erro tratados, código limpo"
+      veto: "Código com violações SOLID ou sem tratamento de erros"
+
+  - id: phase_3
+    name: "Testing"
+    agent: kent-dodds
+    task: build-feature.md
+    depends_on: [phase_2]
+    description: "Estratégia e implementação de testes — unit, integration, e2e se aplicável."
+    outputs:
+      - test_strategy: "markdown"
+      - test_implementation: "code"
+    checkpoint:
+      gate: "Casos principais e de erro cobertos com testes que testam comportamento"
+      veto: "Testes de implementação, cobertura apenas de happy path"
+
+  - id: phase_4
+    name: "Code Review"
+    agent: uncle-bob
+    task: code-review.md
+    depends_on: [phase_2, phase_3]
+    description: "Code review completo — clean code, SOLID, testes e qualidade."
+    outputs:
+      - review_report: "markdown"
+      - approval_status: "boolean"
+    checkpoint:
+      gate: "Score >= 7.0 e nenhum bloqueador sem resolução"
+      veto: "Violações críticas de clean code ou SOLID não resolvidas"
+
+  - id: phase_5
+    name: "Final Review"
+    agent: dev-chief
+    task: review.md
+    depends_on: [phase_3, phase_4]
+    description: "Revisão final de qualidade — feature pronta para merge e deploy."
+    outputs:
+      - final_report: "markdown"
+      - ready_for_deploy: "boolean"
+    checkpoint:
+      gate: "Feature completa, testada, revisada e pronta para merge"
+      veto: "Qualquer bloqueador não resolvido das fases anteriores"
+
+  - id: phase_6
+    name: "Portão do Subgerente"
+    agent: subgerente
+    task: auditar-entrega.md
+    depends_on: [phase_5]
+    description: "Auditoria independente antes do deploy e da entrega ao gerente."
+    outputs:
+      - veredito: "APROVADO | APROVADO COM RESSALVAS | BARRADO"
+    checkpoint:
+      gate: "Veredito APROVADO ou APROVADO COM RESSALVAS"
+      veto: "Qualquer veto do checklist de auditoria (RLS, segredo, migration editada, dinheiro, build quebrado)"
+
+completion_criteria:
+  - "Requisito implementado corretamente"
+  - "Arquitetura documentada"
+  - "Código limpo e seguindo padrões"
+  - "Testes cobrindo casos principais e de erro"
+  - "Code review aprovado"
+  - "Feature pronta para merge e deploy"
+  - "Aprovado no portão do subgerente"

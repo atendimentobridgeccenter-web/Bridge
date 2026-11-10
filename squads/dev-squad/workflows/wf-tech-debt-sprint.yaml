@@ -1,0 +1,110 @@
+workflow:
+  id: wf-tech-debt-sprint
+  name: "Sprint de Dívida Técnica"
+  version: "1.0.0"
+  description: |
+    Workflow para identificar, priorizar e resolver dívida técnica de forma estruturada.
+    Cobre auditoria de código, priorização por impacto, refatoração com testes,
+    e validação de melhoria.
+  trigger: "*tech-debt-sprint"
+  entry_agent: dev-chief
+  estimated_duration: "2-8 hours"
+
+  type: sequential
+
+phases:
+  - id: phase_0
+    name: "Debt Audit"
+    agent: uncle-bob
+    task: code-review.md
+    description: "Auditoria completa do código existente — identificar e catalogar toda a dívida técnica."
+    outputs:
+      - debt_catalog: "list"
+      - severity_scores: "object"
+    checkpoint:
+      gate: "Catálogo completo de dívida técnica com severidade e impacto"
+      veto: "Auditoria superficial sem causa raiz identificada"
+
+  - id: phase_1
+    name: "Prioritization"
+    agent: dev-chief
+    task: review.md
+    depends_on: [phase_0]
+    description: "Priorizar dívida técnica por impacto no negócio, risco e esforço de resolução."
+    outputs:
+      - priority_matrix: "object"
+      - sprint_backlog: "list"
+    checkpoint:
+      gate: "Backlog priorizado com critérios claros e esforço estimado"
+      veto: "Priorização sem critérios claros ou esforço subestimado"
+
+  - id: phase_2
+    name: "Test Coverage First"
+    agent: kent-dodds
+    task: review.md
+    depends_on: [phase_1]
+    description: "Garantir cobertura de testes antes de refatorar — segurança para refatoração."
+    outputs:
+      - test_coverage_report: "markdown"
+      - new_tests: "code"
+    checkpoint:
+      gate: "Casos principais cobertos com testes — pode refatorar com segurança"
+      veto: "Refatorar sem testes é reescrever sem rede de segurança"
+
+  - id: phase_3
+    name: "Refactoring"
+    agent: uncle-bob
+    task: build-feature.md
+    depends_on: [phase_2]
+    description: "Refatoração sistemática seguindo clean code e SOLID — small steps, green tests."
+    outputs:
+      - refactored_code: "code"
+      - before_after_comparison: "markdown"
+    checkpoint:
+      gate: "Código refatorado com todos os testes passando"
+      veto: "Refatoração que quebra testes existentes sem justificativa"
+
+  - id: phase_4
+    name: "Performance Validation"
+    agent: addy-osmani
+    task: optimize-performance.md
+    depends_on: [phase_3]
+    description: "Validar que refatoração não introduziu regressões de performance."
+    outputs:
+      - performance_comparison: "markdown"
+    checkpoint:
+      gate: "Métricas de performance iguais ou melhores que antes"
+      veto: "Regressão de performance sem justificativa"
+
+  - id: phase_5
+    name: "Final Quality Gate"
+    agent: dev-chief
+    task: review.md
+    depends_on: [phase_3, phase_4]
+    description: "Validação final — dívida técnica resolvida, código melhor, testes passando."
+    outputs:
+      - quality_report: "markdown"
+      - debt_reduction_summary: "object"
+    checkpoint:
+      gate: "Score de qualidade >= 8.0 (melhor que antes), todos os testes passando"
+      veto: "Score igual ou pior que antes da refatoração"
+
+  - id: phase_6
+    name: "Portão do Subgerente"
+    agent: subgerente
+    task: auditar-entrega.md
+    depends_on: [phase_5]
+    description: "Auditoria independente antes do deploy e da entrega ao gerente."
+    outputs:
+      - veredito: "APROVADO | APROVADO COM RESSALVAS | BARRADO"
+    checkpoint:
+      gate: "Veredito APROVADO ou APROVADO COM RESSALVAS"
+      veto: "Qualquer veto do checklist de auditoria (RLS, segredo, migration editada, dinheiro, build quebrado)"
+
+completion_criteria:
+  - "Dívida técnica catalogada e priorizada"
+  - "Testes cobrindo código antes de refatorar"
+  - "Código refatorado seguindo clean code"
+  - "Performance igual ou melhor"
+  - "Score de qualidade >= 8.0"
+  - "Aprovado no portão do subgerente"
