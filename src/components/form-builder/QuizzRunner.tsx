@@ -7,6 +7,7 @@ import {
   Copy, Landmark, Upload, Banknote, CreditCard,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import type { FormNode, OptionPrice, NodeType, SocialLink, BankInfo } from './FormBuilder'
 
 // ── Social platform display config ───────────────────────────
@@ -751,16 +752,10 @@ function InfoRow({ label, value, onCopy, copied }: {
 // ── Coupon types ──────────────────────────────────────────────
 
 interface CouponRecord {
-  id:             string
   code:           string
-  description:    string | null
   discount_type:  'percentage' | 'fixed'
   discount_value: number
   applies_to:     'enrollment' | 'monthly' | 'both'
-  max_uses:       number | null
-  uses_count:     number
-  active:         boolean
-  expires_at:     string | null
 }
 
 function fmtMoney(value: number, currency = 'BRL'): string {
@@ -811,18 +806,21 @@ function BankDepositScreen({ node, pct, onAdvance }: {
     setApplying(true)
     setCouponError(null)
     setCoupon(null)
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .eq('code', code)
-      .eq('active', true)
-      .single()
+    const { data, error } = await supabase.rpc('validate_coupon', { p_code: code })
     setApplying(false)
-    if (error || !data) { setCouponError('Cupom inválido ou inativo.'); return }
-    const c = data as CouponRecord
-    if (c.expires_at && new Date(c.expires_at) < new Date()) { setCouponError('Este cupom expirou.'); return }
-    if (c.max_uses !== null && c.uses_count >= c.max_uses) { setCouponError('Este cupom atingiu o limite de usos.'); return }
-    setCoupon(c)
+    if (error) {
+      console.error('[QuizzRunner] validate_coupon falhou:', error)
+      setCouponError('Erro ao validar cupom. Tente de novo.')
+      return
+    }
+    const row = data?.[0]
+    if (!row) { setCouponError('Cupom inválido, inativo ou expirado.'); return }
+    setCoupon({
+      code:           row.code,
+      discount_type:  row.discount_type,
+      discount_value: Number(row.discount_value),
+      applies_to:     row.applies_to,
+    })
   }
 
   return (
@@ -1195,41 +1193,27 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
     setLoading(true)
     setError(null)
     try {
-      // 1. Salva o lead no banco antes do redirect (payment_status: pending)
-      //    Garante que o lead aparece no CRM mesmo se não voltar ao formulário
-      let leadId: string | null = null
-      try {
-        const { data: leadData } = await supabase.from('leads').insert({
-          product_id:   productId,
-          email:        email  || null,
-          name:         name   || null,
-          payment_status: 'pending',
-          answers,
-          qualified:    true,
-          utm_source:   utmParams?.utm_source   || null,
-          utm_medium:   utmParams?.utm_medium   || null,
-          utm_campaign: utmParams?.utm_campaign || null,
-          utm_term:     utmParams?.utm_term     || null,
-          utm_content:  utmParams?.utm_content  || null,
-          referrer:     utmParams?.referrer     || null,
-        }).select('id').single()
-        leadId = leadData?.id ?? null
-      } catch { /* continua mesmo sem salvar o lead */ }
-
-      // 2. Persiste estado do formulário + leadId para retomar após o redirect
-      localStorage.setItem(
-        `payment-resume-${productId}`,
-        JSON.stringify({ history, answers, leadId }),
-      )
-
-      // 3. Monta success_url apontando de volta para este formulário (sem duplicar payment_done)
+      // 1. Monta success_url apontando de volta para este formulário (sem duplicar payment_done)
       const currentParams = new URLSearchParams(window.location.search)
       currentParams.delete('payment_done')
       const cleanSearch = currentParams.toString() ? '?' + currentParams.toString() : ''
       const successPath = window.location.pathname + cleanSearch + (cleanSearch ? '&' : '?') + 'payment_done=1'
 
+      // 2. Cria a sessão de checkout — o lead nasce no servidor a partir das
+      //    respostas e UTMs coletadas até aqui (OS-004/OS-005); o id volta na resposta
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
-        body: { productId, priceIds: [resolvedPriceId], email, name, successPath, leadId },
+        body: {
+          productId, priceIds: [resolvedPriceId], email, name, successPath,
+          lead: {
+            answers,
+            utm_source:   utmParams?.utm_source,
+            utm_medium:   utmParams?.utm_medium,
+            utm_campaign: utmParams?.utm_campaign,
+            utm_term:     utmParams?.utm_term,
+            utm_content:  utmParams?.utm_content,
+            referrer:     utmParams?.referrer,
+          },
+        },
       })
       if (fnErr) {
         // Try to parse the actual error body from the Edge Function response
@@ -1241,6 +1225,13 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
         throw new Error(msg ?? 'Erro ao criar sessão de pagamento.')
       }
       if (!data?.url) throw new Error(data?.error ?? 'URL de checkout não retornada.')
+
+      // 3. Persiste estado do formulário + leadId (devolvido pelo servidor) para retomar após o redirect
+      localStorage.setItem(
+        `payment-resume-${productId}`,
+        JSON.stringify({ history, answers, leadId: data.leadId ?? null }),
+      )
+
       window.location.href = data.url
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erro inesperado.')
@@ -1431,13 +1422,8 @@ export default function QuizzRunner({
     window.history.replaceState({}, '', url.toString())
     // Usuário retornou do Stripe — nunca mostrar CheckoutSummary de novo
     setPaidViaStripe(true)
-    // Marca o lead como confirmado imediatamente na volta do Stripe
-    if (paymentResume.leadId) {
-      supabase.from('leads').update({
-        payment_status: 'confirmed',
-        paid_at:        new Date().toISOString(),
-      }).eq('id', paymentResume.leadId).then(() => {}, () => {})
-    }
+    // A confirmação do pagamento é só do webhook (server-side) — o front não
+    // escreve payment_status nem paid_at.
     // Se stripe-checkout era o último nó, encerra o formulário e exibe o card de obrigado correto.
     // Usa o thankyouNodeId resolvido em restoreFromPayment (suporta múltiplos cards de fim).
     if (paymentResume.complete) {
@@ -1445,7 +1431,14 @@ export default function QuizzRunner({
       const thankyouNode = paymentResume.thankyouNodeId
         ? nodes.find(n => n.id === paymentResume.thankyouNodeId)
         : nodes.find(n => n.type === 'thankyou')
-      if (thankyouNode) setThankyouContent({ title: thankyouNode.title, description: thankyouNode.description, socialLinks: thankyouNode.socialLinks })
+      if (thankyouNode) {
+        // Pagamento ainda não está confirmado neste momento — só o webhook confirma.
+        setThankyouContent({
+          title:       thankyouNode.title,
+          description: 'Pagamento recebido, estamos confirmando. Você recebe a confirmação por e-mail.',
+          socialLinks: thankyouNode.socialLinks,
+        })
+      }
       setDone(true)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1468,16 +1461,22 @@ export default function QuizzRunner({
     if (productId) {
       const existingLeadId = paymentResume?.leadId ?? null
       if (existingLeadId) {
-        // Lead já foi salvo antes do redirect para o Stripe — apenas atualiza
-        // campos coletados depois do pagamento e marca como qualificado/desqualificado
-        supabase.from('leads').update({
-          phone:     phone || null,
-          cpf:       cpf   || null,
-          city:      city  || null,
-          state:     state || null,
-          answers:   ans,
-          qualified: !disqualified,
-        }).eq('id', existingLeadId).then(() => {}, () => {})
+        // Lead já nasceu no servidor antes do redirect para o Stripe (OS-004/OS-005) —
+        // completa só os dados coletados depois do pagamento; nunca toca em pagamento.
+        supabase.rpc('complete_lead_form', {
+          p_lead_id:   existingLeadId,
+          p_phone:     phone || null,
+          p_cpf:       cpf   || null,
+          p_city:      city  || null,
+          p_state:     state || null,
+          p_answers:   ans,
+          p_qualified: !disqualified,
+        }).then(({ error }) => {
+          if (error) {
+            console.error('[QuizzRunner] complete_lead_form falhou:', error)
+            toast.error('Não foi possível salvar seus dados finais. Seu pagamento não foi afetado.')
+          }
+        })
       } else {
         supabase.from('leads').insert({
           product_id:   productId,
