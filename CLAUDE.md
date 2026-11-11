@@ -26,6 +26,10 @@ Hierarquia: **Everton (gerente) → Cérebro (sessão principal) → `@dev-squad
 - `supabase functions deploy <nome> --project-ref hwiwijrdnmsgnhuortiq`: deploy de Edge Function
 - **Webhook do Stripe sempre com `--no-verify-jwt`**: `supabase functions deploy stripe-webhook-handler --project-ref hwiwijrdnmsgnhuortiq --no-verify-jwt`. Sem essa opção o Supabase exige login e recusa (401) todas as entregas do Stripe. A função se protege sozinha validando a assinatura do Stripe.
 
+## Deploy do front (Vercel)
+- A Vercel publica o repositório **`atendimentobridgeccenter-web/Bridge`** (remote `origin`). O `origin` também empurra para `bridge-center-web`, então **sempre `git push origin <branch>`**. `git push lovable` atualiza só o `bridge-center-web` e **não publica nada**.
+- Produção = `git push origin main`.
+
 ## Regras inegociáveis
 - Toda tabela com RLS; migrations novas e numeradas, nunca editar as aplicadas.
 - Nenhum segredo em código, commit ou permissão do Claude Code.
