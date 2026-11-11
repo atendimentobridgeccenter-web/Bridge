@@ -34,7 +34,7 @@ Portal do professor: home, turma, alunos.
 4. **Strings vazias viram null** antes de gravar (`src/lib/emptyToNull.ts`). Já houve bug com coluna de data.
 5. **Erros não podem falhar em silêncio**: toda mutation mostra o erro (sonner) e registra no console.
 6. **Dados via hooks** em `src/hooks/useX.ts` (TanStack Query). Código novo vai por hook; algumas páginas antigas ainda chamam o Supabase direto e podem ser migradas aos poucos.
-7. **Cores só por tokens** (variáveis CSS); nada de hex solto. Testar nos temas claro e escuro.
+7. **Visual segue o design system do Bridge** (`docs/design-system/README.md`, aprovado em 10/11/2026): cores só por tokens (nada de hexadecimal), Noto Serif JP nos títulos, IBM Plex Sans JP na interface, componentes de `src/components/ui/` e logos de `public/brand/`. Testar nos temas claro e escuro.
 8. Antes de entregar: `npm run typecheck`, `npm run lint` e `npm run build` limpos.
 9. Commits em português, no padrão `feat:`/`fix:`/`refactor:`/`redesign:`.
 10. Interface e textos em português (BR).

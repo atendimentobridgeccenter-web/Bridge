@@ -30,3 +30,4 @@ Hierarquia: **Everton (gerente) → Cérebro (sessão principal) → `@dev-squad
 - Toda tabela com RLS; migrations novas e numeradas, nunca editar as aplicadas.
 - Nenhum segredo em código, commit ou permissão do Claude Code.
 - Textos da interface em português (BR).
+- Visual: siga `docs/design-system/README.md` (tokens, tipografia, componentes). Nada de hexadecimal em componente.
