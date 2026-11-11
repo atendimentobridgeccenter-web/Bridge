@@ -16,6 +16,7 @@ import { useContactStage, useContactStageHistory } from '@/hooks/useContactStage
 import { STAGES, stageOf } from '@/lib/stageConfig'
 import StageSelector from '@/components/StageSelector'
 import { BG_PAGE, BG_CARD2, BG_CARD, BORDER2, BORDER } from '@/lib/theme'
+import { scoreAssessment } from '@/lib/assessment'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -40,6 +41,135 @@ function displayName(i: LeadInteraction) {
 
 function resolveTitle(nodeId: string, nodes: FormNode[]) {
   return nodes.find(n => n.id === nodeId)?.title ?? `Campo ${nodeId.slice(0, 6)}`
+}
+
+// ── Avaliação de nivelamento (OS-013) ──────────────────────────
+// O nível/pontuação SEMPRE são recalculados aqui a partir de `{nodeId}.q.*`
+// com a mesma função pura da OS-012 (src/lib/assessment.ts) — nunca lemos o
+// `{nodeId}` gravado pelo navegador. Isso garante que o perfil bate com a
+// ficha do aluno, que o servidor (OS-010) recalcula do mesmo jeito.
+
+interface AssessmentRow {
+  questionTitle: string
+  optionLabel:   string
+  points:        number | null  // null = questão/alternativa não existe mais na config atual
+}
+
+interface AssessmentDisplay {
+  nodeId:     string
+  nodeTitle:  string
+  level:      string | null
+  incomplete: boolean  // true = há questão da config atual sem resposta válida (regra da migration 034)
+  score:      number
+  maxScore:   number
+  rows:       AssessmentRow[]
+}
+
+// Mesma regra de completude da migration 034 (create_student_draft_from_lead):
+// toda questão da configuração atual precisa de uma resposta que aponte para
+// uma alternativa existente com pontos numéricos. Se faltar uma, o servidor
+// não calcula o nível — o perfil não pode mostrar um nível que a ficha não tem.
+function isAssessmentComplete(config: NonNullable<FormNode['assessment']>, questionAnswers: Record<string, string>): boolean {
+  for (const question of config.questions) {
+    const optionId = questionAnswers[question.id]
+    if (!optionId) return false
+    const option = question.options.find(o => o.id === optionId)
+    if (!option || typeof option.points !== 'number' || Number.isNaN(option.points)) return false
+  }
+  return true
+}
+
+function buildAssessmentDisplays(nodes: FormNode[], answers: Record<string, string>): AssessmentDisplay[] {
+  const displays: AssessmentDisplay[] = []
+  for (const node of nodes) {
+    if (node.type !== 'assessment' || !node.assessment) continue
+
+    const prefix = `${node.id}.q.`
+    const questionAnswers: Record<string, string> = {}
+    for (const [key, value] of Object.entries(answers)) {
+      if (key.startsWith(prefix) && value) questionAnswers[key.slice(prefix.length)] = value
+    }
+    // Lead não fez esta avaliação — nada a mostrar, nada muda na tela.
+    if (Object.keys(questionAnswers).length === 0) continue
+
+    const result   = scoreAssessment(node.assessment, questionAnswers)
+    const complete = isAssessmentComplete(node.assessment, questionAnswers)
+    const rows: AssessmentRow[] = Object.entries(questionAnswers).map(([questionId, optionId]) => {
+      const question = node.assessment!.questions.find(q => q.id === questionId)
+      if (!question) return { questionTitle: 'Questão removida', optionLabel: '—', points: null }
+      const option = question.options.find(o => o.id === optionId)
+      if (!option) return { questionTitle: question.title, optionLabel: 'Alternativa removida', points: null }
+      return { questionTitle: question.title, optionLabel: option.label, points: option.points }
+    })
+
+    displays.push({
+      nodeId:     node.id,
+      nodeTitle:  node.title || 'Avaliação de nivelamento',
+      level:      complete ? result.level : null,
+      incomplete: !complete,
+      score:      result.score,
+      maxScore:   result.maxScore,
+      rows,
+    })
+  }
+  return displays
+}
+
+// Chaves técnicas de blocos `assessment` que nunca devem aparecer cruas na
+// lista genérica de respostas: `{nodeId}`, `{nodeId}.score` e `{nodeId}.q.*`.
+function isAssessmentTechnicalKey(key: string, nodes: FormNode[]): boolean {
+  for (const node of nodes) {
+    if (node.type !== 'assessment') continue
+    if (key === node.id || key === `${node.id}.score` || key.startsWith(`${node.id}.q.`)) return true
+  }
+  return false
+}
+
+function AssessmentBlock({ display }: { display: AssessmentDisplay }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-lg px-3 py-2.5" style={{ background: BG_CARD2, border: `1px solid ${BORDER2}` }}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-ink-faint mb-0.5">
+            {display.nodeTitle}
+          </p>
+          <p className="text-[13px] text-ink">
+            {display.level
+              ? `Nível ${display.level}`
+              : display.incomplete
+                ? 'Nível não calculado (avaliação incompleta)'
+                : 'Nível não calculado'}
+            <span className="text-ink-faint">
+              {' · '}{display.score} de {display.maxScore} pontos
+            </span>
+          </p>
+        </div>
+        {display.rows.length > 0 && (
+          <button
+            onClick={() => setOpen(o => !o)}
+            className="shrink-0 flex items-center gap-1 text-[11px] text-ink-mute hover:text-ink-sub transition-colors"
+          >
+            {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {open ? 'Ocultar questões' : `${display.rows.length} ${display.rows.length === 1 ? 'questão' : 'questões'}`}
+          </button>
+        )}
+      </div>
+
+      {open && display.rows.length > 0 && (
+        <div className="mt-2.5 pt-2.5 border-t flex flex-col gap-1.5" style={{ borderColor: BORDER2 }}>
+          {display.rows.map((row, i) => (
+            <div key={i} className="flex items-start justify-between gap-3 text-[12px]">
+              <span className="text-ink-mute">{row.questionTitle}</span>
+              <span className={cn('text-right shrink-0', row.points === null ? 'text-ink-faint italic' : 'text-ink')}>
+                {row.optionLabel}{row.points !== null && ` (${row.points} pt${row.points !== 1 ? 's' : ''})`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const PRODUCT_COLORS = [
@@ -74,7 +204,9 @@ function InteractionCard({
 }) {
   const [expanded, setExpanded] = useState(false)
   const color = productColor(interaction.product_name)
-  const entries = Object.entries(interaction.answers ?? {}).filter(([, v]) => !!v)
+  const assessmentDisplays = buildAssessmentDisplays(interaction.product_nodes, interaction.answers ?? {})
+  const entries = Object.entries(interaction.answers ?? {})
+    .filter(([k, v]) => !!v && !isAssessmentTechnicalKey(k, interaction.product_nodes))
   const hasUtm = interaction.utm_source || interaction.utm_campaign || interaction.utm_medium
 
   return (
@@ -170,6 +302,13 @@ function InteractionCard({
           </button>
         )}
       </div>
+
+      {/* Avaliação de nivelamento (OS-013) — sempre visível quando o lead fez a avaliação */}
+      {assessmentDisplays.length > 0 && (
+        <div className="px-5 pb-4 flex flex-col gap-2">
+          {assessmentDisplays.map(d => <AssessmentBlock key={d.nodeId} display={d} />)}
+        </div>
+      )}
 
       {/* Answers accordion */}
       {expanded && entries.length > 0 && (

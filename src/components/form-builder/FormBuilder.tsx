@@ -5,7 +5,7 @@ import {
   Sparkles, CheckCircle, CreditCard,
   XCircle, FileText, ImageIcon, X,
   InstagramIcon, LinkedinIcon, Globe, MessageCircle, Send, Music2, PlayCircle,
-  Landmark, Upload, Banknote, LayoutList, Workflow, Clock,
+  Landmark, Upload, Banknote, LayoutList, Workflow, Clock, AlertTriangle, GraduationCap,
 } from 'lucide-react'
 import { FormCanvas, type CanvasPositions } from './FormCanvas'
 import { cn } from '@/lib/cn'
@@ -13,7 +13,8 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useBuilderStore } from '@/stores/useBuilderStore'
 import StripePricePicker from '@/components/StripePricePicker'
-import { uid, TYPE_META, SCREEN_TYPES, type TypeMeta } from './formConstants'
+import { uid, TYPE_META, SCREEN_TYPES, isNodeAfterPayment, type TypeMeta } from './formConstants'
+import AssessmentEditor from './AssessmentEditor'
 export type { TypeMeta }
 
 // ── Types ─────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ export type NodeType =
   | 'receipt-upload'   // Tela de upload de comprovante
   | 'payment-done'     // Tela de confirmação de pagamento em dinheiro
   | 'stripe-checkout'  // Tela de checkout do Stripe (cartão de crédito)
+  | 'assessment'       // Avaliação de nivelamento (OS-011) — não é uma pergunta de tela
 
 export interface LogicJump {
   id:           string
@@ -72,6 +74,37 @@ export interface BankInfo {
   imageUrl?:          string   // imagem ilustrativa (ex: QR code, comprovante bancário)
 }
 
+// ── Assessment (avaliação de nivelamento) types ────────────────
+// Fonte: docs/operacao/specs/avaliacao-nivelamento.md (OS-010/011/012/013).
+// O nível calculado aqui é só para exibição ao aluno — o servidor recalcula
+// a partir de AssessmentConfig.bands e das respostas `{nodeId}.q.*` (OS-010).
+
+export type JlptLevel = 'N5' | 'N4' | 'N3' | 'N2' | 'N1'
+
+export interface AssessmentOption {
+  id:     string
+  label:  string
+  points: number   // >= 0
+}
+
+export interface AssessmentQuestion {
+  id:      string
+  title:   string
+  options: AssessmentOption[]
+}
+
+export interface AssessmentBand {
+  minScore: number   // faixa vale de minScore até o próximo minScore - 1
+  level:    JlptLevel
+}
+
+export interface AssessmentConfig {
+  questions:    AssessmentQuestion[]   // >= 1
+  bands:        AssessmentBand[]       // >= 1, ordenadas por minScore crescente, a primeira com minScore = 0
+  showResult:   boolean                // padrão true
+  resultTitle?: string                 // ex.: "Seu nível é"
+}
+
 export interface FormNode {
   id:            string
   title:         string
@@ -89,6 +122,7 @@ export interface FormNode {
   bankInfo?:              BankInfo  // dados bancários para nó bank-deposit
   payLaterLabel?:         string    // quando preenchido, exibe botão "pagar depois" no bank-deposit
   stripeCheckoutPriceId?: string    // preço Stripe específico para nó stripe-checkout
+  assessment?:            AssessmentConfig  // configuração do bloco de avaliação (nó assessment)
   pdfUrl?:       string       // URL do PDF de termos (nó confirm) — requer abertura antes do aceite
   options:       string[]
   logicJumps:    LogicJump[]
@@ -1067,6 +1101,19 @@ function QuestionEditor({
         )
       })()}
 
+      {/* Aviso: pergunta de nível depois de um nó de pagamento */}
+      {node.mapsTo === 'jlpt_level' && isNodeAfterPayment(node, nodes) && (
+        <div className="flex items-start gap-2 px-3.5 py-3 rounded-xl"
+          style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning)' }}>
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--warning)' }} />
+          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--warning)' }}>
+            Esta pergunta está depois de uma tela de pagamento. A ficha do aluno é criada com as
+            respostas enviadas <strong>antes</strong> do pagamento — o nível respondido aqui não vai
+            chegar até ela.
+          </p>
+        </div>
+      )}
+
       {/* Destino na ficha do aluno */}
       <div className="flex flex-col gap-2">
         <label className={labelCls}>Preenche na ficha do aluno</label>
@@ -1370,6 +1417,7 @@ function NodeEditor({ node, nodes, onUpdate, allowedPriceIds }: {
   if (node.type === 'receipt-upload')   return <ReceiptUploadEditor   node={node} nodes={nodes} onUpdate={onUpdate} />
   if (node.type === 'payment-done')     return <PaymentDoneEditor     node={node} nodes={nodes} onUpdate={onUpdate} />
   if (node.type === 'stripe-checkout')  return <StripeCheckoutEditor  node={node} onUpdate={onUpdate} allowedPriceIds={allowedPriceIds} />
+  if (node.type === 'assessment')       return <AssessmentEditor       node={node} nodes={nodes} onUpdate={onUpdate} />
   if (SCREEN_TYPES.includes(node.type)) {
     return <ScreenEditor node={node} onUpdate={onUpdate} />
   }
@@ -1512,6 +1560,28 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
     setSelectedId(n.id)
   }, [nodes, onChange])
 
+  const addAssessment = useCallback(() => {
+    const n: FormNode = {
+      id: uid(), type: 'assessment',
+      title: 'Vamos descobrir seu nível',
+      mapsTo: 'jlpt_level',
+      options: [], logicJumps: [],
+      assessment: {
+        questions: [{
+          id: uid(), title: '',
+          options: [
+            { id: uid(), label: '', points: 0 },
+            { id: uid(), label: '', points: 1 },
+          ],
+        }],
+        bands: [{ minScore: 0, level: 'N5' }],
+        showResult: true,
+      },
+    }
+    onChange([...nodes, n])
+    setSelectedId(n.id)
+  }, [nodes, onChange])
+
   const deleteNode = useCallback((id: string) => {
     const next = nodes.filter(n => n.id !== id)
     onChange(next)
@@ -1577,6 +1647,7 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
               onAddReceiptUpload={addReceiptUpload}
               onAddPaymentDone={addPaymentDone}
               onAddStripeCheckout={addStripeCheckout}
+              onAddAssessment={addAssessment}
               hasWelcome={hasWelcome}
             />
           </div>
@@ -1726,6 +1797,13 @@ export default function FormBuilder({ nodes, onChange, allowedPriceIds, productI
               <CreditCard className="w-3 h-3" /> Cartão
             </button>
           </div>
+          <button
+            onClick={addAssessment}
+            title="Adicionar bloco de avaliação de nivelamento"
+            className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+            style={{ background: 'rgba(20,184,166,0.05)', border: '1px dashed rgba(20,184,166,0.2)', color: '#14B8A6' }}>
+            <GraduationCap className="w-3 h-3" /> Avaliação
+          </button>
         </div>
       </div>
 

@@ -395,6 +395,7 @@ interface FormCanvasProps {
   onAddReceiptUpload: () => void
   onAddPaymentDone:   () => void
   onAddStripeCheckout:() => void
+  onAddAssessment:    () => void
   hasWelcome:         boolean
 }
 
@@ -402,6 +403,7 @@ export function FormCanvas({
   nodes, selectedId, onSelect, positions, onPositionsChange, onChange,
   onAddNode, onAddWelcome, onAddThankyou,
   onAddBankDeposit, onAddReceiptUpload, onAddPaymentDone, onAddStripeCheckout,
+  onAddAssessment,
   hasWelcome,
 }: FormCanvasProps) {
 
@@ -608,6 +610,8 @@ export function FormCanvas({
             {toolBtn(onAddReceiptUpload, '+ Comprovante', '#8B5CF6')}
             {toolBtn(onAddPaymentDone,   '+ Dinheiro',    '#10B981')}
             {toolBtn(onAddStripeCheckout,'+ Cartão',      '#A855F7')}
+            <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 2px' }} />
+            {toolBtn(onAddAssessment,    '+ Avaliação',   '#14B8A6')}
           </div>
         </Panel>
 

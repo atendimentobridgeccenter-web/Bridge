@@ -6,9 +6,9 @@
 import {
   Type, Mail, List, CheckSquare, AlignLeft,
   Phone, Hash, Calendar, MapPin, Map, Sparkles, CheckCircle, CreditCard,
-  User, SquareCheck, Landmark, Upload, Banknote,
+  User, SquareCheck, Landmark, Upload, Banknote, GraduationCap,
 } from 'lucide-react'
-import type { NodeType } from './FormBuilder'
+import type { NodeType, FormNode } from './FormBuilder'
 
 export interface TypeMeta { label: string; icon: React.ElementType; color: string }
 
@@ -34,6 +34,25 @@ export const TYPE_META: Record<NodeType, TypeMeta> = {
   'receipt-upload':   { label: 'Comprovante',     icon: Upload,     color: '#8B5CF6' },
   'payment-done':     { label: 'Pag. Dinheiro',   icon: Banknote,   color: '#10B981' },
   'stripe-checkout':  { label: 'Pag. Cartão',     icon: CreditCard, color: '#A855F7' },
+  assessment:         { label: 'Avaliação',        icon: GraduationCap, color: '#14B8A6' },
 }
 
 export const SCREEN_TYPES: NodeType[] = ['welcome', 'thankyou', 'bank-deposit', 'receipt-upload', 'payment-done', 'stripe-checkout']
+
+// Nós de pagamento — nenhuma resposta depois deles chega à ficha do aluno,
+// porque ela nasce com as respostas enviadas antes do pagamento (OS-004/005).
+// Usado para avisar quando o bloco de avaliação ou a pergunta de nível
+// declarado ficam depois de um desses (OS-011, especificação em
+// docs/operacao/specs/avaliacao-nivelamento.md).
+export const PAYMENT_TYPES: NodeType[] = ['stripe-checkout', 'bank-deposit', 'receipt-upload', 'payment-done']
+
+export function firstPaymentIndex(nodes: FormNode[]): number {
+  return nodes.findIndex(n => PAYMENT_TYPES.includes(n.type))
+}
+
+export function isNodeAfterPayment(node: FormNode, nodes: FormNode[]): boolean {
+  const paymentIdx = firstPaymentIndex(nodes)
+  if (paymentIdx === -1) return false
+  const nodeIdx = nodes.findIndex(n => n.id === node.id)
+  return nodeIdx > paymentIdx
+}

@@ -9,6 +9,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { FormNode, OptionPrice, NodeType, SocialLink, BankInfo } from './FormBuilder'
+import type { AssessmentConfig, AssessmentQuestion, JlptLevel } from './FormBuilder'
+import { scoreAssessment, formatScore, cleanupAssessmentAnswers } from '@/lib/assessment'
 
 // ── Social platform display config ───────────────────────────
 
@@ -51,6 +53,19 @@ export interface QuizzRunnerProps {
 // ── Helpers ───────────────────────────────────────────────────
 
 const LETTER = (i: number) => String.fromCharCode(65 + i)
+
+// OS-023: atalho A/B/C… só deve disparar numa tecla de UM caractere A-Z, sem
+// Ctrl/⌘/Alt e sem repetição (tecla segurada). Antes disso, `e.key.toUpperCase()
+// .charCodeAt(0) - 65` usava a primeira letra do NOME da tecla — Shift, Alt,
+// as setas viravam "A", Backspace virava "B", Control/CapsLock viravam "C",
+// Escape/Enter viravam "E", Meta (⌘) virava "M" — marcando uma opção sem o
+// aluno ter escolhido nada. Usado pelos dois atalhos do arquivo (perguntas de
+// escolha e o AssessmentScreen) para não divergirem de novo.
+function optionIndexFromKey(e: KeyboardEvent): number {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return -1
+  if (e.key.length !== 1 || !/^[a-zA-Z]$/.test(e.key)) return -1
+  return e.key.toUpperCase().charCodeAt(0) - 65
+}
 
 function formatAmount(amount: number, currency: string): string {
   const curr = currency.toLowerCase()
@@ -1160,6 +1175,212 @@ function PaymentDoneScreen({ node, pct, onAdvance }: {
   )
 }
 
+// ── AssessmentScreen (OS-012) ──────────────────────────────────
+// Renderiza o bloco `assessment` uma pergunta por vez ("Questão N de M").
+// Estado das perguntas é local a este componente — só sai para o `answers`
+// externo quando a avaliação termina (onFinish), já com as 3 chaves prontas.
+// Nós do tipo assessment não têm editor de logicJumps hoje (options: [] por
+// padrão) — por isso aqui o fluxo é sempre linear: ao terminar, quem chama
+// decide o próximo nó exatamente como o `advance()` principal faz para os
+// demais tipos (ver uso em QuizzRunner).
+
+function AssessmentScreen({ node, pct, onFinish, onExitBack }: {
+  node:      FormNode
+  pct:       number
+  onFinish:  (level: JlptLevel | '', scoreLabel: string, questionAnswers: Record<string, string>) => void
+  onExitBack: () => void
+}) {
+  const config = node.assessment
+  const questions: AssessmentQuestion[] = config?.questions ?? []
+  const [qIdx, setQIdx]         = useState(0)
+  const [qAnswers, setQAnswers] = useState<Record<string, string>>({})
+  const [stage, setStage]       = useState<'pergunta' | 'resultado'>('pergunta')
+  const [result, setResult]     = useState<{ level: JlptLevel | null; score: number; maxScore: number } | null>(null)
+  const dirRef = useRef(1)
+
+  const invalid  = !config || questions.length === 0
+  const question = questions[qIdx]
+
+  // Avaliação sem perguntas configuradas: não trava o aluno, segue o fluxo
+  // sem gravar nenhuma resposta de avaliação.
+  useEffect(() => {
+    if (invalid) onFinish('', '0/0', {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invalid])
+
+  // Atalho A/B/C… — o atalho global do QuizzRunner é desligado para
+  // `assessment` (ver useEffect de keydown mais abaixo no arquivo), então
+  // este componente precisa do seu próprio, só enquanto está montado e só na
+  // etapa de pergunta (não durante a tela de resultado). Hooks não podem ser
+  // condicionais — por isso este efeito vem ANTES do `if (invalid) return
+  // null` abaixo, com `question` guardado dentro do handler.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (invalid || stage !== 'pergunta' || !question) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const idx = optionIndexFromKey(e)
+      if (idx >= 0 && idx < question.options.length) choose(question.options[idx].id)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invalid, stage, question, qAnswers])
+
+  if (invalid) return null
+
+  const selected = qAnswers[question.id]
+
+  function choose(optionId: string) {
+    const nextAnswers = { ...qAnswers, [question.id]: optionId }
+    setQAnswers(nextAnswers)
+
+    if (qIdx + 1 < questions.length) {
+      dirRef.current = 1
+      setTimeout(() => setQIdx(i => i + 1), 220)
+      return
+    }
+
+    const scored = scoreAssessment(config as AssessmentConfig, nextAnswers)
+    setResult(scored)
+    if (config?.showResult) {
+      setStage('resultado')
+    } else {
+      onFinish(scored.level ?? '', formatScore(scored.score, scored.maxScore), nextAnswers)
+    }
+  }
+
+  function back() {
+    if (qIdx === 0) { onExitBack(); return }
+    dirRef.current = -1
+    setQIdx(i => i - 1)
+  }
+
+  function continueAfterResult() {
+    if (!result) return
+    onFinish(result.level ?? '', formatScore(result.score, result.maxScore), qAnswers)
+  }
+
+  if (stage === 'resultado' && result) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-16 overflow-x-hidden"
+        style={{ background: '#0D0E12' }}>
+        <ProgressBar pct={pct} />
+        <motion.div
+          className="w-full max-w-[560px] flex flex-col gap-8 text-center"
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <motion.div
+            className="flex items-center justify-center mx-auto"
+            style={{ width: 80, height: 80, borderRadius: 16, background: 'rgba(232,82,26,0.1)', border: '1px solid rgba(232,82,26,0.2)' }}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 18 }}
+          >
+            <Sparkles className="w-8 h-8" style={{ color: '#E8521A' }} />
+          </motion.div>
+
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight text-[#F1F5F9] break-words">
+              {config?.resultTitle || 'Seu resultado'}
+            </h1>
+            <p className="text-[17px] mt-4 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {result.level ? `Seu nível é ${result.level}` : 'Não foi possível calcular seu nível agora.'}
+            </p>
+          </div>
+
+          <button
+            onClick={continueAfterResult}
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl
+                       text-[15px] font-bold text-white mx-auto transition-all"
+            style={{ background: '#E8521A', boxShadow: '0 8px 32px rgba(232,82,26,0.3)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C43E10' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#E8521A' }}
+          >
+            Continuar <ArrowRight className="w-4 h-4" />
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col overflow-x-hidden" style={{ background: '#0D0E12' }}>
+      <ProgressBar pct={pct} />
+      <div className="flex-1 flex items-center justify-center px-6 py-20">
+        <div className="w-full max-w-[560px]">
+          <AnimatePresence mode="wait" custom={dirRef.current}>
+            <motion.div
+              key={question.id}
+              custom={dirRef.current}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={transition}
+              className="flex flex-col gap-8"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-bold tabular-nums" style={{ color: '#E8521A' }}>
+                  {String(qIdx + 1).padStart(2, '0')}
+                </span>
+                <ArrowRight className="w-3.5 h-3.5" style={{ color: '#E8521A' }} />
+                <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  Questão {qIdx + 1} de {questions.length}
+                </span>
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight break-words" style={{ color: '#F1F5F9' }}>
+                {question.title || (
+                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>Pergunta sem título</span>
+                )}
+              </h1>
+
+              <div className="flex flex-col gap-3">
+                {question.options.map((opt, i) => (
+                  <OptionBtn
+                    key={opt.id}
+                    letter={LETTER(i)}
+                    label={opt.label}
+                    selected={selected === opt.id}
+                    onClick={() => choose(opt.id)}
+                  />
+                ))}
+                {question.options.length === 0 && (
+                  <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                    Nenhuma opção configurada.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4 pt-1 flex-wrap">
+                <button onClick={back}
+                  className="flex items-center gap-1.5 text-[13px] transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)' }}>
+                  <ChevronLeft className="w-3.5 h-3.5" /> Voltar
+                </button>
+                {question.options.length > 0 && (
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                    Pressione <strong>A</strong>, <strong>B</strong>, <strong>C</strong>… para selecionar
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+      <div className="shrink-0 pb-5 flex justify-center">
+        <p className="text-[10px] tracking-wide" style={{ color: 'rgba(255,255,255,0.1)' }}>
+          POWERED BY BRIDGE
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── StripeCheckoutScreen ──────────────────────────────────────
 
 function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answers, nodes, history, utmParams }: {
@@ -1199,13 +1420,18 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
       const cleanSearch = currentParams.toString() ? '?' + currentParams.toString() : ''
       const successPath = window.location.pathname + cleanSearch + (cleanSearch ? '&' : '?') + 'payment_done=1'
 
+      // OS-012: respostas de bloco(s) `assessment` que não ficaram no caminho
+      // final (history) até aqui são removidas antes de persistir — evita
+      // enviar respostas de uma avaliação abandonada/substituída.
+      const cleanAnswers = cleanupAssessmentAnswers(answers, nodes, history)
+
       // 2. Cria a sessão de checkout — o lead nasce no servidor a partir das
       //    respostas e UTMs coletadas até aqui (OS-004/OS-005); o id volta na resposta
       const { data, error: fnErr } = await supabase.functions.invoke('create-checkout-session', {
         body: {
           productId, priceIds: [resolvedPriceId], email, name, successPath,
           lead: {
-            answers,
+            answers: cleanAnswers,
             utm_source:   utmParams?.utm_source,
             utm_medium:   utmParams?.utm_medium,
             utm_campaign: utmParams?.utm_campaign,
@@ -1229,7 +1455,7 @@ function StripeCheckoutScreen({ node, pct, priceId, productId, productName, answ
       // 3. Persiste estado do formulário + leadId (devolvido pelo servidor) para retomar após o redirect
       localStorage.setItem(
         `payment-resume-${productId}`,
-        JSON.stringify({ history, answers, leadId: data.leadId ?? null }),
+        JSON.stringify({ history, answers: cleanAnswers, leadId: data.leadId ?? null }),
       )
 
       window.location.href = data.url
@@ -1449,7 +1675,10 @@ export default function QuizzRunner({
     if ((!done && !disqualified) || leadSaved) return
     setLeadSaved(true)
 
-    const ans = finalAnswersRef.current
+    // OS-012: idem — limpa respostas de assessment fora do caminho final antes
+    // de gravar o lead (cobre: usuário voltou depois de terminar a avaliação
+    // e seguiu por outro caminho que não passa mais pelo bloco).
+    const ans = cleanupAssessmentAnswers(finalAnswersRef.current, nodes, history)
     const email = findAnswerByType('email', nodes, ans)
     const phone = findAnswerByType('phone', nodes, ans)
     const name  = findAnswerByType('name',  nodes, ans)
@@ -1609,6 +1838,80 @@ export default function QuizzRunner({
     setDraft('')
   }, [currentNode, currentIdx, answers, nodes, onComplete])
 
+  // ── Advance from assessment (OS-012) ──────────────────────────
+  // Escreve as 3 chaves do bloco (nível, pontuação, respostas por pergunta)
+  // de uma vez e resolve o próximo nó com a MESMA regra do advance() acima
+  // (jump exato > fallback linear). Nós assessment não têm editor de
+  // logicJumps hoje (options: []), então na prática isso sempre cai no
+  // fallback linear — mas resolver via logicJumps também deixa o código
+  // pronto caso um dia a configuração de salto seja adicionada para este tipo.
+  const advanceAssessment = useCallback((
+    level: JlptLevel | '',
+    scoreLabel: string,
+    questionAnswers: Record<string, string>,
+  ) => {
+    if (!currentNode) return
+
+    // Config vazia/sem perguntas chama aqui com level === '' e nenhuma
+    // resposta — nesse caso não gravamos nada (gate 2: o comentário dizia
+    // "segue sem gravar nada", mas o código gravava `{nodeId} = ''` e
+    // `.score = '0/0'`; ajustado para bater com o que o comentário promete).
+    const hasData = level !== '' || Object.keys(questionAnswers).length > 0
+    let newAnswers = answers
+    if (hasData) {
+      const extra: Record<string, string> = { [currentNode.id]: level, [`${currentNode.id}.score`]: scoreLabel }
+      for (const [questionId, optionId] of Object.entries(questionAnswers)) {
+        extra[`${currentNode.id}.q.${questionId}`] = optionId
+      }
+      newAnswers = { ...answers, ...extra }
+      setAnswers(newAnswers)
+      finalAnswersRef.current = newAnswers
+    }
+
+    const jump = currentNode.logicJumps.find(j => !!j.jumpToNodeId && j.ifOption === level)
+      ?? currentNode.logicJumps.find(j => !!j.jumpToNodeId && j.ifOption === '')
+
+    if (jump) {
+      if (jump.jumpToNodeId === '__disqualify__') {
+        setDisqualified(true)
+        return
+      }
+      if (jump.jumpToNodeId === '__end__') {
+        setDone(true)
+        onComplete?.(newAnswers)
+        return
+      }
+      const targetNode = nodes.find(n => n.id === jump.jumpToNodeId)
+      if (targetNode?.type === 'thankyou') {
+        setThankyouContent({ title: targetNode.title, description: targetNode.description, socialLinks: targetNode.socialLinks })
+        setDone(true)
+        onComplete?.(newAnswers)
+        return
+      }
+      dirRef.current = 1
+      setHistory(h => [...h, jump.jumpToNodeId])
+      setDraft('')
+      return
+    }
+
+    // Linear: próximo nó
+    const nextNode = nodes[currentIdx + 1]
+    if (!nextNode) {
+      setDone(true)
+      onComplete?.(newAnswers)
+      return
+    }
+    if (nextNode.type === 'thankyou') {
+      setThankyouContent({ title: nextNode.title, description: nextNode.description, socialLinks: nextNode.socialLinks })
+      setDone(true)
+      onComplete?.(newAnswers)
+      return
+    }
+    dirRef.current = 1
+    setHistory(h => [...h, nextNode.id])
+    setDraft('')
+  }, [currentNode, currentIdx, answers, nodes, onComplete])
+
   const handleNext = useCallback(() => {
     if (!draft && currentNode?.required !== false) return
     advance(draft)
@@ -1640,10 +1943,10 @@ export default function QuizzRunner({
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (done || disqualified || !currentNode) return
       if (currentNode.type === 'welcome') return
-      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload' || currentNode.type === 'payment-done' || currentNode.type === 'stripe-checkout') return
+      if (currentNode.type === 'bank-deposit' || currentNode.type === 'receipt-upload' || currentNode.type === 'payment-done' || currentNode.type === 'stripe-checkout' || currentNode.type === 'assessment') return
 
       if (isChoice && !otherActive) {
-        const idx = e.key.toUpperCase().charCodeAt(0) - 65
+        const idx = optionIndexFromKey(e)
         if (idx >= 0 && idx < currentNode.options.length) {
           const opt = currentNode.options[idx]
           setDraft(opt)
@@ -1748,6 +2051,20 @@ export default function QuizzRunner({
         pct={pct}
         productId={productId}
         onAdvance={(url) => advance(url)}
+      />
+    )
+  }
+
+  // ── Assessment screen (avaliação de nivelamento — OS-012) ────
+
+  if (currentNode.type === 'assessment') {
+    return (
+      <AssessmentScreen
+        key={currentNode.id}
+        node={currentNode}
+        pct={pct}
+        onFinish={(level, scoreLabel, questionAnswers) => advanceAssessment(level, scoreLabel, questionAnswers)}
+        onExitBack={handleBack}
       />
     )
   }
