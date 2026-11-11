@@ -15,9 +15,13 @@
 //        b. Every priceId in form_logic_config (FormSchema: allowed_price_ids)
 //        c. Every optionPrice in form_logic_config (FormNode: nodes[*].optionPrices)
 //   4. Reject with 403 if any submitted priceId is not in the allowed set.
-//   5. Criar o lead 'pending' em public.leads com a service_role — antes da
-//      sessão existir, para que todo pagamento tenha lead. Falha aqui → 500,
-//      sem criar a sessão.
+//   5. Reaproveitar (OS-014) ou criar o lead 'pending' em public.leads com a
+//      service_role — antes da sessão existir, para que todo pagamento tenha
+//      lead. Se já existe um lead 'none' recente (≤2h) do mesmo e-mail
+//      (comparação exata em minúsculas, feita no servidor — nunca ilike) e
+//      produto — ex.: o formulário já gravou respostas no resumo do fim
+//      (QuizzRunner) — promove-o para 'pending' em vez de criar um segundo
+//      lead duplicado. Falha aqui → 500, sem criar a sessão.
 //   6. Retrieve the first Stripe Price to determine mode (payment vs subscription).
 //   7. Create Stripe Checkout Session — line_items reference Prices by ID only.
 //      No unit_amount is ever passed from the frontend. metadata.lead_id é o id
@@ -242,33 +246,106 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'One or more price IDs are not available for this product.' }, 403)
     }
 
-    // ── 4. Criar o lead 'pending' no banco (service_role) ────────
-    // Sempre cria aqui — todo pagamento tem lead, e o id vem do servidor.
-    // Falha aqui → 500 e nenhuma sessão é criada (sem lead não há como
-    // confirmar o pagamento depois, no webhook da OS-003).
+    // ── 4. Reaproveitar lead 'none' do formulário (OS-014) ou criar novo ─
     const leadFields = sanitizeLeadInput(lead)
+    const normalizedEmail = emptyToNull(email)?.toLowerCase() ?? null
 
-    const { data: leadRow, error: leadErr } = await supabaseAdmin
-      .from('leads')
-      .insert({
-        product_id:     productId,
-        email:          emptyToNull(email),
-        name:           emptyToNull(name),
-        payment_status: 'pending',
-        ...leadFields,
-      })
-      .select('id')
-      .single()
+    let leadId: string | null = null
+    let leadPath: 'reaproveitado' | 'criado' = 'criado'
 
-    if (leadErr || !leadRow) {
-      console.error('[create-checkout-session] Failed to create lead:', {
-        productId,
-        error: leadErr?.message,
-      })
-      return json({ error: 'Failed to register lead — checkout not created.' }, 500)
+    if (normalizedEmail) {
+      // Igualdade exata em minúsculas, nunca ilike (evita varrer por
+      // wildcard e evita pegar lead de outra pessoa). A comparação é feita
+      // aqui, em memória, sobre um conjunto já estreito: mesmo produto,
+      // só 'none', só os últimos 2h.
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+
+      const { data: candidates, error: findErr } = await supabaseAdmin
+        .from('leads')
+        .select('id, name, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referrer, answers, email')
+        .eq('product_id', productId)
+        .eq('payment_status', 'none')
+        .gte('created_at', twoHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (findErr) {
+        console.error('[create-checkout-session] Lead reuse lookup failed (falling back to insert):', {
+          productId,
+          error: findErr.message,
+        })
+      }
+
+      const existingLead = candidates?.find(
+        c => typeof c.email === 'string' && c.email.toLowerCase() === normalizedEmail,
+      )
+
+      if (existingLead) {
+        const hasAnswers = existingLead.answers && typeof existingLead.answers === 'object'
+          && Object.keys(existingLead.answers as Record<string, unknown>).length > 0
+
+        const patch: Record<string, unknown> = {
+          payment_status: 'pending',
+          name:           existingLead.name         ?? emptyToNull(name),
+          utm_source:     existingLead.utm_source    ?? leadFields.utm_source,
+          utm_medium:     existingLead.utm_medium    ?? leadFields.utm_medium,
+          utm_campaign:   existingLead.utm_campaign  ?? leadFields.utm_campaign,
+          utm_term:       existingLead.utm_term      ?? leadFields.utm_term,
+          utm_content:    existingLead.utm_content   ?? leadFields.utm_content,
+          referrer:       existingLead.referrer      ?? leadFields.referrer,
+          answers:        hasAnswers ? existingLead.answers : leadFields.answers,
+        }
+
+        const { data: updated, error: updErr } = await supabaseAdmin
+          .from('leads')
+          .update(patch)
+          .eq('id', existingLead.id)
+          .eq('payment_status', 'none') // guarda contra corrida entre duas abas
+          .select('id')
+
+        if (updErr) {
+          console.error('[create-checkout-session] Lead reuse update failed (falling back to insert):', {
+            leadId: existingLead.id,
+            error: updErr.message,
+          })
+        } else if (updated && updated.length > 0) {
+          leadId   = updated[0].id as string
+          leadPath = 'reaproveitado'
+        }
+        // updated.length === 0 → outra aba já promoveu esse lead (corrida);
+        // cai no INSERT normal abaixo, sem reaproveitar.
+      }
     }
 
-    const leadId = leadRow.id as string
+    if (!leadId) {
+      // Sempre cria aqui quando não há lead para reaproveitar — todo
+      // pagamento tem lead, e o id vem do servidor. Falha aqui → 500 e
+      // nenhuma sessão é criada (sem lead não há como confirmar o
+      // pagamento depois, no webhook da OS-003).
+      const { data: leadRow, error: leadErr } = await supabaseAdmin
+        .from('leads')
+        .insert({
+          product_id:     productId,
+          email:          emptyToNull(email),
+          name:           emptyToNull(name),
+          payment_status: 'pending',
+          ...leadFields,
+        })
+        .select('id')
+        .single()
+
+      if (leadErr || !leadRow) {
+        console.error('[create-checkout-session] Failed to create lead:', {
+          productId,
+          error: leadErr?.message,
+        })
+        return json({ error: 'Failed to register lead — checkout not created.' }, 500)
+      }
+
+      leadId = leadRow.id as string
+    }
+
+    console.log('[create-checkout-session] Lead path:', { leadId, path: leadPath })
 
     // ── 5. Determine checkout mode from first price ─────────────
     const firstPrice = await stripe.prices.retrieve(resolvedPriceIds[0])
