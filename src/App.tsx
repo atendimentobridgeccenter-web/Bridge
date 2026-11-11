@@ -17,6 +17,9 @@ const StudentsPage      = lazy(() => import('@/pages/admin/StudentsPage'))
 const TurmasPage        = lazy(() => import('@/pages/admin/TurmasPage'))
 const MatriculasPage    = lazy(() => import('@/pages/admin/MatriculasPage'))
 const StudentProfile    = lazy(() => import('@/pages/admin/StudentProfilePage'))
+// Página de desenvolvimento do design system (OS-016). Fora do menu de
+// propósito — não está em Sidebar.tsx.
+const DesignPage         = lazy(() => import('@/pages/admin/DesignPage'))
 
 // ── Portal do professor ───────────────────────────────────────
 const ProfessorHome     = lazy(() => import('@/pages/professor/ProfessorHome'))
@@ -84,6 +87,7 @@ export default function App() {
             <Route path="products/:id"            element={<ProductConfigPage />} />
             <Route path="products/:id/edit"       element={<ProductBuilder />} />
             <Route path="settings"                element={<SettingsPage />} />
+            <Route path="_design"                 element={<DesignPage />} />
           </Route>
 
           {/* ── Portal do professor ── */}

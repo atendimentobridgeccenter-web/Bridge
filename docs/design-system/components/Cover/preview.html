@@ -1,0 +1,50 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Bridge</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--fundo); color:var(--texto); overflow:hidden; }
+  .cover { position:relative; width:960px; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; }
+  .grafite { fill:var(--texto); }
+  .laranja { fill:var(--laranja); }
+  .suave { fill:var(--laranja-suave); }
+  .branco { fill:var(--superficie); }
+  .cartao { rx:var(--radius-cartao); }
+  .arco { fill:none; stroke:var(--superficie); stroke-width:4; stroke-linecap:round; }
+  .arco-l { fill:none; stroke:var(--laranja); stroke-width:4; stroke-linecap:round; }
+  .words { position:absolute; left:32px; bottom:32px; max-width:440px; }
+  .name { margin:0; font-family:var(--font-titulo); font-size:112px; line-height:.92; font-weight:700; letter-spacing:-.01em; color:var(--texto); }
+  .tag { margin:14px 0 0 6px; font-family:var(--font-texto); font-size:14px; line-height:20px; color:var(--texto-sub); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      texto 296×248 laje grafite (clara no tema escuro) sangrando à direita e no topo (o topo do site) · laranja disco r=96 (o disco do logo) · laranja-suave 136×72 (o creme aquecido) · superficie 96×32 (um botão-pílula) — ≈45% da capa
+  arrangement laje grafite à direita, disco laranja apoiado na borda da laje e do creme, como o sol sobre a ponte; cartão e tinta suave à esquerda, embaixo
+  pattern     literal: a ponte do logo — três arcos concêntricos (3 traços) atravessando disco e laje, dois em superficie e um em laranja sobre o grafite; escolhido porque o README define a ponte como o desenho do sistema
+  scales      lados em múltiplos de space-2 (8) e space-6 (24); cantos radius-cartao (16); disco e arcos a partir do mesmo centro
+-->
+<rect class="grafite cartao" x="200" y="-16" width="296" height="248" rx="16"/>
+<rect class="suave cartao" x="40" y="200" width="136" height="72" rx="16"/>
+<rect class="branco cartao" x="64" y="224" width="96" height="32" rx="16"/>
+<circle class="laranja" cx="208" cy="136" r="96"/>
+<path class="arco" d="M136 152 A72 72 0 0 1 280 152"/>
+<path class="arco" d="M152 152 A56 56 0 0 1 264 152"/>
+<path class="arco-l" d="M296 152 A88 88 0 0 1 472 152"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Bridge</h1>
+<p class="tag">Sua ponte entre o Brasil e o Japão.</p>
+</div>
+</div>
+</body>
+</html>

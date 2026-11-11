@@ -1,0 +1,1 @@
+Tela de exemplo: a página Hoje, que é a entrada do sistema. Ela tem o cabeçalho com a data, os três números do mês, a lista do que precisa de ação (cobrança atrasada, avaliação do dia, matrícula em rascunho) e o Arco com a ocupação de uma turma.

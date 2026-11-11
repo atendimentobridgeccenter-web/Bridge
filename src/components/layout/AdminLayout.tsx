@@ -6,7 +6,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 import Sidebar from './Sidebar'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 
-import { BG_DROP, BG_PAGE, BORDER, INK_MUTE } from '@/lib/theme'
+import { FUNDO, LARANJA_ACAO, ON_LARANJA } from '@/lib/theme'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -118,27 +118,25 @@ function SearchModal({ onClose }: { onClose: () => void }) {
   }, [query])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}>
-      <div className="w-full max-w-[560px] rounded-2xl overflow-hidden shadow-2xl"
-        style={{ background: BG_DROP, border: `1px solid ${BORDER}` }}
+      <div className="w-full max-w-[560px] rounded-grande overflow-hidden border border-line bg-superficie shadow-[var(--sombra-flutua)]"
         onClick={e => e.stopPropagation()}>
 
         {/* Input */}
-        <div className="flex items-center gap-3 px-4 py-3.5"
-          style={{ borderBottom: results.length ? `1px solid ${BORDER}` : 'none' }}>
-          <Search className="w-4 h-4 text-[#7C8294] shrink-0" />
+        <div className={`flex items-center gap-3 px-4 py-3.5 ${results.length ? 'border-b border-line' : ''}`}>
+          <Search className="w-4 h-4 text-texto-mute shrink-0" />
           <input
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Buscar produtos, leads…"
-            className="flex-1 bg-transparent outline-none text-[14px] text-ink placeholder:text-[#8A8FA0]"
+            className="flex-1 bg-transparent outline-none text-[14px] text-ink placeholder:text-texto-mute"
           />
-          {loading && <div className="w-4 h-4 rounded-full border-2 border-[#C7CBD6] border-t-[#E8521A] animate-spin shrink-0" />}
+          {loading && <div className="w-4 h-4 rounded-full border-2 border-line border-t-laranja animate-spin shrink-0" />}
           <button onClick={onClose}
-            className="p-1 rounded-md text-[#9CA1B0] hover:text-ink-sub transition-colors shrink-0">
+            aria-label="Fechar busca"
+            className="p-1 rounded-md text-texto-mute hover:text-ink-sub transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)]">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -150,22 +148,17 @@ function SearchModal({ onClose }: { onClose: () => void }) {
               <button key={r.id + r.type}
                 onClick={() => { navigate(r.href); onClose() }}
                 onMouseEnter={() => setActive(i)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                style={{ background: i === active ? 'rgba(15,23,42,0.05)' : 'transparent' }}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{
-                    background: r.type === 'product' ? 'rgba(232,82,26,0.1)' : 'rgba(96,165,250,0.1)',
-                    border: `1px solid ${r.type === 'product' ? 'rgba(232,82,26,0.2)' : 'rgba(96,165,250,0.2)'}`,
-                  }}>
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)] ${i === active ? 'bg-superficie-2' : 'bg-transparent'}`}>
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${r.type === 'product' ? 'bg-laranja-suave' : 'bg-ok-fundo'}`}>
                   {r.type === 'product'
-                    ? <Package className="w-3.5 h-3.5" style={{ color: '#F0643A' }} />
-                    : <Users   className="w-3.5 h-3.5" style={{ color: '#93C5FD' }} />}
+                    ? <Package className="w-3.5 h-3.5 text-laranja-texto" />
+                    : <Users   className="w-3.5 h-3.5 text-ok" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-ink truncate">{r.label}</p>
-                  <p className="text-[11px] text-[#7C8294] truncate">{r.sub}</p>
+                  <p className="text-[13px] text-texto-mute truncate">{r.sub}</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[#B7BBC6] shrink-0" />
+                <ChevronRight className="w-3.5 h-3.5 text-texto-mute shrink-0" />
               </button>
             ))}
           </div>
@@ -173,14 +166,14 @@ function SearchModal({ onClose }: { onClose: () => void }) {
 
         {query.trim() && !loading && results.length === 0 && (
           <div className="py-8 text-center">
-            <p className="text-[13px] text-[#8A8FA0]">Nenhum resultado para "<span className="text-[#6B7280]">{query}</span>"</p>
+            <p className="text-[13px] text-texto-mute">Nenhum resultado para "<span className="text-ink-sub">{query}</span>"</p>
           </div>
         )}
 
         {!query.trim() && (
           <div className="px-4 py-3 flex items-center gap-4">
-            <span className="text-[11px] text-[#9CA1B0]">Dica:</span>
-            <span className="text-[11px] text-[#9CA1B0]">↑↓ navegar · Enter abrir · Esc fechar</span>
+            <span className="text-[13px] text-texto-mute">Dica:</span>
+            <span className="text-[13px] text-texto-mute">↑↓ navegar · Enter abrir · Esc fechar</span>
           </div>
         )}
       </div>
@@ -231,12 +224,11 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
   }, [])
 
   return (
-    <div ref={ref} className="absolute top-full right-0 mt-2 w-[340px] rounded-2xl shadow-2xl z-50 overflow-hidden"
-      style={{ background: BG_DROP, border: `1px solid ${BORDER}` }}>
-      <div className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: `1px solid ${BORDER}` }}>
+    <div ref={ref} className="absolute top-full right-0 mt-2 w-[340px] rounded-grande overflow-hidden z-50 border border-line bg-superficie shadow-[var(--sombra-flutua)]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-line">
         <p className="text-[13px] font-semibold text-ink">Notificações</p>
-        <button onClick={onClose} className="text-[#9CA1B0] hover:text-ink-sub transition-colors">
+        <button onClick={onClose} aria-label="Fechar notificações"
+          className="text-texto-mute hover:text-ink-sub transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)] rounded-md">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -244,33 +236,28 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
       <div className="max-h-[400px] overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-10">
-            <div className="w-4 h-4 rounded-full border-2 border-[#C7CBD6] border-t-[#E8521A] animate-spin" />
+            <div className="w-4 h-4 rounded-full border-2 border-line border-t-laranja animate-spin" />
           </div>
         ) : items.length === 0 ? (
           <div className="py-10 text-center">
-            <Bell className="w-7 h-7 text-[#D7D9E0] mx-auto mb-2" />
-            <p className="text-[12px] text-[#8A8FA0]">Sem notificações ainda</p>
+            <Bell className="w-7 h-7 text-texto-mute mx-auto mb-2" />
+            <p className="text-[13px] text-texto-mute">Sem notificações ainda</p>
           </div>
         ) : (
           items.map(item => {
             const isNew = item.created_at > lastRead.current
             return (
               <div key={item.id}
-                className="flex items-start gap-3 px-4 py-3 transition-colors cursor-default"
-                style={{ borderBottom: `1px solid rgba(15,23,42,0.04)`, background: isNew ? 'rgba(232,82,26,0.03)' : 'transparent' }}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                  style={{
-                    background: item.qualified ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)',
-                    border: `1px solid ${item.qualified ? 'rgba(52,211,153,0.2)' : 'rgba(248,113,113,0.2)'}`,
-                  }}>
-                  <Users className="w-3.5 h-3.5" style={{ color: item.qualified ? '#34D399' : '#F87171' }} />
+                className={`flex items-start gap-3 px-4 py-3 transition-colors cursor-default border-b border-line ${isNew ? 'bg-laranja-suave' : 'bg-transparent'}`}>
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${item.qualified ? 'bg-ok-fundo' : 'bg-erro-fundo'}`}>
+                  <Users className={`w-3.5 h-3.5 ${item.qualified ? 'text-ok' : 'text-erro'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-ink truncate">
+                  <p className="text-[13px] font-medium text-ink truncate">
                     {item.name || item.email || 'Novo lead'}
-                    {isNew && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-[#E8521A] align-middle" />}
+                    {isNew && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-laranja align-middle" />}
                   </p>
-                  <p className="text-[11px] text-[#7C8294] truncate mt-0.5">
+                  <p className="text-[13px] text-texto-mute truncate mt-0.5">
                     {item.product_name ? `${item.product_name} · ` : ''}{fmtAgo(item.created_at)}
                   </p>
                 </div>
@@ -280,12 +267,9 @@ function NotificationsPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      <div className="px-4 py-2.5" style={{ borderTop: `1px solid ${BORDER}` }}>
+      <div className="px-4 py-2.5 border-t border-line">
         <button onClick={() => { navigate('/admin/leads'); onClose() }}
-          className="w-full text-center text-[12px] font-medium transition-colors"
-          style={{ color: '#E8521A' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.75' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1' }}>
+          className="w-full text-center text-[13px] font-medium text-laranja-texto hover:opacity-75 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)] rounded-md">
           Ver todos os leads →
         </button>
       </div>
@@ -309,24 +293,22 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
   }
 
   return (
-    <div ref={ref} className="absolute top-full right-0 mt-2 w-[240px] rounded-2xl shadow-2xl z-50 overflow-hidden"
-      style={{ background: BG_DROP, border: `1px solid ${BORDER}` }}>
+    <div ref={ref} className="absolute top-full right-0 mt-2 w-[240px] rounded-grande overflow-hidden z-50 border border-line bg-superficie shadow-[var(--sombra-flutua)]">
       {/* User info */}
-      <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${BORDER}` }}>
+      <div className="px-4 py-3.5 border-b border-line">
         <div className="flex items-center gap-3">
           {avatarUrl ? (
             <img src={avatarUrl} alt="avatar"
-              className="w-9 h-9 rounded-xl object-cover shrink-0"
-              style={{ border: `1px solid ${BORDER}` }} />
+              className="w-9 h-9 rounded-xl object-cover shrink-0 border border-line" />
           ) : (
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-              style={{ background: 'linear-gradient(135deg, #E8521A, #C23F12)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[13px] font-bold shrink-0"
+              style={{ background: LARANJA_ACAO, color: ON_LARANJA }}>
               {ini}
             </div>
           )}
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-ink truncate">{name || 'Usuário'}</p>
-            <p className="text-[11px] text-[#7C8294] truncate">{user?.email}</p>
+            <p className="text-[13px] text-texto-mute truncate">{user?.email}</p>
           </div>
         </div>
       </div>
@@ -334,20 +316,20 @@ function ProfileMenu({ user, onClose }: { user: SupabaseUser | null; onClose: ()
       {/* Actions */}
       <div className="py-1.5">
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-ink hover:bg-[#EEF0F5] transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink-sub hover:text-ink hover:bg-superficie-2 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)]">
           <Settings className="w-4 h-4 shrink-0" />
           Configurações
         </button>
         <button onClick={() => { navigate('/admin/settings'); onClose() }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#4B525F] hover:text-ink hover:bg-[#EEF0F5] transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink-sub hover:text-ink hover:bg-superficie-2 transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)]">
           <User className="w-4 h-4 shrink-0" />
           Perfil
         </button>
       </div>
 
-      <div style={{ borderTop: `1px solid ${BORDER}` }} className="py-1.5">
+      <div className="border-t border-line py-1.5">
         <button onClick={signOut}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-red-400/70 hover:text-red-400 hover:bg-red-500/8 transition-all text-left">
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-erro hover:bg-erro-fundo transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)]">
           <LogOut className="w-4 h-4 shrink-0" />
           Sair
         </button>
@@ -402,13 +384,13 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
 
   return (
     <>
-      <header className="h-12 shrink-0 flex items-center gap-3 px-6"
-        style={{ borderBottom: `1px solid ${BORDER}`, background: BG_PAGE }}>
+      <header className="h-12 shrink-0 flex items-center gap-3 px-6 border-b border-line"
+        style={{ background: FUNDO }}>
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[13px]">
-          <span style={{ color: INK_MUTE }}>Bridge HUB</span>
-          <span style={{ color: '#3F3F46' }}>/</span>
+          <span className="text-texto-mute">Bridge HUB</span>
+          <span className="text-texto-mute">/</span>
           <span className="text-ink font-bold tracking-tight">{title}</span>
         </div>
 
@@ -416,18 +398,10 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
 
         {/* Search */}
         <button onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] transition-all"
-          style={{
-            background: 'rgba(15,23,42,0.04)',
-            border: `1px solid ${BORDER}`,
-            color: INK_MUTE,
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(15,23,42,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = BORDER; (e.currentTarget as HTMLButtonElement).style.color = INK_MUTE }}>
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] border border-line bg-campo text-texto-mute transition-all hover:text-ink-sub hover:border-[var(--borda-controle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)]">
           <Search className="w-3.5 h-3.5" />
           <span>Buscar...</span>
-          <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
-            style={{ background: 'rgba(15,23,42,0.06)', color: INK_MUTE }}>
+          <span className="ml-2 text-[13px] px-1.5 py-0.5 rounded bg-superficie-2 text-texto-mute">
             ⌘K
           </span>
         </button>
@@ -438,17 +412,12 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
         <div ref={notifRef} className="relative">
           <button
             onClick={() => { setNotifOpen(o => !o); setProfileOpen(false) }}
-            className="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-            style={{
-              color:      notifOpen ? '#EDEDED'    : INK_MUTE,
-              background: notifOpen ? 'rgba(15,23,42,0.07)' : 'transparent',
-            }}
-            onMouseEnter={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(15,23,42,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = '#A1A1AA' }}}
-            onMouseLeave={e => { if (!notifOpen) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = INK_MUTE }}}>
+            aria-label="Notificações"
+            aria-expanded={notifOpen}
+            className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)] ${notifOpen ? 'text-ink bg-superficie-2' : 'text-texto-mute hover:text-ink-sub hover:bg-superficie-2'}`}>
             <Bell className="w-4 h-4" />
             {unread > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full flex items-center justify-center text-[7px] font-bold text-white"
-                style={{ background: '#E8521A' }} />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-laranja" />
             )}
           </button>
           {notifOpen && <NotificationsPanel onClose={closeNotif} />}
@@ -458,11 +427,10 @@ function Topbar({ user }: { user: SupabaseUser | null }) {
         <div ref={profileRef} className="relative">
           <button
             onClick={() => { setProfileOpen(o => !o); setNotifOpen(false) }}
-            className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-bold text-white transition-all ring-offset-[#111] ring-offset-1"
-            style={{
-              background: avatarUrl ? 'transparent' : 'linear-gradient(135deg, #E8521A, #C23F12)',
-              outline: profileOpen ? '2px solid rgba(232,82,26,0.5)' : '2px solid transparent',
-            }}>
+            aria-label="Menu do usuário"
+            aria-expanded={profileOpen}
+            className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--foco)] ${profileOpen ? 'ring-2 ring-laranja' : ''}`}
+            style={{ background: avatarUrl ? 'transparent' : LARANJA_ACAO, color: ON_LARANJA }}>
             {avatarUrl
               ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
               : ini}
@@ -508,13 +476,13 @@ export default function AdminLayout() {
   }, [navigate])
 
   if (!ready) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: BG_PAGE }}>
-      <div className="w-7 h-7 rounded-full border-2 border-[#E8521A] border-t-transparent animate-spin" />
+    <div className="ds min-h-screen flex items-center justify-center" style={{ background: FUNDO }}>
+      <div className="w-7 h-7 rounded-full border-2 border-laranja border-t-transparent animate-spin" />
     </div>
   )
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: BG_PAGE }}>
+    <div className="ds flex h-screen overflow-hidden" style={{ background: FUNDO }}>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar user={user} />

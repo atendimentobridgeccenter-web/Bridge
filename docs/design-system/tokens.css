@@ -1,0 +1,94 @@
+/* Bridge — generated from tokens.json */
+:root, [data-theme="claro"] {
+  --fundo: #f7f3ee;
+  --superficie: #ffffff;
+  --superficie-2: #f1ece4;
+  --campo: #ffffff;
+  --linha: #e7e0d5;
+  --borda-controle: #8c8794;
+  --texto: #1c1b22;
+  --texto-sub: #5e5b66;
+  --texto-mute: #6f6a78;
+  --laranja: #fe510d;
+  --laranja-acao: #c43e10;
+  --laranja-acao-hover: #a9350d;
+  --on-laranja: #ffffff;
+  --laranja-texto: #b8390d;
+  --laranja-suave: #fde7dd;
+  --ok: #1e7046;
+  --ok-fundo: #e2f1e8;
+  --atencao: #8a5a00;
+  --atencao-fundo: #fbebcb;
+  --erro: #a3213f;
+  --erro-fundo: #fbe1e6;
+  --info: #2d5e8e;
+  --info-fundo: #e1ecf7;
+  --foco: #c43e10;
+  --trilho: #0d0e12;
+  --trilho-ativo: #1e202a;
+  --trilho-linha: #24262f;
+  --trilho-texto: #f3f1ec;
+  --trilho-sub: #a9a6b2;
+  --sombra-cartao: 0 1px 2px rgba(28,27,34,0.04), 0 10px 28px -14px rgba(28,27,34,0.16);
+  --sombra-flutua: 0 0 0 1px rgba(28,27,34,0.06), 0 18px 40px -16px rgba(28,27,34,0.28);
+  --sombra-laranja: 0 10px 24px -10px rgba(196,62,16,0.55);
+}
+[data-theme="escuro"] {
+  --fundo: #0d0e12;
+  --superficie: #16181f;
+  --superficie-2: #1e202a;
+  --campo: #111318;
+  --linha: #2a2d38;
+  --borda-controle: #6e6b78;
+  --texto: #f3f1ec;
+  --texto-sub: #a9a6b2;
+  --texto-mute: #8e8b97;
+  --laranja: #fe510d;
+  --laranja-acao: #fe510d;
+  --laranja-acao-hover: #ff6a2b;
+  --on-laranja: #0d0e12;
+  --laranja-texto: #ff7a45;
+  --laranja-suave: #2b1a12;
+  --ok: #6fcf97;
+  --ok-fundo: #13291d;
+  --atencao: #f2b84b;
+  --atencao-fundo: #2e2410;
+  --erro: #f2788f;
+  --erro-fundo: #2e1219;
+  --info: #7fb2e5;
+  --info-fundo: #13202f;
+  --foco: #ff7a45;
+  --trilho: #08090c;
+  --trilho-ativo: #1a1c24;
+  --trilho-linha: #1f2129;
+  --trilho-texto: #f3f1ec;
+  --trilho-sub: #a9a6b2;
+  --sombra-cartao: 0 1px 0 rgba(255,255,255,0.03), 0 10px 28px -14px rgba(0,0,0,0.6);
+  --sombra-flutua: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px -16px rgba(0,0,0,0.8);
+  --sombra-laranja: 0 10px 24px -10px rgba(254,81,13,0.5);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-controle: 10px;
+  --radius-cartao: 16px;
+  --radius-grande: 24px;
+  --radius-pilula: 999px;
+  --font-titulo: "Noto Serif JP", Georgia, serif;
+  --font-texto: "IBM Plex Sans JP", "Noto Sans JP", system-ui, sans-serif;
+}
+.pagina { font-family: var(--font-titulo); font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.01em; }
+.secao { font-family: var(--font-titulo); font-size: 20px; line-height: 28px; font-weight: 600; }
+.numero-destaque { font-family: var(--font-titulo); font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.kanji { font-family: var(--font-titulo); font-size: 13px; line-height: 16px; font-weight: 500; }
+.destaque { font-family: var(--font-texto); font-size: 17px; line-height: 24px; font-weight: 600; }
+.corpo { font-family: var(--font-texto); font-size: 15px; line-height: 24px; font-weight: 400; }
+.corpo-forte { font-family: var(--font-texto); font-size: 15px; line-height: 24px; font-weight: 600; }
+.dado { font-family: var(--font-texto); font-size: 14px; line-height: 20px; font-weight: 400; }
+.rotulo { font-family: var(--font-texto); font-size: 13px; line-height: 16px; font-weight: 500; }

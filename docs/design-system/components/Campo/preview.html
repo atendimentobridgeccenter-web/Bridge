@@ -1,0 +1,15 @@
+<!-- @dsCard group="Formulários" height=260 subtitle="Rótulo em cima, foco em laranja, erro no lugar" -->
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Campo</title></head>
+<body>
+<div class="br" style="padding:28px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:780px">
+ <div class="br-campo"><label for="a">Nome do responsável<span class="req">*</span></label><input id="a" value="Juliana Nishimura"><span class="ajuda">Quem assina o contrato e recebe as cobranças.</span></div>
+ <div class="br-campo"><label for="b">Mensalidade</label><div class="prefixo"><span>¥</span><input id="b" value="12.800"></div><span class="ajuda">Valor cheio, antes do desconto.</span></div>
+ <div class="br-campo br-campo--erro"><label for="c">E-mail</label><input id="c" value="juliana.nishimura@" aria-invalid="true" aria-describedby="ce"><span class="ajuda" id="ce" role="alert">Falta o domínio depois do @, por exemplo gmail.com.</span></div>
+ <div class="br-campo"><label for="d">Dia de vencimento</label><select id="d"><option>Dia 10</option><option>Dia 25</option></select></div>
+</div>
+</div>
+</body>
+</html>

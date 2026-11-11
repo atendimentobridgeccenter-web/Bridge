@@ -4,163 +4,345 @@
 
 /* ─────────────────────────────────────────────────────────────
    BRIDGE — DESIGN SYSTEM
-   Paleta: claro, cards brancos com sombra suave, rail escuro.
-───────────────────────────────────────────────────────────── */
+   Migração (OS-015): a paleta e as fontes agora vêm do design system
+   aprovado (docs/design-system/), tema creme/grafite/laranja com
+   Noto Serif JP + IBM Plex Sans JP. As telas continuam usando os NOMES
+   antigos (--bg-base, --ink, --accent…): este arquivo só os reaponta
+   para os tokens novos, abaixo. Nada foi renomeado nas telas.
 
-/* ── Tokens ──────────────────────────────────────────────────
-   Três estados de tema: a escolha explícita grava data-theme no <html>;
-   sem escolha, vale a preferência do sistema. Por isso cada token nasce
-   no :root puro (claro) e é redefinido em DOIS blocos — o da media query,
-   protegido contra a escolha "claro", e o do data-theme="dark", para o
-   seletor vencer nos dois sentidos.
+   MAPA (antigo → novo):
+     --bg-base      → --fundo
+     --bg-surface   → --superficie
+     --bg-surface-2 → --superficie-2
+     --bg-input     → --campo
+     --bg-drop      → --superficie-2      (sem par exato; superfície elevada mais próxima)
+     --bg-sidebar       → --trilho
+     --sidebar-border   → --trilho-linha
+     --rail-ink         → --trilho-texto
+     --rail-ink-sub     → --trilho-sub
+     --rail-ink-mute    → --trilho-sub (65% via color-mix; sem par exato)
+     --rail-ink-faint   → --trilho-sub (40% via color-mix; sem par exato)
+     --border       → --linha
+     --border-2     → --linha
+     --border-hover → --borda-controle
+     --border-focus → --foco              (cor pura, sem alpha — ver uso real)
+     --ink        → --texto
+     --ink-sub    → --texto-sub
+     --ink-mute   → --texto-mute
+     --ink-faint  → --texto-mute (color-mix com o fundo; sem par exato)
+     --ink-ghost  → --texto (10%/14% via color-mix; sem par exato)
+     --accent          → --laranja-acao
+     --accent-dim      → --laranja-suave
+     --accent-gradient → removido do design system (proibido); mantido como
+                         --laranja-acao sólido (ver nota abaixo)
+     --shadow-card → --sombra-cartao
+     --shadow-pop  → --sombra-flutua
+     --success / --success-bg → --ok / --ok-fundo
+     --warning / --warning-bg → --atencao / --atencao-fundo
+     --danger  / --danger-bg  → --erro / --erro-fundo
+     --info    / --info-bg    → --info / --info-fundo
+     --tint         → trio RGB derivado de --texto (claro 28,27,34 · escuro 243,241,236)
+     --scroll-thumb(-hover) → derivados de --texto via color-mix (sem par exato)
+
+   Nota sobre --accent-gradient: o design system proíbe gradiente em botão ou
+   texto (docs/design-system/README.md, "Proibido"). A variável é mantida só
+   para não quebrar quem já a referencia, mas agora vale um laranja sólido
+   (--laranja-acao), nunca um gradient() de fato. Novas telas não devem usá-la.
 ───────────────────────────────────────────────────────────── */
-:root {
+:root, [data-theme="claro"] {
+  /* Gate 1 (OS-015): as fontes novas valem só dentro do admin, do portal
+     do professor e do login, via classe .ds (ver abaixo). Fora dela, as
+     páginas públicas (formulário de campanha, landing, área de membros)
+     continuam em Plus Jakarta Sans — nada muda lá nesta OS. */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-titulo: 'Noto Serif JP', Georgia, serif;
 
-  /* Superfícies */
-  --bg-base:      #F5F6FA;
-  --bg-surface:   #FFFFFF;
-  --bg-surface-2: #F7F8FC;
-  --bg-input:     #F3F4F8;
-  --bg-drop:      #FFFFFF;
+  /* ── Tokens do design system (docs/design-system/tokens.css) ── */
+  --fundo: #f7f3ee;
+  --superficie: #ffffff;
+  --superficie-2: #f1ece4;
+  --campo: #ffffff;
+  --linha: #e7e0d5;
+  --borda-controle: #8c8794;
+  --texto: #1c1b22;
+  --texto-sub: #5e5b66;
+  --texto-mute: #6f6a78;
+  --laranja: #fe510d;
+  --laranja-acao: #c43e10;
+  --laranja-acao-hover: #a9350d;
+  --on-laranja: #ffffff;
+  --laranja-texto: #b8390d;
+  --laranja-suave: #fde7dd;
+  --ok: #1e7046;
+  --ok-fundo: #e2f1e8;
+  --atencao: #8a5a00;
+  --atencao-fundo: #fbebcb;
+  --erro: #a3213f;
+  --erro-fundo: #fbe1e6;
+  --info: #2d5e8e;
+  --info-fundo: #e1ecf7;
+  --foco: #c43e10;
+  --trilho: #0d0e12;
+  --trilho-ativo: #1e202a;
+  --trilho-linha: #24262f;
+  --trilho-texto: #f3f1ec;
+  --trilho-sub: #a9a6b2;
+  --sombra-cartao: 0 1px 2px rgba(28,27,34,0.04), 0 10px 28px -14px rgba(28,27,34,0.16);
+  --sombra-flutua: 0 0 0 1px rgba(28,27,34,0.06), 0 18px 40px -16px rgba(28,27,34,0.28);
+  --sombra-laranja: 0 10px 24px -10px rgba(196,62,16,0.55);
 
-  /* Rail de navegação — escuro nos dois temas, ancora a marca.
-     Por isso o texto sobre ele tem tokens próprios: usar --ink aqui daria
-     texto escuro sobre fundo escuro no tema claro. */
-  --bg-sidebar:     #0E0F13;
-  --sidebar-border: rgba(255,255,255,0.07);
-  --rail-ink:       #F2F3F7;
-  --rail-ink-sub:   rgba(255,255,255,0.62);
-  --rail-ink-mute:  rgba(255,255,255,0.40);
-  --rail-ink-faint: rgba(255,255,255,0.24);
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-controle: 10px;
+  --radius-cartao: 16px;
+  --radius-grande: 24px;
+  --radius-pilula: 999px;
 
-  /* Bordas */
-  --border:        rgba(15, 23, 42, 0.08);
-  --border-2:      rgba(15, 23, 42, 0.06);
-  --border-hover:  rgba(15, 23, 42, 0.16);
-  --border-focus:  rgba(232, 82, 26, 0.5);
+  /* ── Aliases antigos → tokens novos (mapa completo no comentário acima) ── */
+  --bg-base:      var(--fundo);
+  --bg-surface:   var(--superficie);
+  --bg-surface-2: var(--superficie-2);
+  --bg-input:     var(--campo);
+  --bg-drop:      var(--superficie-2);
 
-  /* Texto — do mais forte ao decorativo */
-  --ink:       #12131A;
-  --ink-sub:   #5B6170;
-  --ink-mute:  #8A90A0;
-  --ink-faint: #B4B8C4;
-  --ink-ghost: rgba(15, 23, 42, 0.10);
+  --bg-sidebar:     var(--trilho);
+  --sidebar-border: var(--trilho-linha);
+  --rail-ink:       var(--trilho-texto);
+  --rail-ink-sub:   var(--trilho-sub);
+  --rail-ink-mute:  color-mix(in srgb, var(--trilho-sub) 65%, transparent);
+  --rail-ink-faint: color-mix(in srgb, var(--trilho-sub) 40%, transparent);
 
-  /* Acento */
-  --accent:          #E8521A;
-  --accent-dim:      rgba(232, 82, 26, 0.12);
-  --accent-gradient: linear-gradient(135deg, #FF7A3D 0%, #D6450F 100%);
+  --border:       var(--linha);
+  --border-2:     var(--linha);
+  --border-hover: var(--borda-controle);
+  --border-focus: var(--foco);
 
-  /* Sombras */
-  --shadow-card: 0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -10px rgba(15,23,42,0.12);
-  --shadow-pop:  0 4px 10px rgba(15,23,42,0.06), 0 20px 40px -12px rgba(15,23,42,0.18);
+  --ink:       var(--texto);
+  --ink-sub:   var(--texto-sub);
+  --ink-mute:  var(--texto-mute);
+  --ink-faint: color-mix(in srgb, var(--texto-mute) 55%, var(--fundo));
+  --ink-ghost: color-mix(in srgb, var(--texto) 10%, transparent);
 
-  /* Semânticas */
-  --success:    #0F9D66;
-  --success-bg: rgba(16,185,129,0.12);
-  --warning:    #B45309;
-  --warning-bg: rgba(245,158,11,0.14);
-  --danger:     #DC2626;
-  --danger-bg:  rgba(239,68,68,0.12);
-  --info:       #4F46E5;
-  --info-bg:    rgba(99,102,241,0.12);
+  --accent:          var(--laranja-acao);
+  --accent-dim:      var(--laranja-suave);
+  --accent-gradient: var(--laranja-acao);
 
-  /* Tinta de camada: usada em rgba(var(--tint), X) para fundos sutis, bordas
-     e texto apagado. No claro é quase-preto, no escuro é branco — assim o
-     mesmo alpha funciona nos dois temas sem reescrever cada chamada. */
-  --tint: 15, 23, 42;
+  --shadow-card: var(--sombra-cartao);
+  --shadow-pop:  var(--sombra-flutua);
 
-  /* Trilho da barra de rolagem */
-  --scroll-thumb:       rgba(15, 23, 42, 0.14);
-  --scroll-thumb-hover: rgba(15, 23, 42, 0.24);
+  --success:    var(--ok);
+  --success-bg: var(--ok-fundo);
+  --warning:    var(--atencao);
+  --warning-bg: var(--atencao-fundo);
+  --danger:     var(--erro);
+  --danger-bg:  var(--erro-fundo);
+  --info-bg:    var(--info-fundo);
+
+  --tint: 28, 27, 34;
+
+  --scroll-thumb:       color-mix(in srgb, var(--texto) 14%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--texto) 24%, transparent);
 }
 
 /* Paleta escura. Repetida nos dois seletores de propósito: um cobre quem
-   não escolheu e usa sistema escuro, o outro cobre a escolha explícita. */
+   não escolheu e usa sistema escuro, o outro cobre a escolha explícita —
+   exigência do Gate 1 (os valores do escuro precisam entrar nos dois). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg-base:      #0D0E12;
-    --bg-surface:   #14161C;
-    --bg-surface-2: #1A1D24;
-    --bg-input:     #11131A;
-    --bg-drop:      #1A1D24;
+    --fundo: #0d0e12;
+    --superficie: #16181f;
+    --superficie-2: #1e202a;
+    --campo: #111318;
+    --linha: #2a2d38;
+    --borda-controle: #6e6b78;
+    --texto: #f3f1ec;
+    --texto-sub: #a9a6b2;
+    --texto-mute: #8e8b97;
+    --laranja: #fe510d;
+    --laranja-acao: #fe510d;
+    --laranja-acao-hover: #ff6a2b;
+    --on-laranja: #0d0e12;
+    --laranja-texto: #ff7a45;
+    --laranja-suave: #2b1a12;
+    --ok: #6fcf97;
+    --ok-fundo: #13291d;
+    --atencao: #f2b84b;
+    --atencao-fundo: #2e2410;
+    --erro: #f2788f;
+    --erro-fundo: #2e1219;
+    --info: #7fb2e5;
+    --info-fundo: #13202f;
+    --foco: #ff7a45;
+    --trilho: #08090c;
+    --trilho-ativo: #1a1c24;
+    --trilho-linha: #1f2129;
+    --trilho-texto: #f3f1ec;
+    --trilho-sub: #a9a6b2;
+    --sombra-cartao: 0 1px 0 rgba(255,255,255,0.03), 0 10px 28px -14px rgba(0,0,0,0.6);
+    --sombra-flutua: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px -16px rgba(0,0,0,0.8);
+    --sombra-laranja: 0 10px 24px -10px rgba(254,81,13,0.5);
 
-    --bg-sidebar:     #090A0D;
-    --sidebar-border: rgba(255,255,255,0.06);
+    --bg-base:      var(--fundo);
+    --bg-surface:   var(--superficie);
+    --bg-surface-2: var(--superficie-2);
+    --bg-input:     var(--campo);
+    --bg-drop:      var(--superficie-2);
 
-    --border:       rgba(255, 255, 255, 0.09);
-    --border-2:     rgba(255, 255, 255, 0.06);
-    --border-hover: rgba(255, 255, 255, 0.18);
+    --bg-sidebar:     var(--trilho);
+    --sidebar-border: var(--trilho-linha);
 
-    --ink:       #ECEEF3;
-    --ink-sub:   #9BA1AF;
-    --ink-mute:  #767C8A;
-    --ink-faint: #555B68;
-    --ink-ghost: rgba(255, 255, 255, 0.10);
+    --border:       var(--linha);
+    --border-2:     var(--linha);
+    --border-hover: var(--borda-controle);
 
-    /* Sombra não lê sobre escuro: o relevo passa a vir da borda */
-    --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
-    --shadow-pop:  0 8px 24px -6px rgba(0,0,0,0.6);
+    --ink:       var(--texto);
+    --ink-sub:   var(--texto-sub);
+    --ink-mute:  var(--texto-mute);
+    --ink-faint: color-mix(in srgb, var(--texto-mute) 55%, var(--fundo));
+    --ink-ghost: color-mix(in srgb, var(--texto) 10%, transparent);
 
-    /* Semânticas clareadas para manter contraste sobre superfície escura */
-    --success:    #34D399;
-    --success-bg: rgba(52,211,153,0.14);
-    --warning:    #FBBF24;
-    --warning-bg: rgba(251,191,36,0.14);
-    --danger:     #F87171;
-    --danger-bg:  rgba(248,113,113,0.14);
-    --info:       #818CF8;
-    --info-bg:    rgba(129,140,248,0.14);
+    --shadow-card: var(--sombra-cartao);
+    --shadow-pop:  var(--sombra-flutua);
 
-    --tint: 255, 255, 255;
+    --success:    var(--ok);
+    --success-bg: var(--ok-fundo);
+    --warning:    var(--atencao);
+    --warning-bg: var(--atencao-fundo);
+    --danger:     var(--erro);
+    --danger-bg:  var(--erro-fundo);
+    --info-bg:    var(--info-fundo);
 
-    --scroll-thumb:       rgba(255, 255, 255, 0.14);
-    --scroll-thumb-hover: rgba(255, 255, 255, 0.26);
+    --tint: 243, 241, 236;
+
+    --scroll-thumb:       color-mix(in srgb, var(--texto) 14%, transparent);
+    --scroll-thumb-hover: color-mix(in srgb, var(--texto) 26%, transparent);
 
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg-base:      #0D0E12;
-  --bg-surface:   #14161C;
-  --bg-surface-2: #1A1D24;
-  --bg-input:     #11131A;
-  --bg-drop:      #1A1D24;
+  --fundo: #0d0e12;
+  --superficie: #16181f;
+  --superficie-2: #1e202a;
+  --campo: #111318;
+  --linha: #2a2d38;
+  --borda-controle: #6e6b78;
+  --texto: #f3f1ec;
+  --texto-sub: #a9a6b2;
+  --texto-mute: #8e8b97;
+  --laranja: #fe510d;
+  --laranja-acao: #fe510d;
+  --laranja-acao-hover: #ff6a2b;
+  --on-laranja: #0d0e12;
+  --laranja-texto: #ff7a45;
+  --laranja-suave: #2b1a12;
+  --ok: #6fcf97;
+  --ok-fundo: #13291d;
+  --atencao: #f2b84b;
+  --atencao-fundo: #2e2410;
+  --erro: #f2788f;
+  --erro-fundo: #2e1219;
+  --info: #7fb2e5;
+  --info-fundo: #13202f;
+  --foco: #ff7a45;
+  --trilho: #08090c;
+  --trilho-ativo: #1a1c24;
+  --trilho-linha: #1f2129;
+  --trilho-texto: #f3f1ec;
+  --trilho-sub: #a9a6b2;
+  --sombra-cartao: 0 1px 0 rgba(255,255,255,0.03), 0 10px 28px -14px rgba(0,0,0,0.6);
+  --sombra-flutua: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px -16px rgba(0,0,0,0.8);
+  --sombra-laranja: 0 10px 24px -10px rgba(254,81,13,0.5);
 
-  --bg-sidebar:     #090A0D;
-  --sidebar-border: rgba(255,255,255,0.06);
+  --bg-base:      var(--fundo);
+  --bg-surface:   var(--superficie);
+  --bg-surface-2: var(--superficie-2);
+  --bg-input:     var(--campo);
+  --bg-drop:      var(--superficie-2);
 
-  --border:       rgba(255, 255, 255, 0.09);
-  --border-2:     rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.18);
+  --bg-sidebar:     var(--trilho);
+  --sidebar-border: var(--trilho-linha);
 
-  --ink:       #ECEEF3;
-  --ink-sub:   #9BA1AF;
-  --ink-mute:  #767C8A;
-  --ink-faint: #555B68;
-  --ink-ghost: rgba(255, 255, 255, 0.10);
+  --border:       var(--linha);
+  --border-2:     var(--linha);
+  --border-hover: var(--borda-controle);
 
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-pop:  0 8px 24px -6px rgba(0,0,0,0.6);
+  --ink:       var(--texto);
+  --ink-sub:   var(--texto-sub);
+  --ink-mute:  var(--texto-mute);
+  --ink-faint: color-mix(in srgb, var(--texto-mute) 55%, var(--fundo));
+  --ink-ghost: color-mix(in srgb, var(--texto) 10%, transparent);
 
-  --success:    #34D399;
-  --success-bg: rgba(52,211,153,0.14);
-  --warning:    #FBBF24;
-  --warning-bg: rgba(251,191,36,0.14);
-  --danger:     #F87171;
-  --danger-bg:  rgba(248,113,113,0.14);
-  --info:       #818CF8;
-  --info-bg:    rgba(129,140,248,0.14);
+  --shadow-card: var(--sombra-cartao);
+  --shadow-pop:  var(--sombra-flutua);
 
-  --tint: 255, 255, 255;
+  --success:    var(--ok);
+  --success-bg: var(--ok-fundo);
+  --warning:    var(--atencao);
+  --warning-bg: var(--atencao-fundo);
+  --danger:     var(--erro);
+  --danger-bg:  var(--erro-fundo);
+  --info-bg:    var(--info-fundo);
 
-  --scroll-thumb:       rgba(255, 255, 255, 0.14);
-  --scroll-thumb-hover: rgba(255, 255, 255, 0.26);
+  --tint: 243, 241, 236;
+
+  --scroll-thumb:       color-mix(in srgb, var(--texto) 14%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--texto) 26%, transparent);
 
   color-scheme: dark;
+}
+
+/* ── Classes utilitárias de tipografia do design system ─────── */
+.pagina { font-family: var(--font-titulo); font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.01em; }
+.secao { font-family: var(--font-titulo); font-size: 20px; line-height: 28px; font-weight: 600; }
+.numero-destaque { font-family: var(--font-titulo); font-size: 36px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.kanji { font-family: var(--font-titulo); font-size: 13px; line-height: 16px; font-weight: 500; color: var(--texto-mute); }
+.destaque { font-family: var(--font-sans); font-size: 17px; line-height: 24px; font-weight: 600; }
+.corpo { font-family: var(--font-sans); font-size: 15px; line-height: 24px; font-weight: 400; }
+.corpo-forte { font-family: var(--font-sans); font-size: 15px; line-height: 24px; font-weight: 600; }
+.dado { font-family: var(--font-sans); font-size: 14px; line-height: 20px; font-weight: 400; }
+.rotulo { font-family: var(--font-sans); font-size: 13px; line-height: 16px; font-weight: 500; }
+.num { font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums; }
+
+/* ── Escopo das fontes novas (Gate 1, OS-015) ────────────────
+   .ds troca --font-sans para IBM Plex Sans JP só dentro de quem a usa:
+   AdminLayout, ProfessorLayout, Login e ResetPassword. As páginas públicas
+   (QuizzRunner/formulário de campanha, landing, área de membros) não têm
+   essa classe e continuam em Plus Jakarta Sans — decisão de visual público
+   é separada (ver OS-022) e não é desta OS. */
+.ds {
+  --font-sans: 'IBM Plex Sans JP', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* OS-017 (ressalva Gate 2 da OS-015): modais/menus que o Radix (ou
+   createPortal) monta direto em <body> ficam fora da árvore de qualquer
+   elemento com .ds, então a troca de --font-sans acima não chegava até eles.
+   :has() sobe até o <html> quando existe ALGUM .ds na página — e todo lugar
+   que usa .ds (AdminLayout, ProfessorLayout, Login, ResetPassword) é tela
+   cheia, então "existe .ds na página" é equivalente a "estou numa dessas
+   telas" para efeito de herança de fonte. */
+html:has(.ds) {
+  --font-sans: 'IBM Plex Sans JP', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Logo do login por tema (OS-017) ──────────────────────────
+   Troca puramente por CSS — claro → bridge-horizontal-web.png, escuro →
+   bridge-branco-web.png — para não piscar a logo errada enquanto o React
+   monta. Cobre os três modos de lib/useTheme.ts: 'light'/'dark' explícitos
+   escrevem data-theme no <html>; 'system' REMOVE o atributo e deixa a
+   media query decidir. */
+.logo-login-claro  { display: block; }
+.logo-login-escuro { display: none; }
+
+[data-theme="dark"] .logo-login-claro  { display: none; }
+[data-theme="dark"] .logo-login-escuro { display: block; }
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .logo-login-claro  { display: none; }
+  html:not([data-theme]) .logo-login-escuro { display: block; }
 }
 
 /* ── Reset ───────────────────────────────────────────────────*/
@@ -198,13 +380,13 @@ html, body, #root {
 
 /* ── Focus ring ──────────────────────────────────────────────*/
 *:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 
 /* ── Selection ───────────────────────────────────────────────*/
 ::selection {
-  background: rgba(232, 82, 26, 0.18);
+  background: color-mix(in srgb, var(--laranja-acao) 18%, transparent);
   color: var(--ink);
 }
 
@@ -212,10 +394,10 @@ html, body, #root {
 
 /* Glass — usado em overlays sobre o rail escuro */
 .glass {
-  background: rgba(14, 15, 19, 0.85);
+  background: color-mix(in srgb, var(--trilho) 85%, transparent);
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid color-mix(in srgb, var(--trilho-texto) 8%, transparent);
 }
 
 .glass-ultra {

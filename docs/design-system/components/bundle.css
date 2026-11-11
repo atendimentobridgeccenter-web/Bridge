@@ -1,0 +1,152 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap");
+
+/* ── Base ─────────────────────────────────────────────────────── */
+html, body { margin: 0; background: var(--fundo); color: var(--texto); }
+.br { font-family: var(--font-texto); color: var(--texto); background: var(--fundo); -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 24px; }
+.br *, .br *::before, .br *::after { box-sizing: border-box; }
+.br .num { font-variant-numeric: tabular-nums; }
+.br :focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+.br h1, .br h2, .br h3 { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .br * { transition: none !important; animation: none !important; } }
+
+/* ── Botão (pílula, como no site) ─────────────────────────────── */
+.br-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 42px; padding: 0 22px;
+  border-radius: var(--radius-pilula); border: 1.5px solid transparent; font: 600 15px/1 var(--font-texto); cursor: pointer; white-space: nowrap;
+  transition: transform 220ms cubic-bezier(.22,.68,0,1.2), box-shadow 220ms, background-color 160ms, border-color 160ms; }
+.br-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.br-btn:active { transform: scale(.98); }
+.br-btn--primario { background: var(--laranja-acao); color: var(--on-laranja); }
+.br-btn--primario:hover { background: var(--laranja-acao-hover); transform: translateY(-1px); box-shadow: var(--sombra-laranja); }
+.br-btn--secundario { background: var(--superficie); color: var(--texto); border-color: var(--borda-controle); }
+.br-btn--secundario:hover { border-color: var(--texto); }
+.br-btn--fantasma { background: transparent; color: var(--laranja-texto); padding: 0 12px; }
+.br-btn--fantasma:hover { background: var(--laranja-suave); }
+.br-btn--perigo { background: var(--superficie); color: var(--erro); border-color: var(--erro); }
+.br-btn--perigo:hover { background: var(--erro-fundo); }
+.br-btn--icone { width: 42px; padding: 0; }
+.br-btn[disabled] { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.br-btn--carregando { color: transparent !important; position: relative; pointer-events: none; }
+.br-btn--carregando::after { content: ""; position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--on-laranja); border-right-color: transparent; animation: br-gira 700ms linear infinite; }
+@keyframes br-gira { to { transform: rotate(360deg); } }
+
+/* ── Campo ────────────────────────────────────────────────────── */
+.br-campo { display: grid; gap: var(--space-2); }
+.br-campo label { font: 500 13px/16px var(--font-texto); color: var(--texto-sub); }
+.br-campo label .req { color: var(--laranja-texto); margin-left: 2px; }
+.br-campo input, .br-campo select, .br-campo textarea { width: 100%; min-height: 44px; padding: 10px 14px; background: var(--campo); color: var(--texto);
+  border: 1px solid var(--borda-controle); border-radius: var(--radius-controle); font: 400 15px/22px var(--font-texto); transition: border-color 160ms, box-shadow 160ms; }
+.br-campo input::placeholder { color: var(--texto-mute); }
+.br-campo input:focus { outline: none; border-color: var(--laranja-acao); box-shadow: 0 0 0 3px var(--laranja-suave); }
+.br-campo .ajuda { font: 400 13px/18px var(--font-texto); color: var(--texto-mute); }
+.br-campo--erro input { border-color: var(--erro); box-shadow: 0 0 0 3px var(--erro-fundo); }
+.br-campo--erro .ajuda { color: var(--erro); }
+.br-campo .prefixo { position: relative; }
+.br-campo .prefixo span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--texto-mute); }
+.br-campo .prefixo input { padding-left: 32px; font-variant-numeric: tabular-nums; }
+
+/* ── Etiqueta de estado (pílula) ──────────────────────────────── */
+.br-etiqueta { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px 0 8px; border-radius: var(--radius-pilula); font: 500 13px/1 var(--font-texto); white-space: nowrap; }
+.br-etiqueta svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.br-etiqueta--ok { color: var(--ok); background: var(--ok-fundo); }
+.br-etiqueta--atencao { color: var(--atencao); background: var(--atencao-fundo); }
+.br-etiqueta--erro { color: var(--erro); background: var(--erro-fundo); }
+.br-etiqueta--info { color: var(--info); background: var(--info-fundo); }
+.br-etiqueta--marca { color: var(--laranja-texto); background: var(--laranja-suave); }
+.br-etiqueta--neutra { color: var(--texto-sub); background: transparent; box-shadow: inset 0 0 0 1px var(--linha); padding: 0 10px; }
+
+/* ── Nível JLPT ───────────────────────────────────────────────── */
+.br-nivel { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: var(--radius-controle);
+  background: var(--texto); color: var(--superficie); font: 700 13px/1 var(--font-titulo); letter-spacing: .02em; }
+.br-nivel--previsto { background: transparent; color: var(--texto); outline: 1.5px dashed var(--texto); outline-offset: -1.5px; }
+
+/* ── Cartão ───────────────────────────────────────────────────── */
+.br-cartao { background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--radius-cartao); box-shadow: var(--sombra-cartao); }
+.br-titulo-secao { display: flex; align-items: baseline; gap: 10px; margin-bottom: var(--space-3); }
+.br-titulo-secao h2 { font: 600 20px/28px var(--font-titulo); }
+.br-titulo-secao .kanji { font: 500 13px/16px var(--font-titulo); color: var(--texto-mute); letter-spacing: .08em; }
+.br-titulo-secao .acao { margin-left: auto; }
+
+/* ── Tabela ───────────────────────────────────────────────────── */
+.br-tabela-wrap { background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--radius-cartao); box-shadow: var(--sombra-cartao); overflow: hidden; }
+.br-tabela { width: 100%; border-collapse: collapse; font: 400 14px/20px var(--font-texto); }
+.br-tabela th { text-align: left; font: 500 13px/16px var(--font-texto); color: var(--texto-sub); padding: 12px 20px; background: var(--superficie-2); }
+.br-tabela td { padding: 14px 20px; border-top: 1px solid var(--linha); vertical-align: middle; }
+.br-tabela tbody tr { transition: background-color 120ms; }
+.br-tabela tbody tr:hover { background: color-mix(in srgb, var(--superficie-2) 60%, transparent); }
+.br-tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
+.br-tabela .sub { display: block; color: var(--texto-sub); font-size: 13px; }
+.br-tabela tfoot td { font-weight: 600; background: var(--superficie-2); }
+.br-pessoa { display: flex; align-items: center; gap: 12px; }
+.br-avatar { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--laranja-suave); color: var(--laranja-texto); font: 600 13px/1 var(--font-texto); }
+
+/* ── Arco (o motivo da ponte) ─────────────────────────────────── */
+.br-arco { display: grid; justify-items: center; gap: 4px; }
+.br-arco svg { display: block; overflow: visible; }
+.br-arco .trilho { fill: none; stroke: var(--linha); stroke-width: 10; stroke-linecap: round; }
+.br-arco .valor { fill: none; stroke: var(--laranja); stroke-width: 10; stroke-linecap: round; animation: br-arco 900ms cubic-bezier(.22,.68,0,1) both; }
+.br-arco .pilar { stroke: var(--linha); stroke-width: 2; }
+@keyframes br-arco { from { stroke-dashoffset: var(--total); } }
+.br-arco .leitura { margin-top: -46px; text-align: center; }
+.br-arco .leitura b { display: block; font: 700 28px/32px var(--font-titulo); letter-spacing: -.02em; }
+.br-arco .leitura span { font: 400 13px/18px var(--font-texto); color: var(--texto-sub); }
+
+/* ── Jornada (contato → matrícula) ────────────────────────────── */
+.br-jornada { display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; margin: 0; padding: 0; }
+.br-jornada li { position: relative; display: grid; justify-items: center; gap: 6px; text-align: center; padding-top: 4px; }
+.br-jornada .marco { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--superficie); box-shadow: inset 0 0 0 2px var(--borda-controle); color: var(--texto-mute); }
+.br-jornada .marco svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+.br-jornada li[data-estado="feito"] .marco { background: var(--laranja); box-shadow: none; color: var(--superficie); }
+.br-jornada li[data-estado="atual"] .marco { box-shadow: inset 0 0 0 2px var(--laranja), 0 0 0 5px var(--laranja-suave); color: var(--laranja-texto); }
+.br-jornada li[data-estado="atual"] .marco::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--laranja); }
+.br-jornada .nome { font: 600 14px/20px var(--font-texto); }
+.br-jornada li:not([data-estado]) .nome { color: var(--texto-sub); font-weight: 500; }
+.br-jornada .quando { font: 400 13px/16px var(--font-texto); color: var(--texto-mute); }
+.br-jornada li + li::before { content: ""; position: absolute; top: -10px; right: calc(50% + 18px); width: calc(100% - 36px); height: 26px;
+  border: 2px solid var(--linha); border-bottom: 0; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+.br-jornada li[data-estado="feito"] + li::before, .br-jornada li[data-estado="feito"] + li[data-estado]::before { border-color: var(--laranja); }
+
+/* ── Navegação lateral (grafite) ──────────────────────────────── */
+.br-nav { width: 248px; background: var(--trilho); color: var(--trilho-sub); padding: 22px 14px; display: grid; gap: 22px; align-content: start; }
+.br-nav .marca { display: flex; align-items: center; gap: 10px; padding: 0 8px 18px; border-bottom: 1px solid var(--trilho-linha); }
+.br-nav .marca img { width: 36px; height: 36px; }
+.br-nav .marca b { display: block; font: 700 17px/1.1 var(--font-titulo); color: var(--trilho-texto); letter-spacing: .04em; }
+.br-nav .marca small { display: block; font: 500 11.5px/1.3 var(--font-texto); color: var(--trilho-sub); letter-spacing: .04em; }
+.br-nav h6 { margin: 0 0 4px; padding: 0 10px; font: 500 12.5px/16px var(--font-texto); color: var(--trilho-sub); opacity: .8; }
+.br-nav a { position: relative; display: flex; align-items: center; gap: 11px; min-height: 38px; padding: 0 10px; border-radius: var(--radius-controle);
+  color: var(--trilho-sub); text-decoration: none; font: 500 14px/1 var(--font-texto); transition: background-color 140ms, color 140ms; }
+.br-nav a svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.br-nav a:hover { color: var(--trilho-texto); background: var(--trilho-ativo); }
+.br-nav a[aria-current="page"] { color: var(--trilho-texto); background: var(--trilho-ativo); font-weight: 600; }
+.br-nav a[aria-current="page"] svg { color: var(--laranja); }
+.br-nav a[aria-current="page"]::before { content: ""; position: absolute; left: -14px; top: 9px; width: 4px; height: 20px; border-radius: 0 3px 3px 0; background: var(--laranja); }
+.br-nav .conta { margin-left: auto; min-width: 22px; height: 20px; padding: 0 7px; border-radius: var(--radius-pilula); background: var(--laranja); color: var(--trilho); font: 600 12px/20px var(--font-texto); text-align: center; }
+
+/* ── Cabeçalho de página ──────────────────────────────────────── */
+.br-cabecalho { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--space-5); }
+.br-cabecalho .trilha { font: 400 13px/16px var(--font-texto); color: var(--texto-mute); margin-bottom: 10px; }
+.br-cabecalho .trilha a { color: inherit; text-decoration: none; }
+.br-cabecalho .trilha a:hover { color: var(--laranja-texto); }
+.br-cabecalho h1 { font: 700 32px/40px var(--font-titulo); letter-spacing: -.01em; }
+.br-cabecalho p { margin: 6px 0 0; color: var(--texto-sub); max-width: 64ch; }
+.br-cabecalho .acoes { display: flex; gap: 10px; }
+
+/* ── Resumo (números da marca) ────────────────────────────────── */
+.br-resumo { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: var(--space-5); }
+.br-resumo > div { padding: 22px 24px; }
+.br-resumo dt { font: 500 13px/16px var(--font-texto); color: var(--texto-sub); }
+.br-resumo dd { margin: 10px 0 0; font: 700 36px/40px var(--font-titulo); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.br-resumo dd.marca { color: var(--laranja-texto); }
+.br-resumo small { display: block; margin-top: 6px; font: 400 13px/18px var(--font-texto); color: var(--texto-mute); }
+.br-resumo .escuro { background: var(--trilho); border-color: transparent; color: var(--trilho-texto); }
+.br-resumo .escuro dt, .br-resumo .escuro small { color: var(--trilho-sub); }
+.br-resumo .escuro dd { color: var(--laranja); }
+
+/* ── Estado vazio ─────────────────────────────────────────────── */
+.br-vazio { display: grid; justify-items: center; text-align: center; gap: 10px; padding: 40px 24px 36px; }
+.br-vazio svg { width: 160px; height: 64px; margin-bottom: 6px; }
+.br-vazio svg .a { fill: none; stroke: var(--laranja); stroke-width: 3; stroke-linecap: round; }
+.br-vazio svg .b { fill: none; stroke: var(--linha); stroke-width: 3; stroke-linecap: round; }
+.br-vazio h3 { font: 600 20px/28px var(--font-titulo); }
+.br-vazio p { margin: 0; max-width: 46ch; color: var(--texto-sub); }
+[data-theme="escuro"] .br-resumo .escuro { background: var(--laranja-suave); }
+[data-theme="escuro"] .br-nav { box-shadow: inset -1px 0 0 var(--trilho-linha); }
