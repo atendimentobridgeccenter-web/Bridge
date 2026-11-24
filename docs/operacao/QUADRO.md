@@ -17,9 +17,7 @@
 | [OS-005](os/OS-005.md) | Checkout do formulário usa o lead do servidor | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
 | [OS-007](os/OS-007.md) | Cupom do depósito bancário pela RPC | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
 | [OS-009](os/OS-009.md) | Remover `FormRunner` e telas mortas de `bridge_leads` | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
-| [OS-015](os/OS-015.md) | Fundação visual: tokens, fontes e logo | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
 | [OS-016](os/OS-016.md) | Biblioteca de componentes do design system | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
-| [OS-017](os/OS-017.md) | Casca do sistema: menu lateral, layouts e login | 🟠 Alta | NO AR — falta conferência do Everton | OP-01 |
 | [OS-018](os/OS-018.md) | Telas: Hoje, Alunos e ficha do aluno | 🟡 Média | ABERTA (depende da OS-017) | — |
 | [OS-019](os/OS-019.md) | Telas: Matrículas e Turmas | 🟡 Média | ABERTA (depende da OS-017) | — |
 | [OS-020](os/OS-020.md) | Telas: área Comercial | 🟡 Média | ABERTA (depende da OS-017 e da OS-013) | — |
@@ -45,6 +43,8 @@
 
 | OS | Título | Concluída em |
 |---|---|---|
+| [OS-015](os/OS-015.md) | Fundação visual: tokens, fontes e logo | 11/11/2026 |
+| [OS-017](os/OS-017.md) | Casca do sistema: menu lateral, layouts e login | 11/11/2026 |
 | [OS-010](os/OS-010.md) | Nível JLPT seguro na ficha e recálculo da avaliação no servidor | 11/11/2026 |
 | [OS-001](os/OS-001.md) | Fechar escalada para admin (`set_admin_role`) | 09/11/2026 |
 | [OS-002](os/OS-002.md) | Exigir admin no `sync-stripe-product` | 09/11/2026 |
