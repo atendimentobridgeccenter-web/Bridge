@@ -23,6 +23,7 @@
 | [OS-020](os/OS-020.md) | Telas: área Comercial | 🟡 Média | ABERTA (depende da OS-017 e da OS-013) | — |
 | [OS-021](os/OS-021.md) | Telas: Financeiro, Cursos, Acessos, Cupons, Configurações | 🟡 Média | ABERTA (depende da OS-017) | — |
 | [OS-022](os/OS-022.md) | Telas: portal do professor e construtor de formulário | 🟡 Média | ABERTA (depende da OS-017 e das OS-011/012/013) | — |
+| [OS-024](os/OS-024.md) | Faixas da avaliação por intervalo ("Até 5 · De 6 a 13 · De 14 a 21") | 🟡 Média | ABERTA (fazer antes da OS-022) | — |
 
 ## Backlog (ainda sem OS)
 
@@ -36,6 +37,7 @@
 
 > **Migração visual** (design system em `docs/design-system/`, aprovado em 10/11): OS-015 → OS-016 → OS-017, todas do OP-01 e em sequência. Depois, OS-018 a OS-021 em qualquer ordem; OS-022 por último. A OS-012 e a OS-013, se começarem depois da OS-016, já usam os componentes novos.
 > Avaliação de nivelamento (spec em `specs/avaliacao-nivelamento.md`): OS-010 (back) e OS-011 (front) podem correr juntas; OS-012 só depois das OS-011, OS-005 **e** OS-007; OS-013 depois da OS-012. A migration da OS-010 é a 034.
+> OS-024 refina o editor de faixas da OS-011 (só tela, formato salvo intacto). Mexe no `AssessmentEditor.tsx`, que a OS-022 também migra para o design system: fazer a OS-024 primeiro.
 > **Deploy 10/11:** ① webhook (OS-003/008) ② checkout (OS-004) ③ migration 032 (OS-006) no ar; o front `83ac13d` (OS-005/007/009) **não** foi publicado em 10/11 (push foi para o remote `lovable`). Deploy real do front: `git push origin main` (11/11). Única pendência: com o cliente, painel do Stripe + compra de teste (fecha OS-003 e OS-008).
 > Alto 3 virou OS-003/004/005; Médio 6 entrou na OS-003; Alto 4 virou OS-006/007. Alto 5 virou OS-008/009 (decisão: desligar e arquivar; `bridge_leads` tem 1 registro, de 16/05/2026).
 
