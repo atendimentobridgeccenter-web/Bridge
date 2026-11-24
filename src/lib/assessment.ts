@@ -11,6 +11,12 @@
 //     ficou no caminho final do formulário (ex.: usuário voltou e declarou o nível
 //     manualmente em vez de fazer a avaliação). Aplicado nos 3 pontos definidos pelo
 //     Gate 1 da OS-012: payload do checkout, payment-resume (localStorage) e salvamento final do lead.
+//  5. bandUpperLimits  — (OS-024) limite de cima (inclusivo) de cada faixa, por
+//     ordem do array (não por minScore ordenado) — é assim que o editor exibe
+//     o modo "Por faixa" sem reordenar faixas antigas fora de ordem.
+//  6. setBandUpper     — (OS-024) edição do modo "Por faixa": muda o minScore
+//     da faixa SEGUINTE a partir do limite de cima digitado na faixa atual.
+//     O formato salvo (AssessmentBand[] = { minScore, level }) não muda.
 //
 // O recálculo definitivo do nível fica no servidor (OS-010, trigger
 // create_student_draft_from_lead) — este módulo só serve para exibição no
@@ -70,6 +76,32 @@ export function bandForScore(bands: AssessmentBand[], score: number): JlptLevel 
 /** Formato salvo em `{nodeId}.score` — ex.: "14/20". */
 export function formatScore(score: number, maxScore: number): string {
   return `${score}/${maxScore}`
+}
+
+/**
+ * Limite de cima (inclusivo) de cada faixa, pela ORDEM DO ARRAY (não por
+ * minScore ordenado — um formulário antigo com faixas fora de ordem continua
+ * sendo mostrado como está, sem reordenar nada sozinho). Faixa i vai até
+ * `bands[i+1].minScore - 1`; a última vai até `maxScore`.
+ */
+export function bandUpperLimits(bands: AssessmentBand[], maxScore: number): number[] {
+  return bands.map((_, i) => {
+    const next = bands[i + 1]
+    return next ? next.minScore - 1 : maxScore
+  })
+}
+
+/**
+ * Edita o limite de cima da faixa `idx`, ajustando o `minScore` da faixa
+ * SEGUINTE para `upper + 1`. Não mexe em mais nada (nem reordena, nem muda a
+ * própria faixa `idx`). Na última faixa (sem seguinte) devolve `bands` sem
+ * alteração — não há limite de cima editável ali, ele é sempre `maxScore`.
+ * Retorna um novo array; não muta `bands`.
+ */
+export function setBandUpper(bands: AssessmentBand[], idx: number, upper: number): AssessmentBand[] {
+  const nextIdx = idx + 1
+  if (nextIdx >= bands.length) return bands
+  return bands.map((b, i) => i === nextIdx ? { ...b, minScore: upper + 1 } : b)
 }
 
 /**

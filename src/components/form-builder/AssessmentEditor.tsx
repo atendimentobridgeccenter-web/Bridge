@@ -2,11 +2,13 @@
 // Fica em arquivo próprio, exportando só o componente, pela mesma regra de
 // fast refresh registrada em formConstants.ts:1-5 — um arquivo que mistura
 // export de componente com export de valor quebra o Fast Refresh.
+import { useState } from 'react'
 import { Plus, Trash2, ChevronUp, ChevronDown, AlertTriangle } from 'lucide-react'
 import type {
   FormNode, AssessmentConfig, AssessmentQuestion, AssessmentBand, JlptLevel,
 } from './FormBuilder'
 import { uid, isNodeAfterPayment } from './formConstants'
+import { bandUpperLimits, setBandUpper } from '@/lib/assessment'
 
 const JLPT_LEVELS: JlptLevel[] = ['N5', 'N4', 'N3', 'N2', 'N1']
 
@@ -73,7 +75,9 @@ export default function AssessmentEditor({
 
   // ── Faixas de pontuação ───────────────────────────────────────
   function addBand() {
-    setCfg({ bands: [...cfg.bands, { minScore: 0, level: 'N5' }] })
+    const last = cfg.bands[cfg.bands.length - 1]
+    const minScore = last ? last.minScore + 1 : 0
+    setCfg({ bands: [...cfg.bands, { minScore, level: 'N5' }] })
   }
   function updateBand(idx: number, patch: Partial<AssessmentBand>) {
     setCfg({ bands: cfg.bands.map((b, i) => i === idx ? { ...b, ...patch } : b) })
@@ -93,6 +97,13 @@ export default function AssessmentEditor({
   }, 0)
 
   const afterPayment = isNodeAfterPayment(node, nodes)
+
+  // OS-024: modo de edição das faixas — escolha só de tela (não salva no nó).
+  // Nunca derivar/normalizar `cfg.bands` aqui: a leitura abaixo é só exibição.
+  const [bandMode, setBandMode] = useState<'faixa' | 'apartir'>('faixa')
+  const upperLimits = bandUpperLimits(cfg.bands, maxScore)
+  const unreachableBands = cfg.bands.filter(b => !noQuestions && b.minScore > maxScore)
+  const hasFractionalPoints = cfg.questions.some(q => q.options.some(o => !Number.isInteger(o.points)))
 
   return (
     <div className="flex flex-col gap-6 p-6 overflow-y-auto h-full">
@@ -258,9 +269,39 @@ export default function AssessmentEditor({
           <span className="text-[10px] text-ink-faint">máx. {maxScore} pts</span>
         </div>
 
+        {/* Alternância de modo — só de tela, não é salva no nó (OS-024) */}
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            aria-pressed={bandMode === 'faixa'}
+            onClick={() => setBandMode('faixa')}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+            style={{
+              background: bandMode === 'faixa' ? 'var(--laranja-suave)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${bandMode === 'faixa' ? 'var(--laranja-acao)' : 'rgba(255,255,255,0.07)'}`,
+              color: bandMode === 'faixa' ? 'var(--laranja-texto)' : undefined,
+            }}>
+            Por faixa
+          </button>
+          <button
+            type="button"
+            aria-pressed={bandMode === 'apartir'}
+            onClick={() => setBandMode('apartir')}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+            style={{
+              background: bandMode === 'apartir' ? 'var(--laranja-suave)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${bandMode === 'apartir' ? 'var(--laranja-acao)' : 'rgba(255,255,255,0.07)'}`,
+              color: bandMode === 'apartir' ? 'var(--laranja-texto)' : undefined,
+            }}>
+            A partir de
+          </button>
+        </div>
+
         {bandsOutOfOrder && (
           <p className="text-[11px]" style={{ color: 'var(--warning)' }}>
-            As faixas precisam estar em ordem crescente de pontuação mínima.
+            {bandMode === 'faixa'
+              ? 'Cada faixa precisa terminar depois de onde começa.'
+              : 'As faixas precisam estar em ordem crescente de pontuação mínima.'}
           </p>
         )}
         {firstBandNotZero && (
@@ -268,7 +309,21 @@ export default function AssessmentEditor({
             A primeira faixa precisa começar em 0 ponto.
           </p>
         )}
+        {unreachableBands.length > 0 && (
+          <p className="text-[11px]" style={{ color: 'var(--warning)' }}>
+            {unreachableBands.length === 1
+              ? 'Uma faixa começa acima da pontuação máxima e nunca é atingida.'
+              : `${unreachableBands.length} faixas começam acima da pontuação máxima e nunca são atingidas.`}
+          </p>
+        )}
+        {bandMode === 'faixa' && hasFractionalPoints && (
+          <p className="text-[11px]" style={{ color: 'var(--warning)' }}>
+            Há alternativas com pontos fracionados — os rótulos de intervalo só são exatos com pontos inteiros.
+            Use o modo "A partir de" para conferir os valores exatos.
+          </p>
+        )}
 
+        {bandMode === 'apartir' && (
         <div className="flex flex-col gap-1.5">
           {cfg.bands.map((b, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -297,6 +352,76 @@ export default function AssessmentEditor({
             </div>
           ))}
         </div>
+        )}
+
+        {bandMode === 'faixa' && (
+        <div className="flex flex-col gap-1.5">
+          {cfg.bands.map((b, i) => {
+            const n = cfg.bands.length
+            const isSingle = n === 1
+            const isFirst  = i === 0
+            const isLast   = i === n - 1
+
+            let label: string
+            let showInput = false
+            let suffix: string
+
+            if (isSingle) {
+              label  = 'De 0 a'
+              suffix = `${maxScore} pts →`
+            } else if (isFirst) {
+              label     = 'Até'
+              showInput = true
+              suffix    = 'pts →'
+            } else if (isLast) {
+              if (noQuestions || b.minScore > maxScore) {
+                label  = `De ${b.minScore}`
+                suffix = 'pts em diante →'
+              } else {
+                label  = `De ${b.minScore} a`
+                suffix = `${maxScore} pts →`
+              }
+            } else {
+              label     = `De ${b.minScore} a`
+              showInput = true
+              suffix    = 'pts →'
+            }
+
+            return (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-[10px] text-ink-faint shrink-0">{label}</span>
+                {showInput && (
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={upperLimits[i]}
+                    onChange={e => {
+                      const upper = Math.max(0, Math.floor(Number(e.target.value) || 0))
+                      setCfg({ bands: setBandUpper(cfg.bands, i, upper) })
+                    }}
+                    className="w-16 px-2 py-1.5 rounded-md text-[12px] text-ink outline-none text-center"
+                    style={inputSty}
+                  />
+                )}
+                <span className="text-[10px] text-ink-faint shrink-0">{suffix}</span>
+                <select
+                  value={b.level}
+                  onChange={e => updateBand(i, { level: e.target.value as JlptLevel })}
+                  className="flex-1 px-2.5 py-1.5 rounded-md text-[12px] text-ink outline-none appearance-none cursor-pointer"
+                  style={inputSty}
+                >
+                  {JLPT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+                <button onClick={() => removeBand(i)}
+                  className="p-1 rounded text-ink-faint hover:text-red-400 transition-colors shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+        )}
 
         <button onClick={addBand}
           className="flex items-center justify-center gap-2 py-2 rounded-lg text-[12px] font-semibold text-[#E8521A] transition-all"

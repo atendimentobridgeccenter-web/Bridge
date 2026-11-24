@@ -23,7 +23,7 @@
 | [OS-020](os/OS-020.md) | Telas: área Comercial | 🟡 Média | ABERTA (depende da OS-017 e da OS-013) | — |
 | [OS-021](os/OS-021.md) | Telas: Financeiro, Cursos, Acessos, Cupons, Configurações | 🟡 Média | ABERTA (depende da OS-017) | — |
 | [OS-022](os/OS-022.md) | Telas: portal do professor e construtor de formulário | 🟡 Média | ABERTA (depende da OS-017 e das OS-011/012/013) | — |
-| [OS-024](os/OS-024.md) | Faixas da avaliação por intervalo ("Até 5 · De 6 a 13 · De 14 a 21") | 🟡 Média | ABERTA (fazer antes da OS-022) | — |
+| [OS-024](os/OS-024.md) | Faixas da avaliação por intervalo ("Até 5 · De 6 a 13 · De 14 a 21") | 🟡 Média | AGUARDANDO EVERTON (push) | OP-01 |
 
 ## Backlog (ainda sem OS)
 
